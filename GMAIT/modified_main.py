@@ -8,7 +8,7 @@ def static(prechoice=None):
         choice = prechoice
     print("\n")
     if prechoice is None:
-        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n"))
+        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
         rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : ")) 
@@ -423,6 +423,29 @@ def static(prechoice=None):
         os.system("clear")
         inpt_dict = {"nranges" : ranges, "deg" : max_deg, "moe" : moe, "param_ranges" : param_ranges, "params":parameters, "float_mode" : float_mode, "ndigits":ndigits, "dim" : dims, "inp_ranges": inp_ranges, "n" : n}
         stats = gr.general_runner(gh.shuffle, rounds, inpt_dict, md)#multgame.lineIntegralScalar(number_of_rounds=rounds, max_deg=max_deg, nranges=ranges[:], moe=moe)
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    
+    if choice == 28:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of numbers (seperated by blank space): ").split(" ")
+        ranges = [int(a), int(b)]
+        n_partite = int(input("Number of parts : "))
+        c, d = input("Range of the length of non-zero interval (seperated by blank space): ").split(" ")
+        p_ranges = [int(c), int(d)]
+        
+        max_deg = int(input("Maximum degree : "))
+        moe = float(input("Margin of error : "))
+        exp_cond = int(input("Exponential mode? 1 : Yes\t0 : No "))
+        u_cond = int(input("Poly mode? 1 : Yes\t0 : No "))
+        umvar_cond = 0
+        if u_cond != 0:
+            umvar_cond = int(input("Multivariate mode? 1 : Yes\t0 : No "))
+        os.system("clear")
+        inpt_dict = {"nranges" : ranges, "period_ranges" : p_ranges, "deg" : max_deg, "moe" : moe, "exp_cond" : exp_cond, "u_cond" : u_cond, "umvar_cond" : umvar_cond, "n_partite" : n_partite}
+        stats = gr.general_runner(gh.fourierTransform, rounds, inpt_dict, md)#multgame.fourierSgame(number_of_rounds=rounds, nranges=ranges[:], deg=max_deg, p_range=p_ranges, exp_cond=exp_cond, u_cond=u_cond, umvar_cond=umvar_cond, moe=moe)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
         print("Time spent per item : ", round(stats[2]))

@@ -1570,6 +1570,16 @@ def fourier_series(f, period):
     a_0 = numericIntegration(f, -period/2, period/2) / period
     return [a_n, b_n, a_0]
 
+def fourier_ct(function, start, end, dx=0.0001):
+    return lambda w : numericIntegration(lambda x : function(x) * math.cos(w * x), start, end, dx=dx) * math.sqrt(2/math.pi)
+
+def fourier_st(function, start, end, dx=0.0001):
+    return lambda w : numericIntegration(lambda x : function(x) * math.sin(w * x), start, end, dx=dx) * math.sqrt(2/math.pi)
+
+def fourier_t(function, start, end, dx=0.0001):
+    return lambda w : numericIntegration(lambda x : function(x) * cmath.exp(complex(0, -w * x)), start, end, dx=dx) / math.sqrt(2 * math.pi)
+
+
 def generate_integrable_ratExpr(deg=3, nranges = [1, 10]):
     p = poly([1])
     p_deg = random.randint(0, deg)
@@ -1698,6 +1708,229 @@ def generate_trig_prod(nranges=[1, 10]):
                     ["s", "i", "n"] + [" " for i in range(len(str(a)))] + ["x", " "] + ["c", "o", "s"] + [" " for i in range(len(str(b)))] + ["x"]]
     string = "\n".join(["".join(i) for i in string_array])
     return [function, string]
+
+def generate_fourier_ct(nranges=[1, 10], n_partite=1, deg=2, p_range=[1, 5], exp_cond=False, u_cond=False, umvar_cond=False):
+    p1 = poly.rand(deg, coeff_range=nranges[:])
+    c1 = random.randint(nranges[0], nranges[1])
+    period = random.randint(p_range[0], p_range[1])
+    rand_exp = lambda x : math.exp(c1 * x)
+    f = (lambda x : p1(x) * rand_exp(x))
+    if n_partite > 1:
+        arr = [0]
+        step = period // n_partite
+        for i in range(n_partite - 1):
+            arr.append(random.randint(arr[-1], arr[-1] + step))
+        arr.append(period)
+        p_array = [poly.rand(deg, coeff_range=nranges[:]) for i in range(n_partite)]
+        def g(x):
+            for i in range(n_partite):
+                if arr[i] <= x < arr[i+1]:
+                    return p_array[i](x)
+            
+            return 0
+        
+        z = fourier_ct(g, 0, period)
+        str_arr = ["if %d <= x < %d then f(x) = \n"%(arr[i], arr[i+1]) + strpprint(p_array[i].pprint()) + "\n" for i in range(n_partite)]
+        string = "".join(str_arr)
+        return [g, period, z, string, p1, c1]
+
+
+
+    if not exp_cond:
+        f = lambda x : p1(x)
+    if umvar_cond:
+        x, y, z = rndF(nranges=nranges), rndF(nranges=nranges), rndF(nranges=nranges)
+        p1 = polymvar.rand(max_deg=2, nrange=nranges[:])
+        f = lambda t : p1(x[0](t), y[0](t), z[0](t))
+        fct = fourier_ct(f, 0, period)
+        nstr = connect(p1.pprint(), [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "w", "h", "e", "r", "e", " ", "x", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, x[1])
+        nstr = connect(pnstr, [[" ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "a", "n", "d", " ", "y", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, y[1])
+        nstr = connect(pnstr, [[" ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "a", "n", "d", " ", "z", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, z[1])
+        return [f, period, fct, strpprint(pnstr), p1, c1]
+    if u_cond:
+        z = rndF(nranges=nranges)
+        f = lambda x : p1(z[0](x))
+        fct = fourier_ct(f, 0, period)
+        nstr = connect(p1.pprint(), [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "w", "h", "e", "r", "e", " ", "x", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, z[1])
+        return [f, period, fct, strpprint(pnstr), p1, c1]
+    
+     
+        
+    fct = fourier_ct(f, 0, period)
+    if not exp_cond:
+        return [f, period, fct, strpprint(p1.pprint()), p1, c1]
+    poly_pprint = connect(connect([["/"], ["|"], ["\\"]], p1.pprint()), [["\\"], ["|"], ["/"]])
+    array = [[" "], ["e"], [" "]]
+    for i in str(c1):
+        array[0].append(i)
+    array[0].append("x")
+    for i in range(len(str(c1)) + 1):
+        array[1].append(" ")
+        array[2].append(" ")
+    
+    full_pprint = connect(array, poly_pprint)
+    return [f, period, fct, strpprint(full_pprint), p1, c1]
+
+def generate_fourier_st(nranges=[1, 10], n_partite=1, deg=2, p_range=[1, 5], exp_cond=False, u_cond=False, umvar_cond=False):
+    p1 = poly.rand(deg, coeff_range=nranges[:])
+    c1 = random.randint(nranges[0], nranges[1])
+    period = random.randint(p_range[0], p_range[1])
+    rand_exp = lambda x : math.exp(c1 * x)
+    f = (lambda x : p1(x) * rand_exp(x))
+    if n_partite > 1:
+        arr = [0]
+        step = period // n_partite
+        for i in range(n_partite - 1):
+            arr.append(random.randint(arr[-1], arr[-1] + step))
+        arr.append(period)
+        p_array = [poly.rand(deg, coeff_range=nranges[:]) for i in range(n_partite)]
+        def g(x):
+            for i in range(n_partite):
+                if arr[i] <= x < arr[i+1]:
+                    return p_array[i](x)
+            
+            return 0
+        
+        z = fourier_st(g, 0, period)
+        str_arr = ["if %d <= x < %d then f(x) = \n"%(arr[i], arr[i+1]) + strpprint(p_array[i].pprint()) + "\n" for i in range(n_partite)]
+        string = "".join(str_arr)
+        return [g, period, z, string, p1, c1]
+
+
+
+    if not exp_cond:
+        f = lambda x : p1(x)
+    if umvar_cond:
+        x, y, z = rndF(nranges=nranges), rndF(nranges=nranges), rndF(nranges=nranges)
+        p1 = polymvar.rand(max_deg=2, nrange=nranges[:])
+        f = lambda t : p1(x[0](t), y[0](t), z[0](t))
+        fct = fourier_st(f, 0, period)
+        nstr = connect(p1.pprint(), [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "w", "h", "e", "r", "e", " ", "x", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, x[1])
+        nstr = connect(pnstr, [[" ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "a", "n", "d", " ", "y", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, y[1])
+        nstr = connect(pnstr, [[" ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "a", "n", "d", " ", "z", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, z[1])
+        return [f, period, fct, strpprint(pnstr), p1, c1]
+    if u_cond:
+        z = rndF(nranges=nranges)
+        f = lambda x : p1(z[0](x))
+        fct = fourier_st(f, 0, period)
+        nstr = connect(p1.pprint(), [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "w", "h", "e", "r", "e", " ", "x", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, z[1])
+        return [f, period, fct, strpprint(pnstr), p1, c1]
+    
+     
+        
+    fct = fourier_st(f, 0, period)
+    if not exp_cond:
+        return [f, period, fct, strpprint(p1.pprint()), p1, c1]
+    poly_pprint = connect(connect([["/"], ["|"], ["\\"]], p1.pprint()), [["\\"], ["|"], ["/"]])
+    array = [[" "], ["e"], [" "]]
+    for i in str(c1):
+        array[0].append(i)
+    array[0].append("x")
+    for i in range(len(str(c1)) + 1):
+        array[1].append(" ")
+        array[2].append(" ")
+    
+    full_pprint = connect(array, poly_pprint)
+    return [f, period, fct, strpprint(full_pprint), p1, c1]
+
+def generate_fourier_t(nranges=[1, 10], n_partite=1, deg=2, p_range=[1, 5], exp_cond=False, u_cond=False, umvar_cond=False):
+    p1 = poly.rand(deg, coeff_range=nranges[:])
+    c1 = random.randint(nranges[0], nranges[1])
+    period = 2*random.randint(p_range[0], p_range[1])
+    rand_exp = lambda x : math.exp(c1 * x)
+    f = (lambda x : p1(x) * rand_exp(x))
+    if n_partite > 1:
+        arr = [0]
+        step = period // n_partite
+        for i in range(n_partite - 1):
+            arr.append(random.randint(arr[-1], arr[-1] + step))
+        arr.append(period)
+        p_array = [poly.rand(deg, coeff_range=nranges[:]) for i in range(n_partite)]
+        def g(x):
+            for i in range(n_partite):
+                if arr[i] <= x < arr[i+1]:
+                    return p_array[i](x)
+            
+            return 0
+        
+        z = fourier_t(g, 0, period)
+        str_arr = ["if %d <= x < %d then f(x) = \n"%(arr[i], arr[i+1]) + strpprint(p_array[i].pprint()) + "\n" for i in range(n_partite)]
+        string = "".join(str_arr)
+        return [g, period, z, string, p1, c1]
+
+
+
+    if not exp_cond:
+        f = lambda x : p1(x)
+    if umvar_cond:
+        x, y, z = rndF(nranges=nranges), rndF(nranges=nranges), rndF(nranges=nranges)
+        p1 = polymvar.rand(max_deg=2, nrange=nranges[:])
+        f = lambda t : p1(x[0](t), y[0](t), z[0](t))
+        fct = fourier_t(f, 0, period)
+        nstr = connect(p1.pprint(), [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "w", "h", "e", "r", "e", " ", "x", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, x[1])
+        nstr = connect(pnstr, [[" ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "a", "n", "d", " ", "y", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, y[1])
+        nstr = connect(pnstr, [[" ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "a", "n", "d", " ", "z", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, z[1])
+        return [f, period, fct, strpprint(pnstr), p1, c1]
+    if u_cond:
+        z = rndF(nranges=nranges)
+        f = lambda x : p1(z[0](x))
+        fct = fourier_t(f, 0, period)
+        nstr = connect(p1.pprint(), [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "], 
+                                     [" ", "w", "h", "e", "r", "e", " ", "x", " ", "=", " "],
+                                     [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "]])[:]
+        pnstr = connect(nstr, z[1])
+        return [f, period, fct, strpprint(pnstr), p1, c1]
+    
+     
+        
+    fct = fourier_t(f, 0, period)
+    if not exp_cond:
+        return [f, period, fct, strpprint(p1.pprint()), p1, c1]
+    poly_pprint = connect(connect([["/"], ["|"], ["\\"]], p1.pprint()), [["\\"], ["|"], ["/"]])
+    array = [[" "], ["e"], [" "]]
+    for i in str(c1):
+        array[0].append(i)
+    array[0].append("x")
+    for i in range(len(str(c1)) + 1):
+        array[1].append(" ")
+        array[2].append(" ")
+    
+    full_pprint = connect(array, poly_pprint)
+    return [f, period, fct, strpprint(full_pprint), p1, c1]
+
 
 def generate_fourier_s(nranges=[1, 10], n_partite=1, deg=2, p_range=[1, 5], exp_cond=False, u_cond=False, umvar_cond=False):
     p1 = poly.rand(deg, coeff_range=nranges[:])
@@ -1888,3 +2121,4 @@ def random_pfd(nrange=[1, 10], max_deg=2):
     len_measure2 = len(str2cpy.split("\n")[0])
     str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
     return [p, q, "\n".join([str1, str3, str2])]
+

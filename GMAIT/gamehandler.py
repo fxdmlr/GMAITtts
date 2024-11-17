@@ -205,6 +205,22 @@ def fourierSeries(inpt_dict):#(nranges=[1, 10], deg=2, p_range=[0, 2], exp_cond=
     res = a_0 + a_n(1) + b_n(1)
     cond = lambda x : (1-moe) * res <= evl.evl(x) <= (1+moe)*res or (1+moe) * res <= evl.evl(x) <= (1-moe)*res
     return [s, res, lambda x : res if cond(x) else res + 1000]
+def fourierTransform(inpt_dict):#(nranges=[1, 10], deg=2, p_range=[0, 2], exp_cond=False, u_cond=False, umvar_cond=False, moe=0.01):
+    nranges = inpt_dict["nranges"]
+    deg = inpt_dict["deg"]
+    p_range = inpt_dict["period_ranges"]
+    exp_cond = inpt_dict["exp_cond"]
+    u_cond = inpt_dict["u_cond"]
+    umvar_cond = inpt_dict["umvar_cond"]
+    moe = inpt_dict["moe"]
+    n_partite = inpt_dict["n_partite"]
+    coin = random.randint(0, 1)
+    f, period, fct, string, p1, c1 = utils.generate_fourier_ct(nranges=nranges[:], n_partite=n_partite, deg=random.randint(0, deg), p_range=p_range, exp_cond=exp_cond, u_cond=u_cond, umvar_cond=umvar_cond) if not coin else utils.generate_fourier_st(nranges=nranges[:], n_partite=n_partite, deg=random.randint(0, deg), p_range=p_range, exp_cond=exp_cond, u_cond=u_cond, umvar_cond=umvar_cond)
+    inp = random.randint(1, 10)
+    s = string + "\nP = " + str(period) + "\n" + "F_%s{f}(%d) = "%("c" if not coin else "s", inp)
+    res = fct(inp)
+    cond = lambda x : (1-moe) * res <= evl.evl(x) <= (1+moe)*res or (1+moe) * res <= evl.evl(x) <= (1-moe)*res
+    return [s, res, lambda x : res if cond(x) else res + 1000]
 
 def lineq(inpt_dict):#coeff_abs_ranges=[1, 10], parameters=3, param_abs_ranges=[1, 10]):
     coeff_abs_ranges = inpt_dict["nranges"]
