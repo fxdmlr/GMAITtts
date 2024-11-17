@@ -199,7 +199,8 @@ def fourierSeries(inpt_dict):#(nranges=[1, 10], deg=2, p_range=[0, 2], exp_cond=
     u_cond = inpt_dict["u_cond"]
     umvar_cond = inpt_dict["umvar_cond"]
     moe = inpt_dict["moe"]
-    f, period, a_n, b_n, a_0, string, p1, c1 = utils.generate_fourier_s(nranges=nranges[:], deg=random.randint(0, deg), p_range=p_range, exp_cond=exp_cond, u_cond=u_cond, umvar_cond=umvar_cond)
+    n_partite = inpt_dict["n_partite"]
+    f, period, a_n, b_n, a_0, string, p1, c1 = utils.generate_fourier_s(nranges=nranges[:], n_partite=n_partite, deg=random.randint(0, deg), p_range=p_range, exp_cond=exp_cond, u_cond=u_cond, umvar_cond=umvar_cond)
     s = string + "\nP = " + str(period) + "\n" + "a0 + a1 + b1 = "
     res = a_0 + a_n(1) + b_n(1)
     cond = lambda x : (1-moe) * res <= evl.evl(x) <= (1+moe)*res or (1+moe) * res <= evl.evl(x) <= (1-moe)*res

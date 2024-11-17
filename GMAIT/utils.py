@@ -1699,12 +1699,37 @@ def generate_trig_prod(nranges=[1, 10]):
     string = "\n".join(["".join(i) for i in string_array])
     return [function, string]
 
-def generate_fourier_s(nranges=[1, 10], deg=2, p_range=[1, 5], exp_cond=False, u_cond=False, umvar_cond=False):
+def generate_fourier_s(nranges=[1, 10], n_partite=1, deg=2, p_range=[1, 5], exp_cond=False, u_cond=False, umvar_cond=False):
     p1 = poly.rand(deg, coeff_range=nranges[:])
     c1 = random.randint(nranges[0], nranges[1])
     period = 2*random.randint(p_range[0], p_range[1])
     rand_exp = lambda x : math.exp(c1 * x)
     f = (lambda x : p1(x) * rand_exp(x))
+    if n_partite > 1:
+        arr = [-period/2]
+        step = period // n_partite
+        for i in range(n_partite - 1):
+            arr.append(random.randint(arr[-1], arr[-1] + step))
+        arr.append(period/2)
+        p_array = [poly.rand(deg, coeff_range=nranges[:]) for i in range(n_partite)]
+        def g(x):
+            for i in range(n_partite):
+                if arr[i] <= x < arr[i+1]:
+                    return p_array[i](x)
+            
+            return 0
+        
+        a_n_d = lambda n : (lambda x : g(x) * math.cos(2 * n * math.pi * x / period))
+        b_n_d = lambda n : (lambda x : g(x) * math.sin(2 * n * math.pi * x / period)) 
+        a_n = lambda n : numericIntegration(a_n_d(n), -period/2, period/2) / (period/2)
+        b_n = lambda n : numericIntegration(b_n_d(n), -period/2, period/2) / (period/2)
+        a_0 = numericIntegration(g, -period/2, period/2) / period
+        str_arr = ["if %d <= x < %d then f(x) = \n"%(arr[i], arr[i+1]) + strpprint(p_array[i].pprint()) + "\n" for i in range(n_partite)]
+        string = "".join(str_arr)
+        return [g, period, a_n, b_n, a_0, string, p1, c1]
+
+
+
     if not exp_cond:
         f = lambda x : p1(x)
     if umvar_cond:
