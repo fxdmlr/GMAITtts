@@ -2121,4 +2121,5 @@ def random_pfd(nrange=[1, 10], max_deg=2):
     len_measure2 = len(str2cpy.split("\n")[0])
     str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
     return [p, q, "\n".join([str1, str3, str2])]
-
+    
+    

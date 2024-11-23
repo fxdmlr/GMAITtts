@@ -283,7 +283,7 @@ def diffeq(inpt_dict):#(nranges=[1, 10], max_deg=2):
     f, s, iv = utils.random_diff_eq_2(nranges=nranges, n=random.randint(0, 1), max_deg=max_deg)
     z = round(random.random(), ndigits=2)
     nstr = "y(0) = " + str(iv[0]) + "\n" + "y'(0) = " + str(iv[1]) + "\n" + s + "\n" + "y(%f) = "%z 
-    cond = lambda x : f(z) * 0.8 <round(float(x), ndigits=2)< f(z)*1.2
+    cond = lambda x : f(z) * 0.8 <round(evl.evl(x), ndigits=2)< f(z)*1.2
     return [nstr, z, lambda x : z if cond(x) else z + 1]
 
 def pcurve(inpt_dict):#(nranges=[1, 10], max_deg=2, ndigits=2):
