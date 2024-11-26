@@ -2121,5 +2121,59 @@ def random_pfd(nrange=[1, 10], max_deg=2):
     len_measure2 = len(str2cpy.split("\n")[0])
     str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
     return [p, q, "\n".join([str1, str3, str2])]
+
+def rungeKutta4th_2ord(init_vals, coeffs, rhs, init_pt, end_pt, N):
+    '''
+    p(x)y'' + q(x)y' + r(x)y = f(x); y(x0) = y0; y'(x0) = p0 solve for y(x1)->
+    init_vals = [y(x0), y'(x0)]
+    coeffs = [r(x), q(x), p(x)]
+    rhs = f(x)
+    init_pt = x0
+    end_pt = x1
     
+    '''
+    step = (end_pt - init_pt) / N
+    p = (lambda x : coeffs[-1](x)) if callable(coeffs[-1]) else lambda x : coeffs[-1]
+    q = (lambda x : coeffs[1](x)) if callable(coeffs[1]) else lambda x : coeffs[1]
+    r = (lambda x : coeffs[0](x)) if callable(coeffs[0]) else lambda x : coeffs[0]
+    x_n = init_pt
+    y_n = init_vals[0]
+    z_n = init_vals[1]
+    f2 = lambda x, y, z : (rhs(x) - r(x) * y - q(x) * z) / (p(x))
+    f1 = lambda z : z
     
+    while x_n <= end_pt:
+        k1 = step * f1(z_n)
+        l1 = step * f2(x_n, y_n, z_n)
+        
+        k2 = step * f1(z_n + 0.5 * l1)
+        l2 = step * f2(x_n + 0.5 * step, y_n + 0.5 * k1, z_n + 0.5 * l1)
+        
+        k3 = step * f1(z_n + 0.5 * l2)
+        l3 = step * f2(x_n + 0.5 * step, y_n + 0.5 * k2, z_n + 0.5 * l2)
+        
+        k4 = step * f1(z_n + k3)
+        l4 = step * f2(x_n + step, y_n + k4, z_n + l3)
+        
+        y_n += (1/6) * (k1 + 2 * k2 + 2 * k3 + k4)
+        z_n += (1/6) * (l1 + 2 * l2 + 2 * l3 + l4)
+        x_n += step
+    
+    return y_n
+
+def random_diff_eq_2_poly(nranges=[1, 10], mdeg_coeffs=1, max_deg=2, n=2):
+    coeffs = [poly.rand(random.randint(0, mdeg_coeffs), nranges) for i in range(3)]
+    ppr = [[], [], []]
+    for i in range(len(coeffs) - 1, -1, -1):
+        ppr = connect(ppr, [[" "], ["+"], [" "]])
+        ppr = connect(ppr[:], connect([[" "], ["("], [" "]], coeffs[i].pprint() if hasattr(coeffs[i], 'pprint') else poly([coeffs[i]]).pprint()))
+        ppr = connect(ppr[:], [["  "] + ["'" for j in range(i)], [")y"]+[" " for j in range(i)], [" " for j in range(i + 2)]])
+    ppr = connect(ppr[:], [["   "], [" = "], ["   "]])
+    f, pprint_s = randFunction(nranges=nranges[:], n=n, max_deg=max_deg) if random.randint(0, 1) else (PowSeries(lambda n : 1 if n == 0 else 0), [[], [], []])
+    h = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    s = h.pprint()
+    fin_ppr = connect(ppr[:], connect(pprint_s[:], connect([[" "], ["("], [" "]], connect(s, [[" "], [")"], [" "]]))))
+    init_vals = [random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])]
+    n = f * h
+    fin_func = lambda x : rungeKutta4th_2ord(init_vals, coeffs, n, 0, x, 100 * x)
+    return fin_func, strpprint(fin_ppr), init_vals

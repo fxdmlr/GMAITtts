@@ -284,7 +284,7 @@ def diffeq(inpt_dict):#(nranges=[1, 10], max_deg=2):
     z = round(random.random(), ndigits=2)
     nstr = "y(0) = " + str(iv[0]) + "\n" + "y'(0) = " + str(iv[1]) + "\n" + s + "\n" + "y(%f) = "%z 
     cond = lambda x : f(z) * 0.8 <round(evl.evl(x), ndigits=2)< f(z)*1.2
-    return [nstr, z, lambda x : z if cond(x) else z + 1]
+    return [nstr, f(z), lambda x : z if cond(x) else z + 1]
 
 def pcurve(inpt_dict):#(nranges=[1, 10], max_deg=2, ndigits=2):
     nranges = inpt_dict["nranges"]
@@ -381,6 +381,35 @@ CALC_ARRAY = [subIntGame, diffeq, lineIntegral, lineIntegralScalar, divergence, 
 ARITHMETIC_ARRAY = [regMul, regDet, evalRoot, div, regDet, regDet, regDet]
 LINEAR_ARRAY = [regDet, eigenValue, lineq, polyDet]
 FAVORITE_ARRAY = [regDet, polyDet]
+
+def interpolationGame(inpt_dict):
+    n = inpt_dict["n"]
+    nrange_inps = inpt_dict["nranges-inps"]
+    nranges_coeffs = inpt_dict["nranges"]
+    p = utils.poly.rand(n - 1, coeff_range=nranges_coeffs[:])
+    points = []
+    X = []
+    for i in range(n):
+        q = random.randint(nrange_inps[0], nrange_inps[1])
+        while q in X:
+            q = random.randint(nrange_inps[0], nrange_inps[1])
+        points.append((q, p(q)))
+        X.append(q)
+    
+    n_inp = random.randint(nrange_inps[0], nrange_inps[1])
+    res = p(n_inp)
+    string = "\n".join(["(" + str(i) + ", " + str(j) + ")" for i, j in points]) + "\n" + "evaluate at x = " + str(n_inp) + "\n"
+    return string, res, lambda x : int(x)
+
+def diffeqPoly(inpt_dict):#(nranges=[1, 10], max_deg=2):
+    nranges = inpt_dict["nranges"]
+    max_deg_coeffs = inpt_dict["degc"]
+    max_deg_rhs = inpt_dict["deg"]
+    f, s, iv = utils.random_diff_eq_2_poly(nranges, mdeg_coeffs=max_deg_coeffs, max_deg=max_deg_rhs)
+    z = round(random.random(), ndigits=2)
+    nstr = "y(0) = " + str(iv[0]) + "\n" + "y'(0) = " + str(iv[1]) + "\n" + s + "\n" + "y(%f) = "%z 
+    cond = lambda x : f(z) * 0.8 <round(evl.evl(x), ndigits=2)< f(z)*1.2
+    return [nstr, f(z), lambda x : z if cond(x) else z + 1]
 
 def shuffle(inpt_dict):
     return random.choice(FUNCTIONS_ARRAY)(inpt_dict)
