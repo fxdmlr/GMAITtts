@@ -411,6 +411,21 @@ def diffeqPoly(inpt_dict):#(nranges=[1, 10], max_deg=2):
     cond = lambda x : f(z) * 0.8 <round(evl.evl(x), ndigits=2)< f(z)*1.2
     return [nstr, f(z), lambda x : z if cond(x) else z + 1]
 
+def PDEConst(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    l_ranges = inpt_dict["l-ranges"]
+    moe = inpt_dict["moe"]
+    sep = inpt_dict["sep"]
+    sol, string, l, z, s = utils.randomPDEconst(nranges, l_ranges, sep=sep)
+    inp1, inp2 = random.randint(0, l-1) + round(random.random(), ndigits=1), random.randint(0, l-1) + round(random.random(), ndigits=1)
+    
+    res = sol(inp1, inp2)
+    str1 = "u(x, 0) = \n" + s[0] + "\nu(x, %d) = \n"%l + s[1] + "\nu(0, x) = \n" + s[2] + "\nu(%d, x) = \n"%l + s[3] + string + "\nevaluate at x = %f, y = %f\n"%(inp1, inp2)
+    cond = lambda x : res-moe*res <= x <= res + moe*res or res+moe*res <= x <= res - moe*res
+    return str1, res, lambda x : res if cond(evl.evl(x)) else res+1
+    
+    
+    
 def shuffle(inpt_dict):
     return random.choice(FUNCTIONS_ARRAY)(inpt_dict)
 

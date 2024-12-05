@@ -2030,7 +2030,7 @@ def randFunction(nranges=[1, 10], n=2, max_deg=2):
                  (EXP, [[" ", "x"], ["e"," "], [" ", " "]])]
     return functions[random.randint(0, len(functions) - 1)]
 
-def rndF(nranges=[1, 10]):
+def rndF(nranges=[-10, 10]):
     a, b, c, d, e = [random.randint(nranges[0], nranges[1]) for i in range(5)]
     functions = [(lambda x : math.sinh(a * x), [[" ", " ", " ", " ", " "] + [" " for i in str(a)] + [ " ", " "], ["s", "i", "n", "h", "("] + [i for i in str(a)] + ["x", ")"], [" ", " ", " ", " ", " "] + [" " for i in str(a)] + [ " ", " "]]), 
                  (lambda x : math.cosh(b * x), [[" ", " ", " ", " ", " "] + [" " for i in str(b)] + [ " ", " "], ["c", "o", "s", "h", "("] + [i for i in str(b)] + ["x", ")"], [" ", " ", " ", " ", " "] + [" " for i in str(b)] + [ " ", " "]]), 
@@ -2177,3 +2177,188 @@ def random_diff_eq_2_poly(nranges=[1, 10], mdeg_coeffs=1, max_deg=2, n=2):
     n = f * h
     fin_func = lambda x : rungeKutta4th_2ord(init_vals, coeffs, n, 0, x, 100 * x)
     return fin_func, strpprint(fin_ppr), init_vals
+
+def pdeSolveSepVar(coeffs, boundary):
+    # Works on the first try !
+    '''
+    Initial version solves pde of the form
+        Au_xx + Bu_yy + Cu_x + Du_y + Eu = 0
+    
+    coeffs = [A, B, C, D, E]
+    where the boundary conditions are :
+    
+    u(0, y) = u(L, y) = 0
+    
+    and 
+    
+    u(x, 0) = g(x) and u_y(x, 0) = h(x)
+    
+    thus boundary = [L, g(x), h(x)] 
+    
+    h(x) is of the form p * exp(-Cx/(2A)) sin (n * pi * x / L) thus is denoted by [p, n]
+    and so is g(x).
+    thus boundary = [L, n, p_h, p_g]
+    '''
+    a, b, c, d, e = coeffs[:]
+    L, n, p_h, p_g = boundary[:]
+    l = e - (4*a**2*n**2*math.pi**2+c**2*L**2)/(4 * a * L**2)
+    disc = d ** 2 - 4 * b * l
+    function_x = lambda x: math.exp(-c/(2*a) * x) * math.sin(n * math.pi * x / L)
+    if disc > 0:
+        r1, r2 = (-d + math.sqrt(d**2 - 4*b*l)) / (2*b), (-d - math.sqrt(d**2 - 4*b*l)) / (2*b)
+        alpha_1 = (r2*p_g - p_h)/(r2 - r1)
+        beta_1 = (p_h - r1 * p_g) / (r2 - r1)
+        function_y = lambda y : alpha_1 * math.exp(r1*y) + beta_1 * math.exp(r2*y)
+        fin_func = lambda x, y : function_x(x) * function_y(y)
+        return [fin_func, alpha_1, beta_1]
+    
+    elif disc < 0:
+        alpha_1 = p_g
+        q = math.sqrt(-disc)/(2 * b)
+        beta_1 = p_h / q
+        function_y = lambda y : math.exp(-d/(2*b) * y) * (alpha_1 * math.cos(q*y) + beta_1 * math.sin(q*y))
+        fin_func = lambda x, y : function_x(x) * function_y(y)
+        return [fin_func, alpha_1, beta_1]
+
+def solveLineq(coeffs_array, solutions_array):
+    A = matrix(coeffs_array[:])
+    copy_array = coeffs_array[:]
+    sol_det = A.det()
+    arr_i = []
+    for i in range(len(coeffs_array)):
+        narr = [[j for j in i] for i in coeffs_array]
+        for j in range(len(coeffs_array)):
+            narr[j][i] = solutions_array[j]
+        
+        arr_i.append(matrix(narr).det() / sol_det)
+    
+    return arr_i
+
+def pdeFDiffD(coeffs_array, boudary_conditions, step_x = 0.05, step_y=0.05):
+    '''
+    for the below equation we have : 
+    
+    A(x)u_xx + Bu_xy + C(y)u_yy + D(x)u_x + E(y)u_y + (F(x) + G(y))u = 0
+    
+    with boundary conditions : 
+    u(x, 0) = R1(x)
+    u(x, L) = R2(x)
+    
+    u(0, y) = S1(y)
+    u(L, y) = S2(y)
+    
+    coeffs_array = [A, B, C, D, E, F, G]
+    and
+    boundary_conditions = [L, R1(x), R2(x), S1(y), S2(y)]
+    
+    '''
+    A, B, C, D, E, F, G = coeffs_array[:]
+    h, k = step_x, step_y
+    grid = []
+    L, R1, R2, S1, S2 = boudary_conditions[:]
+    # grid[j][i] = u(i * step_x, j * step_y)
+    for i in range(int(L / step_y) + 1):
+        new_arr = []
+        for j in range(int(L / step_x) + 1):
+            if j == 0:
+                new_arr.append(S1(i * step_y))
+            elif int(j * step_x) == L:
+                new_arr.append(S2(i * step_y))
+            elif i == 0:
+                new_arr.append(R1(j * step_x))
+            elif int(i * step_y) == L:
+                new_arr.append(R2(j*step_x))
+            
+            else:
+                new_arr.append(0)
+        
+        grid.append(new_arr)
+    
+    for _ in range(1000):     
+        for j in range(1, int(L/step_y)):
+            for i in range(1, int(L/step_x)):
+                x = i * step_x
+                y = j * step_y
+                a, b, c, d, e, f, = A(x), B(x, y), C(y), D(x), E(y), F(x) + G(y)
+                
+                p = [
+                    (a/h**2+d/(2*h)) * grid[j][i+1],
+                    (a/h**2-d/(2*h)) * grid[j][i-1],
+                    (c/k**2 + e/(2*k)) * grid[j+1][i],
+                    (c/k**2-e/(2*k)) * grid[j-1][i],
+                    (b/(4*h*k)) * grid[j+1][i+1],
+                    (-b/(4*h*k)) * grid[j-1][i+1],
+                    (-b/(4*h*k)) * grid[j+1][i-1],
+                    (b/(4*h*k)) * grid[j-1][i-1]
+                ]
+                if (2*a/h**2+2*c/k**2-f) == 0:
+                    continue
+                grid[j][i] = (1/(2*a/h**2+2*c/k**2-f)) * sum(p)
+        
+    def solution(x, y):
+        if not (0 <= x <= L and 0 <= y <= L):
+            print("Input not in domain !")
+            return 0
+        
+        else:
+            new_x, new_y = int(x / step_x), int(y / step_y)
+            return grid[new_y][new_x]
+    
+    return solution
+'''
+coeffs_array = [lambda x : 1, lambda x, y: 0, lambda x : 1, lambda x : 0, lambda x : 0, lambda x : 0, lambda x : 0]
+boundary_conditions = [1, lambda x : 0, lambda x : x, lambda y : 0 , lambda y : 0]
+
+grid = pdeFDiffD(coeffs_array, boundary_conditions, step_x=0.05, step_y=0.05)
+print(grid(0.5, 0.2))
+'''
+
+def randomPDEconst(nranges, L_ranges, sep=0):
+    arr = []
+    arr_str = []
+    for i in range(4):
+        z, s = rndF() if random.randint(0, 1) else [lambda x : 0, [[" "], ["0"], [" "]]]
+        arr.append(z)
+        arr_str.append(strpprint(s))
+        
+    r1, r2, s1, s2 = arr[:]
+    arr_coeffs = []
+    arr_coeffs_num = []
+    for i in range(7):
+        rand = random.randint(nranges[0], nranges[1]) if not (sep and i == 1) else 0
+        if i != 1:
+            arr_coeffs.append(lambda t : rand)
+        if i == 1:
+            arr_coeffs.append(lambda t, u : rand)
+        arr_coeffs_num.append(rand)
+
+    arr_coeffs_num[-2] += arr_coeffs_num[-1]
+    arr_coeffs_num.pop(-1)
+    l = random.randint(L_ranges[0], L_ranges[1])
+    bnd_arr = [l, r1, r2, s1, s2]
+    solution = pdeFDiffD(arr_coeffs, bnd_arr, step_x=0.1, step_y=0.1)
+    string = [[], [], []]
+    for i in range(6) : 
+        if arr_coeffs_num[i] == 0:
+            continue
+        if i == 0:
+            substr = ["x", "x"]
+        elif i == 1:
+            substr = ["x", "y"]
+        elif i == 2:
+            substr = ["y", "y"]
+        elif i == 3:
+            substr = ["x", " "]
+        elif i == 4:
+            substr = ["y", " "]
+        else:
+            substr = [" ", " "]
+        nstr = connect(string, [["   "], [" + " if arr_coeffs_num[i] > 0 else " - "], ["   "]])[:]
+        if abs(arr_coeffs_num[i]) == 1:
+            new_string = connect(nstr, [[" " for j in range(3)],  ["u", " ", " "], [" "] + substr])[:]        
+        
+        new_string = connect(nstr, [[" " for j in range(len(str(abs(arr_coeffs_num[i]))) + 3)], [j for j in str(abs(arr_coeffs_num[i]))] + ["u", " ", " "], [" " for j in range(len(str(abs(arr_coeffs_num[i]))) + 1)] + substr])[:]        
+        string = new_string[:]
+    new_string = connect(string, [[" ", " ", " ", " "], [" ", "=", " ", "0"], [" ", " ", " ", " "]])[:]
+    finstr = strpprint(new_string)
+    return [solution, finstr, l, z, arr_str]
