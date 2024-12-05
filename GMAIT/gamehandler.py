@@ -286,6 +286,15 @@ def diffeq(inpt_dict):#(nranges=[1, 10], max_deg=2):
     cond = lambda x : f(z) * 0.8 <round(evl.evl(x), ndigits=2)< f(z)*1.2
     return [nstr, f(z), lambda x : z if cond(x) else z + 1]
 
+def diffeq_mixed(inpt_dict):#(nranges=[1, 10], max_deg=2):
+    nranges = inpt_dict["nranges"]
+    max_deg = inpt_dict["deg"]
+    f, s, iv = utils.random_diff_eq_2_mixed(nranges=nranges, n=random.randint(0, 1), max_deg=max_deg)
+    z = round(random.random(), ndigits=2)
+    nstr = "y(0) = " + str(iv[0]) + "\n" + "y'(0) = " + str(iv[1]) + "\n" + s + "\n" + "y(%f) = "%z 
+    cond = lambda x : f(z) * 0.8 <round(evl.evl(x), ndigits=2)< f(z)*1.2
+    return [nstr, f(z), lambda x : z if cond(x) else z + 1]
+
 def pcurve(inpt_dict):#(nranges=[1, 10], max_deg=2, ndigits=2):
     nranges = inpt_dict["nranges"]
     max_deg = inpt_dict["deg"]
@@ -420,12 +429,22 @@ def PDEConst(inpt_dict):
     inp1, inp2 = random.randint(0, l-1) + round(random.random(), ndigits=1), random.randint(0, l-1) + round(random.random(), ndigits=1)
     
     res = sol(inp1, inp2)
-    str1 = "u(x, 0) = \n" + s[0] + "\nu(x, %d) = \n"%l + s[1] + "\nu(0, x) = \n" + s[2] + "\nu(%d, x) = \n"%l + s[3] + string + "\nevaluate at x = %f, y = %f\n"%(inp1, inp2)
+    str1 = "u(x, 0) = \n" + s[0] + "\nu(x, %d) = \n"%l + s[1] + "\nu(0, x) = \n" + s[2] + "\nu(%d, x) = \n"%l + s[3] + "\n" + string + "\nevaluate at x = %f, y = %f\n"%(inp1, inp2)
     cond = lambda x : res-moe*res <= x <= res + moe*res or res+moe*res <= x <= res - moe*res
     return str1, res, lambda x : res if cond(evl.evl(x)) else res+1
+
+def PDESpecial(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    l_ranges = inpt_dict["l-ranges"]
+    moe = inpt_dict["moe"]
+    sol, string, l, z, s = utils.specialPDE(nranges, l_ranges)
+    inp1, inp2 = random.randint(0, l-1) + round(random.random(), ndigits=1), random.randint(0, l-1) + round(random.random(), ndigits=1)
     
-    
-    
+    res = sol(inp1, inp2)
+    str1 = "u(x, 0) = \n" + s[0] + "\nu(x, %d) = \n"%l + s[1] + "\nu(0, x) = \n" + s[2] + "\nu(%d, x) = \n"%l + s[3] + "\n" + string + "\nevaluate at x = %f, y = %f\n"%(inp1, inp2)
+    cond = lambda x : res-moe*res <= x <= res + moe*res or res+moe*res <= x <= res - moe*res
+    return str1, res, lambda x : res if cond(evl.evl(x)) else res+1
+
 def shuffle(inpt_dict):
     return random.choice(FUNCTIONS_ARRAY)(inpt_dict)
 
@@ -440,3 +459,7 @@ def linear_suite(inpt_dict):
 
 def pick1(inpt_dict):
     return random.choice(FAVORITE_ARRAY)(inpt_dict)
+
+def PDE(inpt_dict):
+    arr = [PDEConst, PDESpecial]
+    return arr[random.randint(0, 1)](inpt_dict)

@@ -2068,24 +2068,7 @@ def runge_kutta_2nd(coeffs, function, start, step, init_vals):
         return y_i
     
     return f
-def random_diff_eq_2(nranges=[1, 10], n=2, max_deg=2):
-    coeffs = [random.randint(nranges[0], nranges[1]) * (-1)**random.randint(0, 1) for i in range(3)]
-    ppr = [[], [], []]
-    for i in range(len(coeffs) - 1, -1, -1):
-        if coeffs[i] != 0:
-            if abs(coeffs[i]) != 1:
-                ppr = connect(ppr[:], [[" " for j in range(len(str(abs(coeffs[i]))) + 2)]+["'" for j in range(i)],["+" if coeffs[i] > 0 else "-"]+[j for j in str(abs(coeffs[i]))] + ["y"] + [" " for j in range(i)], [" " for j in range(len(str(abs(coeffs[i]))) + i + 2)]])[:]
-            else:
-                ppr = connect(ppr[:], [[" " for j in range(1+ 2)]+["'" for j in range(i)],["+" if coeffs[i] > 0 else "-"]+ ["y"] + [" " for j in range(i)], [" " for j in range(i + 3)]])[:]  
-    ppr = connect(ppr[:], [["   "], [" = "], ["   "]])
-    f, pprint_s = randFunction(nranges=nranges[:], n=n, max_deg=max_deg) if random.randint(0, 1) else (PowSeries(lambda n : 1 if n == 0 else 0), [[], [], []])
-    h = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
-    s = h.pprint()
-    fin_ppr = connect(ppr[:], connect(pprint_s[:], connect([[" "], ["("], [" "]], connect(s, [[" "], [")"], [" "]]))))
-    init_vals = [random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])]
-    n = f * h
-    fin_func = poly(solveDEseries(coeffs, n, init_vals, 100))
-    return fin_func, strpprint(fin_ppr), init_vals
+
 
 def random_parameterinc_curve(nranges=[1, 10], max_deg=2, dims=2):
     return [poly.rand(random.randint(0, max_deg), coeff_range=nranges[:]) for i in range(dims)]
@@ -2362,3 +2345,107 @@ def randomPDEconst(nranges, L_ranges, sep=0):
     new_string = connect(string, [[" ", " ", " ", " "], [" ", "=", " ", "0"], [" ", " ", " ", " "]])[:]
     finstr = strpprint(new_string)
     return [solution, finstr, l, z, arr_str]
+
+def specialPDE(nranges, L_ranges):
+    arr = []
+    arr_str = []
+    for i in range(4):
+        z, s = rndF() if random.randint(0, 1) else [lambda x : 0, [[" "], ["0"], [" "]]]
+        arr.append(z)
+        arr_str.append(strpprint(s))
+        
+    r1, r2, s1, s2 = arr[:]
+    
+    rand = random.randint(nranges[0], nranges[1])
+    wave_eq_num = [abs(rand), 0, -1, 0, 0, 0, 0]
+    heat_eq_num = [abs(rand), 0, 0, 0, -1, 0, 0]
+    laplace_eq_num = [1, 1, 0, 0, 0, 0, 0]
+    
+    wave_eq = [lambda x : abs(rand), lambda x, y : 0, lambda x : -1, lambda x : 0, lambda x : 0, lambda x : 0, lambda x : 0]
+    wave_eq_str = [[" " for _ in str(rand)] + [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "],
+                   [i for i in str(rand)] + ["u", " ", " ", " ", "-", " ", "u", " ", " ", " ", "=", " ", "0"],
+                   [" " for _ in str(rand)] + [" ", "x", "x", " ", " ", " ", " ", "t", "t", " ", " ", " ", " "]]
+    heat_eq = [lambda x : abs(rand), lambda x, y : 0, lambda x : 0, lambda x : 0, lambda x : -1, lambda x : 0, lambda x : 0]
+    heat_eq_str = [[" " for _ in str(rand)] + [" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "],
+                   [i for i in str(rand)] + ["u", " ", " ", " ", "-", " ", "u", " ", " ", " ", "=", " ", "0"],
+                   [" " for _ in str(rand)] + [" ", "x", "x", " ", " ", " ", " ", "t", " ", " ", " ", " ", " "]]
+    laplace_eq = [lambda x : 1, lambda x, y : 0, lambda x : 1, lambda x : 0, lambda x : 0, lambda x : 0, lambda x : 0]
+    laplace_eq_str = [[" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "],
+                   ["u", " ", " ", " ", "+", " ", "u", " ", " ", " ", "=", " ", "0"],
+                   [" ", "x", "x", " ", " ", " ", " ", "y", "y", " ", " ", " ", " "]]
+    polar_laplace = [lambda x : x**2, lambda x, y : 0, lambda x : 1, lambda x : x, lambda x : 0, lambda x : 0, lambda x : 0]
+    polar_eq_str = [[" ", "2", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "],
+                    ["x", " ", "u", " ", " ", "+", "x", "u", " ", "+", "u", " ", " ", " ", "=", " ", "0"],
+                    [" ", " ", " ", "x", "x", " ", " ", " ", "x", " ", " ", "y", "y", " ", " ", " ", " "]]
+    #tricomi_eq = [lambda x : 1, lambda x, y : 0, lambda x : 1/x, lambda x : 0, lambda x : 0, lambda x: 0, lambda x : 0]
+    
+    equations = [wave_eq, heat_eq, laplace_eq, polar_laplace]#, tricomi_eq]
+    strings = [wave_eq_str, heat_eq_str, laplace_eq_str, polar_eq_str]
+    ind = random.randint(0, 3)
+    function = equations[ind]
+    function_string = strings[ind]
+    l = random.randint(L_ranges[0], L_ranges[1])
+    bnd_arr = [l, r1, r2, s1, s2]
+    solution = pdeFDiffD(equations[ind], bnd_arr, step_x=0.05, step_y=0.05)
+    finstr = strpprint(function_string)
+    return [solution, finstr, l, z, arr_str]
+
+def randCauchyEuler(nranges=[1, 10], max_deg=2, n=2):
+    p = poly.rand(1, nranges)
+    coeffs = [p ** i if i != 0 else poly.rand(0, nranges) for i in range(3)]
+    ppr = [[], [], []]
+    for i in range(len(coeffs) - 1, -1, -1):
+        ppr = connect(ppr, [[" "], ["+"], [" "]])
+        ppr = connect(ppr[:], connect([[" "], ["("], [" "]], coeffs[i].pprint() if hasattr(coeffs[i], 'pprint') else poly([coeffs[i]]).pprint()))
+        ppr = connect(ppr[:], [["  "] + ["'" for j in range(i)], [")y"]+[" " for j in range(i)], [" " for j in range(i + 2)]])
+    ppr = connect(ppr[:], [["   "], [" = "], ["   "]])
+    f, pprint_s = randFunction(nranges=nranges[:], n=n, max_deg=max_deg) if random.randint(0, 1) else (PowSeries(lambda n : 1 if n == 0 else 0), [[], [], []])
+    h = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    s = h.pprint()
+    fin_ppr = connect(ppr[:], connect(pprint_s[:], connect([[" "], ["("], [" "]], connect(s, [[" "], [")"], [" "]]))))
+    init_vals = [random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])]
+    n = f * h
+    fin_func = lambda x : rungeKutta4th_2ord(init_vals, coeffs, n, 0, x, 100 * x)
+    return fin_func, strpprint(fin_ppr), init_vals
+
+def random_diff_eq_2_mixed(nranges=[1, 10], n=2, max_deg=2):
+    cauchy_cond = random.randint(0, 1)
+    if cauchy_cond :
+        return randCauchyEuler(nranges=nranges, max_deg=max_deg, n=n)
+    
+    coeffs = [random.randint(nranges[0], nranges[1]) * (-1)**random.randint(0, 1) for i in range(3)]
+    ppr = [[], [], []]
+    for i in range(len(coeffs) - 1, -1, -1):
+        if coeffs[i] != 0:
+            if abs(coeffs[i]) != 1:
+                ppr = connect(ppr[:], [[" " for j in range(len(str(abs(coeffs[i]))) + 2)]+["'" for j in range(i)],["+" if coeffs[i] > 0 else "-"]+[j for j in str(abs(coeffs[i]))] + ["y"] + [" " for j in range(i)], [" " for j in range(len(str(abs(coeffs[i]))) + i + 2)]])[:]
+            else:
+                ppr = connect(ppr[:], [[" " for j in range(1+ 2)]+["'" for j in range(i)],["+" if coeffs[i] > 0 else "-"]+ ["y"] + [" " for j in range(i)], [" " for j in range(i + 3)]])[:]  
+    ppr = connect(ppr[:], [["   "], [" = "], ["   "]])
+    f, pprint_s = randFunction(nranges=nranges[:], n=n, max_deg=max_deg) if random.randint(0, 1) else (PowSeries(lambda n : 1 if n == 0 else 0), [[], [], []])
+    h = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    s = h.pprint()
+    fin_ppr = connect(ppr[:], connect(pprint_s[:], connect([[" "], ["("], [" "]], connect(s, [[" "], [")"], [" "]]))))
+    init_vals = [random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])]
+    n = f * h
+    fin_func = poly(solveDEseries(coeffs, n, init_vals, 100))
+    return fin_func, strpprint(fin_ppr), init_vals
+
+def random_diff_eq_2(nranges=[1, 10], n=2, max_deg=2):
+    coeffs = [random.randint(nranges[0], nranges[1]) * (-1)**random.randint(0, 1) for i in range(3)]
+    ppr = [[], [], []]
+    for i in range(len(coeffs) - 1, -1, -1):
+        if coeffs[i] != 0:
+            if abs(coeffs[i]) != 1:
+                ppr = connect(ppr[:], [[" " for j in range(len(str(abs(coeffs[i]))) + 2)]+["'" for j in range(i)],["+" if coeffs[i] > 0 else "-"]+[j for j in str(abs(coeffs[i]))] + ["y"] + [" " for j in range(i)], [" " for j in range(len(str(abs(coeffs[i]))) + i + 2)]])[:]
+            else:
+                ppr = connect(ppr[:], [[" " for j in range(1+ 2)]+["'" for j in range(i)],["+" if coeffs[i] > 0 else "-"]+ ["y"] + [" " for j in range(i)], [" " for j in range(i + 3)]])[:]  
+    ppr = connect(ppr[:], [["   "], [" = "], ["   "]])
+    f, pprint_s = randFunction(nranges=nranges[:], n=n, max_deg=max_deg) if random.randint(0, 1) else (PowSeries(lambda n : 1 if n == 0 else 0), [[], [], []])
+    h = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    s = h.pprint()
+    fin_ppr = connect(ppr[:], connect(pprint_s[:], connect([[" "], ["("], [" "]], connect(s, [[" "], [")"], [" "]]))))
+    init_vals = [random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])]
+    n = f * h
+    fin_func = poly(solveDEseries(coeffs, n, init_vals, 100))
+    return fin_func, strpprint(fin_ppr), init_vals

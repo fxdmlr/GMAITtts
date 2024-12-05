@@ -8,7 +8,7 @@ def static(prechoice=None):
         choice = prechoice
     print("\n")
     if prechoice is None:
-        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n"))
+        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
         rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : ")) 
@@ -497,6 +497,57 @@ def static(prechoice=None):
         os.system("clear")
         inpt_dict = {"nranges" : ranges_coeffs, "l-ranges" : ranges_inps, "moe" : moe, "sep" : sep}
         stats = gr.general_runner(gh.PDEConst, rounds, inpt_dict, md)
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    
+    if choice == 32:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of coeffs (seperated by blank space): ").split(" ")
+        ranges_coeffs = [int(a), int(b)]
+        
+        c, d = input("Range of boundaries (seperated by blank space): ").split(" ")
+        ranges_inps = [int(c), int(d)]
+        
+        moe = float(input("Margin of error : "))
+
+        os.system("clear")
+        inpt_dict = {"nranges" : ranges_coeffs, "l-ranges" : ranges_inps, "moe" : moe}
+        stats = gr.general_runner(gh.PDESpecial, rounds, inpt_dict, md)
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    
+    if choice == 33:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of coeffs (seperated by blank space): ").split(" ")
+        ranges_coeffs = [int(a), int(b)]
+        
+        c, d = input("Range of boundaries (seperated by blank space): ").split(" ")
+        ranges_inps = [int(c), int(d)]
+        
+        moe = float(input("Margin of error : "))
+        sep = int(input("Seperablity : "))
+
+        os.system("clear")
+        inpt_dict = {"nranges" : ranges_coeffs, "l-ranges" : ranges_inps, "moe" : moe, "sep" : sep}
+        stats = gr.general_runner(gh.PDE, rounds, inpt_dict, md)
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    
+    if choice == 34:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of numbers (seperated by blank space): ").split(" ")
+        ranges = [int(a), int(b)]
+        
+        max_deg = int(input("Maximum degree : "))
+        os.system("clear")
+        inpt_dict = {"nranges" : ranges, "deg" : max_deg}
+        stats = gr.general_runner(gh.diffeq_mixed, rounds, inpt_dict, md)#multgame.diffeq(number_of_rounds=rounds, nranges=ranges[:], max_deg=max_deg)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
         print("Time spent per item : ", round(stats[2]))
