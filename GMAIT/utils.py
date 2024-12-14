@@ -2288,13 +2288,6 @@ def pdeFDiffD(coeffs_array, boudary_conditions, step_x = 0.05, step_y=0.05):
             return grid[new_y][new_x]
     
     return solution
-'''
-coeffs_array = [lambda x : 1, lambda x, y: 0, lambda x : 1, lambda x : 0, lambda x : 0, lambda x : 0, lambda x : 0]
-boundary_conditions = [1, lambda x : 0, lambda x : x, lambda y : 0 , lambda y : 0]
-
-grid = pdeFDiffD(coeffs_array, boundary_conditions, step_x=0.05, step_y=0.05)
-print(grid(0.5, 0.2))
-'''
 
 def randomPDEconst(nranges, L_ranges, sep=0):
     arr = []
@@ -2449,3 +2442,29 @@ def random_diff_eq_2(nranges=[1, 10], n=2, max_deg=2):
     n = f * h
     fin_func = poly(solveDEseries(coeffs, n, init_vals, 100))
     return fin_func, strpprint(fin_ppr), init_vals
+
+def random_diff_eq_ord(order=3, nranges=[1, 10], n=2, max_deg=2):
+    coeffs = [random.randint(nranges[0], nranges[1]) * (-1)**random.randint(0, 1) for i in range(order+1)]
+    ppr = [[], [], []]
+    for i in range(len(coeffs) - 1, -1, -1):
+        if coeffs[i] != 0:
+            if abs(coeffs[i]) != 1:
+                ppr = connect(ppr[:], [[" " for j in range(len(str(abs(coeffs[i]))) + 2)]+["'" for j in range(i)],["+" if coeffs[i] > 0 else "-"]+[j for j in str(abs(coeffs[i]))] + ["y"] + [" " for j in range(i)], [" " for j in range(len(str(abs(coeffs[i]))) + i + 2)]])[:]
+            else:
+                ppr = connect(ppr[:], [[" " for j in range(order+1)]+["'" for j in range(i)],["+" if coeffs[i] > 0 else "-"]+ ["y"] + [" " for j in range(i)], [" " for j in range(i + order+1)]])[:]  
+    ppr = connect(ppr[:], [["   "], [" = "], ["   "]])
+    f, pprint_s = randFunction(nranges=nranges[:], n=n, max_deg=max_deg) if random.randint(0, 1) else (PowSeries(lambda n : 1 if n == 0 else 0), [[], [], []])
+    h = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    s = h.pprint()
+    fin_ppr = connect(ppr[:], connect(pprint_s[:], connect([[" "], ["("], [" "]], connect(s, [[" "], [")"], [" "]]))))
+    init_vals = [random.randint(nranges[0], nranges[1]) for i in range(order)]
+    n = f * h
+    fin_func = poly(solveDEseries(coeffs, n, init_vals, 100))
+    return fin_func, strpprint(fin_ppr), init_vals
+
+def random_diff_eq_ord_mixed(order=3, nranges=[1, 10], n=2, max_deg=2):
+    cauchy_cond = random.randint(0, 1)
+    if cauchy_cond :
+        return randCauchyEuler(nranges=nranges, max_deg=max_deg, n=n)
+    
+    return random_diff_eq_ord(order=order, nranges=nranges, n=n, max_deg=max_deg)
