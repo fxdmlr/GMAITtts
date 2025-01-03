@@ -8,7 +8,7 @@ def static(prechoice=None):
         choice = prechoice
     print("\n")
     if prechoice is None:
-        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n"))
+        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
         rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : ")) 
@@ -550,6 +550,31 @@ def static(prechoice=None):
         os.system("clear")
         inpt_dict = {"nranges" : ranges, "deg" : max_deg, "ord":order}
         stats = gr.general_runner(gh.diffeq_mixed, rounds, inpt_dict, md)#multgame.diffeq(number_of_rounds=rounds, nranges=ranges[:], max_deg=max_deg)
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    
+    if choice == 35:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of numbers (seperated by blank space): ").split(" ")
+        ranges = [int(a), int(b)]
+        
+        clsd = int(input("Over a closed curve? 1-Yes, 0-No : "))
+        branges = [0, 0]
+        if not clsd:
+            a, b = input("Range of boundaries (seperated by blank space): ").split(" ")
+            branges = [int(a), int(b)]
+        max_deg = int(input("Maximum degree : "))
+        moe = float(input("Margin of error : "))
+        n = int(input("Number of parts : "))
+        repeat = int(input("Repeat roots? 1-Yes 0-No "))
+        mrep = 0
+        if repeat:
+            mrep = int(input("Maximum number of repetition : "))
+        os.system("clear")
+        inpt_dict = {"nranges" : ranges, "mdeg" : max_deg, "clsd":clsd, "n":n, "moe":moe, "rep" : repeat, "branges" : branges, "mrep" : mrep}
+        stats = gr.general_runner(gh.complex_integral, rounds, inpt_dict, md)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
         print("Time spent per item : ", round(stats[2]))

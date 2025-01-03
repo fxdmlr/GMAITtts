@@ -94,6 +94,23 @@ def numericIntegration(function, c, d, dx=0.0001):
 def numericDiff(function, x, dx=0.0001):
     return (function(x+dx) - function(x-dx))* (1/(2*dx))
 
+def cndiff(function, z, dz=complex(0.0001, 0.0001)):
+    return (function(z + dz) - function(z))/dz
+
+def cnint(function, path, start, end, dt=0.0001):
+    s = complex(0, 0)
+    np_real = lambda t : path(t).real
+    np_imag = lambda t : path(t).imag
+    path_diff = lambda t: complex(numericDiff(np_real, t), numericDiff(np_imag, t))
+    i = start
+    while i < end:
+        s += function(path(i)) * path_diff(i) * dt
+        i += dt
+    
+    return s
+
+
+
 def simpInt(function, c, d, h=0.001):
     i = c + h
     s = 0
@@ -2024,22 +2041,32 @@ def fourier_s_poly(p1, p_range=[1, 5]):
     a_0 = numericIntegration(f, -period/2, period/2) / period
     return [period, a_n, b_n, a_0]
 
-def randFunction(nranges=[1, 10], n=2, max_deg=2):
-    functions = [(SINH, [[" ", " ", " ", " ", " ", " ", " "], ["s", "i", "n", "h", "(", "x", ")"], [" ", " ", " ", " ", " ", " ", " "]]), 
-                 (COSH, [[" ", " ", " ", " ", " ", " ", " "], ["c", "o", "s", "h", "(", "x", ")"], [" ", " ", " ", " ", " ", " ", " "]]), 
-                 (EXP, [[" ", "x"], ["e"," "], [" ", " "]])]
+def randFunction(nranges=[1, 10], n=2, max_deg=2, symbol="x"):
+    functions = [(SINH, [[" ", " ", " ", " ", " ", " ", " "], ["s", "i", "n", "h", "(", symbol, ")"], [" ", " ", " ", " ", " ", " ", " "]]), 
+                 (COSH, [[" ", " ", " ", " ", " ", " ", " "], ["c", "o", "s", "h", "(", symbol, ")"], [" ", " ", " ", " ", " ", " ", " "]]), 
+                 (EXP, [[" ", symbol], ["e"," "], [" ", " "]])]
     return functions[random.randint(0, len(functions) - 1)]
 
-def rndF(nranges=[-10, 10]):
+def rndF(nranges=[-10, 10], symbol="x"):
     a, b, c, d, e = [random.randint(nranges[0], nranges[1]) for i in range(5)]
-    functions = [(lambda x : math.sinh(a * x), [[" ", " ", " ", " ", " "] + [" " for i in str(a)] + [ " ", " "], ["s", "i", "n", "h", "("] + [i for i in str(a)] + ["x", ")"], [" ", " ", " ", " ", " "] + [" " for i in str(a)] + [ " ", " "]]), 
-                 (lambda x : math.cosh(b * x), [[" ", " ", " ", " ", " "] + [" " for i in str(b)] + [ " ", " "], ["c", "o", "s", "h", "("] + [i for i in str(b)] + ["x", ")"], [" ", " ", " ", " ", " "] + [" " for i in str(b)] + [ " ", " "]]), 
-                 (lambda x : math.exp(c * x), [[" "] + [i for i in str(c)] + ["x"], ["e"," "] + [" " for i in str(c)], [" ", " "] + [" " for i in str(c)]]),
-                 (lambda x : math.sin(d * x), [[" ", " ", " ", " "] + [" " for i in str(d)] + [ " ", " "], ["s", "i", "n", "("] + [i for i in str(d)] + ["x", ")"], [" ", " ", " ", " "] + [" " for i in str(d)] + [ " ", " "]]), 
-                 (lambda x : math.cos(e * x), [[" ", " ", " ", " "] + [" " for i in str(e)] + [ " ", " "], ["c", "o", "s", "("] + [i for i in str(e)] + ["x", ")"], [" ", " ", " ", " "] + [" " for i in str(e)] + [ " ", " "]]), 
+    functions = [(lambda x : math.sinh(a * x), [[" ", " ", " ", " ", " "] + [" " for i in str(a)] + [ " ", " "], ["s", "i", "n", "h", "("] + [i for i in str(a)] + [symbol, ")"], [" ", " ", " ", " ", " "] + [" " for i in str(a)] + [ " ", " "]]), 
+                 (lambda x : math.cosh(b * x), [[" ", " ", " ", " ", " "] + [" " for i in str(b)] + [ " ", " "], ["c", "o", "s", "h", "("] + [i for i in str(b)] + [symbol, ")"], [" ", " ", " ", " ", " "] + [" " for i in str(b)] + [ " ", " "]]), 
+                 (lambda x : math.exp(c * x), [[" "] + [i for i in str(c)] + [symbol], ["e"," "] + [" " for i in str(c)], [" ", " "] + [" " for i in str(c)]]),
+                 (lambda x : math.sin(d * x), [[" ", " ", " ", " "] + [" " for i in str(d)] + [ " ", " "], ["s", "i", "n", "("] + [i for i in str(d)] + [symbol, ")"], [" ", " ", " ", " "] + [" " for i in str(d)] + [ " ", " "]]), 
+                 (lambda x : math.cos(e * x), [[" ", " ", " ", " "] + [" " for i in str(e)] + [ " ", " "], ["c", "o", "s", "("] + [i for i in str(e)] + [symbol, ")"], [" ", " ", " ", " "] + [" " for i in str(e)] + [ " ", " "]]), 
                  ]
     return functions[random.randint(0, len(functions) - 1)]
 
+def CrndF(nranges=[-10, 10], symbol="z"):
+    a, b, c, d, e, f = [random.randint(nranges[0], nranges[1]) for i in range(6)]
+    functions = [(lambda x : cmath.sinh(a * x), [[" ", " ", " ", " "] + [" " for i in str(a)] + [" ",  " ", " "], ["s", "i", "n", "h", "("] + [i for i in str(a)] + [ symbol, ")"], [ " ", " ", " ", " "] + [" " for i in str(a)] + [" " , " ", " "]]), 
+                 (lambda x : cmath.cosh(b * x), [[ " ", " ", " ", " "] + [" " for i in str(b)] + [" ", " ", " "], ["c", "o", "s", "h", "("] + [i for i in str(b)] + [ symbol, ")"], [ " ", " ", " ", " "] + [" " for i in str(b)] + [" " , " ", " "]]), 
+                 (lambda x : cmath.exp(c * x), [[" "] + [i for i in str(c)] + [symbol], ["e", " "] + [" " for i in str(c)], [ " ", " "] + [" " for i in str(c)]]),
+                 (lambda x : cmath.sin(d * x * cmath.pi), [[ " ", " ", " "] + [" " for i in str(d)] + [ " ", " "], ["s", "i", "n", "("] + [i for i in str(d)] + [symbol, ")"], [" ", " ", " "] + [" " for i in str(d)] + [" ", " ", " "]]), 
+                 (lambda x : cmath.cos(e * x * cmath.pi), [[ " ", " ", " "] + [" " for i in str(e)] + [ " ", " "], ["c", "o", "s", "("] + [i for i in str(e)] + [ symbol, ")"], [" ", " ", " "] + [" " for i in str(e)] + [" ", " ", " "]]), 
+                 (lambda x : cmath.log(f * x), [[" " for i in range(len(str(f)) + 5)], ["L", "n", "("] + [i for i in str(f)] + [symbol, ")"], [" " for i in range(len(str(f)) + 5)]])
+                 ]
+    return functions[random.randint(0, len(functions) - 1)]
 
 def runge_kutta_2nd(coeffs, function, start, step, init_vals):
     '''
@@ -2075,7 +2102,7 @@ def random_parameterinc_curve(nranges=[1, 10], max_deg=2, dims=2):
 
 
 
-def random_pfd(nrange=[1, 10], max_deg=2):
+def random_pfd(nrange=[1, 10], max_deg=2, pprint=False):
     z = []
     for j in range(max_deg):
         x = (-1)**random.randint(1, 2) * random.randint(nrange[0], nrange[1])
@@ -2103,8 +2130,12 @@ def random_pfd(nrange=[1, 10], max_deg=2):
     len_measure1 = len(str1cpy.split("\n")[0])
     len_measure2 = len(str2cpy.split("\n")[0])
     str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
-    return [p, q, "\n".join([str1, str3, str2])]
+    if not pprint:
+        return [p, q, "\n".join([str1, str3, str2])]
+    else:
+        return [p, q, z, a]
 
+    
 def rungeKutta4th_2ord(init_vals, coeffs, rhs, init_pt, end_pt, N):
     '''
     p(x)y'' + q(x)y' + r(x)y = f(x); y(x0) = y0; y'(x0) = p0 solve for y(x1)->
@@ -2468,3 +2499,88 @@ def random_diff_eq_ord_mixed(order=3, nranges=[1, 10], n=2, max_deg=2):
         return randCauchyEuler(nranges=nranges, max_deg=max_deg, n=n)
     
     return random_diff_eq_ord(order=order, nranges=nranges, n=n, max_deg=max_deg)
+
+def random_cmplx_function(nrange=[1, 10], max_deg=2, n=2, repeat=False, mrep=0):
+    p = poly.rand(max_deg, coeff_range=nrange[:])
+    q_arr = []
+    roots = []
+    for i in range(int(max_deg / 2)):
+        x, y = random.randint(nrange[0], nrange[1]), random.randint(nrange[0], nrange[1])
+        a = random.randint(nrange[0], nrange[1])
+        q_arr.append(poly([complex(x, y), a]))
+        q_arr.append(poly([complex(x, -y), a]))
+        if repeat:
+            for j in range(random.randint(0, mrep)):
+                q_arr.append(poly([complex(x, y), a]))
+                q_arr.append(poly([complex(x, -y), a]))
+        roots.append(-complex(x, y) / a)
+        roots.append(-complex(x, -y) / a)
+    
+    a = poly([1])
+    for i in q_arr:
+        a *= i
+    
+    if max_deg % 2:
+        m = poly.rand(1, coeff_range=nrange[:])
+        a *= m
+        roots.append(-m.coeffs[0] / m.coeffs[1])
+        if repeat:
+            for j in range(random.randint(0, mrep)):
+                q_arr.append(m)
+                a *= m
+    
+    q = poly([int(i.real) for i in a.coeffs[:]])
+    p.variable = "z"
+    q.variable = "z"
+    f_array = []
+    f_ppr_array = []
+    for i in range(n):
+        f, ppr = CrndF(nranges=[-5, 5])
+        f_array.append(f)
+        f_ppr_array.append(ppr)
+    
+    def function(z):
+        w = p(z)
+        for i in f_array:
+            w *= i(z)
+        
+        return w
+    
+    str1 = connect([[" "], ["("], [" "]], connect(p.pprint(), [[" "], [")"], [" "]]))
+    for i in f_ppr_array:
+        nstr = connect(str1[:], connect([[" "], [" "], [" "]], i))
+        str1 = nstr[:]
+    
+    str3 = q.pprint()
+    l = max(len(str1[0]), len(str3[0]))
+    str2 = ["-" for i in range(l)]
+    finstr = "\n".join(["".join(i) for i in str1])+ "\n" + "".join(str2) + "\n" + "\n".join(["".join(i) for i in str3])
+    fin_f = lambda z : function(z) / q(z)
+    return fin_f, finstr, roots
+
+def random_f_c_integrate(nranges=[1, 10], max_deg=2, n=2, repeat=False, mrep=0, clsd=True, boundary_ranges=[1, 10]):
+    funct, fstring, roots = random_cmplx_function(nrange=nranges[:], max_deg=max_deg, n=n, repeat=repeat, mrep=mrep)
+    center_root = sum(roots[:]) / len(roots)
+    max_length = round(max([math.sqrt(abs(center_root - i)) for i in roots])) + 1
+    if clsd:
+        pcurve_real = lambda t : center_root.real + max_length * math.cos(t)
+        pcurve_im = lambda t : center_root.imag + max_length * math.sin(t)
+        path = lambda t : complex(pcurve_real(t), pcurve_im(t))
+        res = cnint(funct, path, 0, 2*cmath.pi, dt=0.0001)
+        ppr_path = [
+            [" " for i in range(len(str(center_root)) + len(str(max_length)) + 6)] + ["i", "t"],
+            [i for i in str(center_root)] + [" ", "+", " "] + [i for i in str(max_length)] + [" ", "e", " "],
+            [" " for i in range(len(str(center_root)) + len(str(max_length)) + 8)]
+        ]
+        ppr_str = strpprint(ppr_path)
+        return fstring, ppr_str, res
+    
+    else:
+        pcurve_vect = pcurve.rand(max_deg=2, nranges=nranges)
+        path = lambda t : complex(pcurve_vect.array[0](t), pcurve_vect.array[1](t))
+        start, end = random.randint(boundary_ranges[0], boundary_ranges[1]), random.randint(boundary_ranges[0], boundary_ranges[1])
+        res = cnint(funct, path, start, end)
+        string = strpprint(connect([[" ", " ", " ", " "], ["x", " ", "=", " "], [" ", " ", " ", " "]], pcurve_vect.array[0].pprint()))
+        string2 = strpprint(connect([[" ", " ", " ", " "], ["y", " ", "=", " "], [" ", " ", " ", " "]], pcurve_vect.array[1].pprint()))
+        return fstring, string+"\n"+string2+"\n", res, start, end
+

@@ -447,6 +447,25 @@ def PDESpecial(inpt_dict):
     cond = lambda x : res-moe*res <= x <= res + moe*res or res+moe*res <= x <= res - moe*res
     return str1, res, lambda x : res if cond(evl.evl(x)) else res+1
 
+def complex_integral(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    max_deg = inpt_dict["mdeg"]
+    n = inpt_dict["n"]
+    moe = inpt_dict["moe"]
+    clsd = inpt_dict["clsd"]
+    repeat = inpt_dict["rep"]
+    mrep = inpt_dict["mrep"]
+    boundary_ranges = inpt_dict["branges"]
+    if clsd:
+        fstring, ppr_string, res = utils.random_f_c_integrate(nranges=nranges[:],max_deg=max_deg, n=n, mrep=mrep, repeat=repeat, clsd=True)
+        string = fstring + "\n" + ppr_string+"\n"
+        cond = lambda x : (abs(x - res) <= abs(moe * res)) or abs(x - res) <= 0.0005
+        return string, res, lambda x : res if cond(complex(evl.evl(x.split(" ")[0]), evl.evl(x.split(" ")[1]))) else res + 1
+    else:
+        fstring, ppr_string, res, s, e = utils.random_f_c_integrate(nranges=nranges[:],max_deg=max_deg, n=n, mrep=0, repeat=repeat, clsd=False, boundary_ranges=boundary_ranges[:])
+        string = fstring + "\n" + ppr_string+"\n" + "from t = " + str(s) + " to t = " + str(e) + "\n"
+        cond = lambda x : (abs(x - res) <= abs(moe * res)) or abs(x - res) <= 0.0005
+        return string, res, lambda x : res if cond(complex(evl.evl(x.split(" ")[0]), evl.evl(x.split(" ")[1]))) else res + 1
 def shuffle(inpt_dict):
     return random.choice(FUNCTIONS_ARRAY)(inpt_dict)
 
@@ -465,3 +484,4 @@ def pick1(inpt_dict):
 def PDE(inpt_dict):
     arr = [PDEConst, PDESpecial]
     return arr[random.randint(0, 1)](inpt_dict)
+
