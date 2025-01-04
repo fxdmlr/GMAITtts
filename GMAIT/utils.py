@@ -85,14 +85,22 @@ def numericIntegration(function, c, d, dx=0.0001):
     s = 0
     a = min(c, d)
     b = max(c, d)
-    i = a
-    while i <= b:
+    i = a+dx
+    while i <= b - dx:
         s += (function(i) + function(i+dx))*dx/2
         i += dx
     return s * sgn(d - c)
 
 def numericDiff(function, x, dx=0.0001):
     return (function(x+dx) - function(x-dx))* (1/(2*dx))
+
+def nDiff(function, n, x, dx=0.0001):
+    if n == 0:
+        return function(x)
+    if n == 1:
+        return numericDiff(function, x, dx=dx)
+    else:
+        return nDiff(lambda t : numericDiff(function, t, dx=dx), n - 1, x, dx=dx)
 
 def cndiff(function, z, dz=complex(0.0001, 0.0001)):
     return (function(z + dz) - function(z))/dz
@@ -2584,3 +2592,70 @@ def random_f_c_integrate(nranges=[1, 10], max_deg=2, n=2, repeat=False, mrep=0, 
         string2 = strpprint(connect([[" ", " ", " ", " "], ["y", " ", "=", " "], [" ", " ", " ", " "]], pcurve_vect.array[1].pprint()))
         return fstring, string+"\n"+string2+"\n", res, start, end
 
+def generate_integral_cmplx_rat(nranges = [1, 10], max_deg=2):
+    p = poly.rand(random.randint(0, max_deg - 2), coeff_range=nranges[:])
+    q_arr = []
+    roots = []
+    for i in range(int(max_deg / 2)):
+        x, y = random.randint(nranges[0], nranges[1]) * (-1)**random.randint(0, 1), random.randint(nranges[0], nranges[1]) * (-1)**random.randint(0, 1)
+        q_arr.append(poly([complex(x, y), 1]))
+        q_arr.append(poly([complex(x, -y), 1]))
+        roots.append(-complex(x, y) / 1)
+        roots.append(-complex(x, -y) / 1)
+    
+    a = poly([1])
+    for i in q_arr:
+        a *= i
+    
+    if max_deg % 2:
+        m = poly.rand(1, coeff_range=nranges[:])
+        a *= m
+        roots.append(-m.coeffs[0] / m.coeffs[1])
+    
+    q = poly([int(i.real) for i in a.coeffs[:]])
+    d, e = random.randint(0, 10), random.randint(0, 10) 
+    arr = [(lambda x : math.sin(d * x), [[" ", " ", " ", " "] + [" " for i in str(d)] + [ " ", " "], ["s", "i", "n", "("] + [i for i in str(d)] + ["x", ")"], [" ", " ", " ", " "] + [" " for i in str(d)] + [ " ", " "]]), 
+                 (lambda x : math.cos(e * x), [[" ", " ", " ", " "] + [" " for i in str(e)] + [ " ", " "], ["c", "o", "s", "("] + [i for i in str(e)] + ["x", ")"], [" ", " ", " ", " "] + [" " for i in str(e)] + [ " ", " "]])]
+    
+    cond = random.randint(0, 1)
+    if cond:
+        f, fppr = arr[random.randint(0, 1)]
+        function = lambda x : p(x) * f(x) / q(x)
+        string = connect([[" "], ["("], [" "]], connect(p.pprint(), connect([[" "], [")"], [" "]], fppr)))
+    else:
+        function = lambda x : p(x)/ q(x)   
+        string = p.pprint()[:]
+    
+    string3 = q.pprint()[:]
+    string2 = ["-" for i in range(max(len(string[1]), len(string3[1])))]
+    fstring = strpprint(string)+"\n"+"".join(string2)+"\n"+strpprint(string3)
+    res = numericIntegration(lambda x : function(x/(1-x**2)) * (1+x**2)/(1-x**2)**2, -1, 1, dx=0.00001)
+    
+    return function, res, fstring
+
+def generate_trig_cmplx(nranges=[1, 10]):
+    a, s, c = random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])
+    c2 = random.randint(nranges[0], nranges[1])
+    a2 = random.randint(c2, nranges[1])
+    n = random.randint(1, 9)
+    p = lambda x : a + s * math.sin(n*x)
+    q = lambda x : a2 + c2 * math.cos(n*x)
+    p_str = "%d + %dsin(%sx)" % (a, s, "" if n == 1 else str(n))
+    q_str = "%d + %dcos(%sx)" % (a2, c2, "" if n == 1 else str(n))
+    string = p_str + "\n" + "".join(["-" for i in range(max(len(p_str), len(q_str)))]) + "\n" + q_str
+    res = numericIntegration(lambda x : p(x) / q(x), 0, 2*math.pi/n)
+    return res, string, n
+
+def maclaurin_series(function, n):
+    return nDiff(function, n, 0, dx=0.00001) / math.factorial(n)
+
+def generate_rand_mseries(nranges , max_deg):
+    p = poly.rand(max_deg, coeff_range=nranges[:])
+    q = poly.rand(max_deg, coeff_range=nranges[:])
+    string = p.pprint()[:]
+    string3 = q.pprint()[:]
+    string2 = ["-" for i in range(max(len(string[1]), len(string3[1])))]
+    fstring = strpprint(string)+"\n"+"".join(string2)+"\n"+strpprint(string3)
+    function = lambda x : p(x) / q(x)
+    res = lambda n : maclaurin_series(function, n)
+    return fstring, res

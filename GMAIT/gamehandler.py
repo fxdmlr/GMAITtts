@@ -466,6 +466,37 @@ def complex_integral(inpt_dict):
         string = fstring + "\n" + ppr_string+"\n" + "from t = " + str(s) + " to t = " + str(e) + "\n"
         cond = lambda x : (abs(x - res) <= abs(moe * res)) or abs(x - res) <= 0.0005
         return string, res, lambda x : res if cond(complex(evl.evl(x.split(" ")[0]), evl.evl(x.split(" ")[1]))) else res + 1
+def integral_cmplx(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    max_deg = inpt_dict["mdeg"]
+    moe = inpt_dict["moe"]
+    mode = inpt_dict["mode"]
+    
+    if not mode:
+        f,  res, s = utils.generate_integral_cmplx_rat(nranges=nranges, max_deg=max_deg)
+        string = s + "\n" + "from -∞ to +∞ : "
+        cond = lambda x : abs(x - res) <= abs(moe*res) or abs(x - res) <= 0.0005
+        return string, res, lambda x : res if cond(evl.evl(x)) else res+1
+    
+    else:
+        res, s, n = utils.generate_trig_cmplx(nranges)
+        string = s + "\n" + "from 0 to %s : " % ("2π/%d"%n if n != 1 else "2π")
+        cond = lambda x : abs(x - res) <= abs(moe*res) or abs(x - res) <= 0.0005
+        return string, res, lambda x : res if cond(evl.evl(x)) else res+1
+
+def maclaurin_series(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    max_deg = inpt_dict["mdeg"]
+    moe = inpt_dict["moe"]
+    
+    s, r = utils.generate_rand_mseries(nranges, max_deg)
+    res = r(0)**2 + r(1)**2 + r(2)**2 
+    string = "Find the sum of the squares \nof the first three terms:\n" + s + "\n"
+    cond = lambda x : abs(x - res) <= abs(moe*res)
+    return string, res, lambda x : res if cond(evl.evl(x)) else res+1
+    
+
+    
 def shuffle(inpt_dict):
     return random.choice(FUNCTIONS_ARRAY)(inpt_dict)
 
