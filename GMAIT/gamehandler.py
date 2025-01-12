@@ -371,8 +371,9 @@ def eigenValue(inpt_dict):
     ndigits = inpt_dict["ndigits"]
     m = utils.matrix.rand(dims=[dims, dims], nrange=nrange[:])
     string = str(m) + "\n" + "L = "
-    eigens = min(m.eigenvalue())
-    return string, round(eigens, ndigits), lambda x : float(x)
+    eigens = [int(i.real * 10 ** ndigits) / 10 ** ndigits for i in m.eigenvalue()]
+    ans = eigens[0]
+    return string, ans, lambda x : ans if float(x) in eigens else float(x)
 
 def polyDet(inpt_dict):
     dims = inpt_dict["dim"]

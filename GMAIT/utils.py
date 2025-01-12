@@ -1101,7 +1101,7 @@ class matrix:
         return matrix(new_arr[:]).det()
     
     def eigenvalue(self):
-        return [i.real for i in self.charpoly().roots()[:]]
+        return [i for i in self.charpoly().roots()[:]]
     
     __rmul__ = __mul__
     __radd__ = __add__

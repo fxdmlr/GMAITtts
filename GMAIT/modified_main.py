@@ -169,7 +169,7 @@ def static(prechoice=None):
         ndigits = int(input("Digits after decimal point : "))
         os.system("clear")
         inpt_dict = {"nranges" : ranges, "dim" : dims, "ndigits" : ndigits}
-        print("Enter the smallest real part of all eigen values for each matrix.")
+        print("Enter one of all real eigen values for each matrix.")
         stats = gr.general_runner(gh.eigenValue, rounds, inpt_dict, md)#matrixgames.eigenvalueGame(number_of_rounds=rounds, dims=dims, nrange=ranges, ndigits=ndigits)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
