@@ -2057,11 +2057,11 @@ def randFunction(nranges=[1, 10], n=2, max_deg=2, symbol="x"):
 
 def rndF(nranges=[-10, 10], symbol="x"):
     a, b, c, d, e = [random.randint(nranges[0], nranges[1]) for i in range(5)]
-    functions = [(lambda x : math.sinh(a * x), [[" ", " ", " ", " ", " "] + [" " for i in str(a)] + [ " ", " "], ["s", "i", "n", "h", "("] + [i for i in str(a)] + [symbol, ")"], [" ", " ", " ", " ", " "] + [" " for i in str(a)] + [ " ", " "]]), 
-                 (lambda x : math.cosh(b * x), [[" ", " ", " ", " ", " "] + [" " for i in str(b)] + [ " ", " "], ["c", "o", "s", "h", "("] + [i for i in str(b)] + [symbol, ")"], [" ", " ", " ", " ", " "] + [" " for i in str(b)] + [ " ", " "]]), 
-                 (lambda x : math.exp(c * x), [[" "] + [i for i in str(c)] + [symbol], ["e"," "] + [" " for i in str(c)], [" ", " "] + [" " for i in str(c)]]),
-                 (lambda x : math.sin(d * x), [[" ", " ", " ", " "] + [" " for i in str(d)] + [ " ", " "], ["s", "i", "n", "("] + [i for i in str(d)] + [symbol, ")"], [" ", " ", " ", " "] + [" " for i in str(d)] + [ " ", " "]]), 
-                 (lambda x : math.cos(e * x), [[" ", " ", " ", " "] + [" " for i in str(e)] + [ " ", " "], ["c", "o", "s", "("] + [i for i in str(e)] + [symbol, ")"], [" ", " ", " ", " "] + [" " for i in str(e)] + [ " ", " "]]), 
+    functions = [(lambda x : math.sinh(a * x), [[" ", " ", " ", " ", " "] + [" " for i in (str(a) if a != 1 else "") ] + [ " ", " "], ["s", "i", "n", "h", "("] + [i for i in (str(a) if a != 1 else "")] + [symbol, ")"], [" ", " ", " ", " ", " "] + [" " for i in (str(a) if a != 1 else "")] + [ " ", " "]]), 
+                 (lambda x : math.cosh(b * x), [[" ", " ", " ", " ", " "] + [" " for i in (str(b) if a != 1 else "")] + [ " ", " "], ["c", "o", "s", "h", "("] + [i for i in (str(b) if a != 1 else "")] + [symbol, ")"], [" ", " ", " ", " ", " "] + [" " for i in (str(b) if a != 1 else "")] + [ " ", " "]]), 
+                 (lambda x : math.exp(c * x), [[" "] + [i for i in (str(c) if a != 1 else "")] + [symbol], ["e"," "] + [" " for i in (str(c) if a != 1 else "")], [" ", " "] + [" " for i in (str(c) if a != 1 else "")]]),
+                 (lambda x : math.sin(d * x), [[" ", " ", " ", " "] + [" " for i in (str(d) if a != 1 else "")] + [ " ", " "], ["s", "i", "n", "("] + [i for i in (str(d) if a != 1 else "")] + [symbol, ")"], [" ", " ", " ", " "] + [" " for i in (str(d) if a != 1 else "")] + [ " ", " "]]), 
+                 (lambda x : math.cos(e * x), [[" ", " ", " ", " "] + [" " for i in (str(e) if a != 1 else "")] + [ " ", " "], ["c", "o", "s", "("] + [i for i in (str(e) if a != 1 else "")] + [symbol, ")"], [" ", " ", " ", " "] + [" " for i in (str(e) if a != 1 else "")] + [ " ", " "]]), 
                  ]
     return functions[random.randint(0, len(functions) - 1)]
 
@@ -2659,3 +2659,64 @@ def generate_rand_mseries(nranges , max_deg):
     function = lambda x : p(x) / q(x)
     res = lambda n : maclaurin_series(function, n)
     return fstring, res
+
+def generate_rand_func_arr(ndigits=5, n=3):
+    syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
+    nums = [round(random.random(), ndigits=ndigits) for i in range(n)]
+    func = [rndF(nranges=[1, 1], symbol=syms[i]) for i in range(n)]
+    fstr = [func[i][1]for i in range(n)]
+    fres = [func[i][0](nums[i]) for i in range(n)]
+    return fstr, fres, nums
+
+def generate_matrix_str_ent(fstr, fres, dim):
+    res_mat = [[fres[j * dim + i] for i in range(dim)] for j in range(dim)]
+    array = [[fstr[j * dim + i] for i in range(dim)] for j in range(dim)]
+    res_det = det(res_mat[:])
+    tot_cells = []
+    for i in array:
+        cells = []
+        for j in i:
+            lines = [[], [], []]
+            lines = connect(lines, j)              
+            cells.append(lines)
+        
+        tot_cells.append(cells)
+    
+    longest_length = 0
+    for i in tot_cells:
+        for j in i:
+            if max([len(k) for k in j]) > longest_length:
+                longest_length = max([len(k) for k in j])
+    tot_lines = []
+    for i in range(len(tot_cells)):
+        lines = [[], [], []]
+        for j in range(len(tot_cells[i])):
+            mlen = max([len(k) for k in tot_cells[i][j]])
+            new_cell = connect(tot_cells[i][j], [[" " for k in range((longest_length - mlen)//2)]for h in range(3)])
+            new_cell2 = connect([[" " for k in range((longest_length - mlen)//2 + (longest_length - mlen) % 2)]for h in range(3)], new_cell)
+            lines = connect(lines, new_cell2)
+            lines = connect(lines, [["   "], [" , "], ["   "]])
+        tot_lines.append(lines)
+    
+    string = matrixpprint(tot_lines[:])
+    return res_det, string
+
+def generate_matrix_item(ndigits=3, dim=3):
+    fstr, fres, nums = generate_rand_func_arr(ndigits=ndigits, n=dim**2)
+    syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
+    narray = [syms[i] + " = " + str(nums[i]) for i in range(dim**2)]
+    return generate_matrix_str_ent(fstr, fres, dim), narray
+
+def generate_function_item(ndigits=3, n=2):
+    p = 1
+    fstr, fres, nums = generate_rand_func_arr(ndigits=ndigits, n=n)
+    syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
+    narray = [syms[i] + " = " + str(nums[i]) for i in range(n)]
+    newstr = [[], [], []]
+    for i in fstr:
+        newstr = connect(newstr, i)
+        
+    for i in fres:
+        p *= i
+    
+    return strpprint(newstr), p, "\n".join(narray)
