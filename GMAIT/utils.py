@@ -1495,8 +1495,51 @@ class polymvar:
         
         return polymvar(new_array[:])
     
+    def evalArray(self, array):
+        if len(array) < 3:
+            narray = array[:]
+            for i in range(3-len(array)):
+                narray += [0]
+            array = narray[:]
+                
+        x, y, z = array[:]
+        s = 0
+        for i in range(len(self.array)):
+            for j in range(len(self.array)):
+                for k in range(len(self.array)):
+                    s += self.array[i][j][k] * (x ** i) * (y ** j) * (z ** k)
+        
+        return s
+       
+    
     def grad(self):
         return vect([self.diff(0), self.diff(1), self.diff(2)])
+    
+    def delvar(self, var):
+        new_array = [[self.array[i][j] for j in range(len(self.array))] for i in range(len(self.array))]
+        if var == 0:
+            for i in range(1, len(self.array)):
+                for j in range(len(self.array)):
+                    for k in range(len(self.array)):
+                        new_array[i][j][k] = 0
+            
+            return polymvar(new_array)
+        
+        if var == 1:
+            for i in range(len(self.array)):
+                for j in range(1, len(self.array)):
+                    for k in range(len(self.array)):
+                        new_array[i][j][k] = 0
+            
+            return polymvar(new_array)
+        
+        if var == 2:
+            for i in range(len(self.array)):
+                for j in range(len(self.array)):
+                    for k in range(1, len(self.array)):
+                        new_array[i][j][k] = 0
+            
+            return polymvar(new_array)
 
     @staticmethod
     def rand(max_deg=2, nrange=[1, 10]):
@@ -1583,6 +1626,9 @@ class vectF:
         return vectF([random.randint(nranges[0], nranges[1]) * c,
                       random.randint(nranges[0], nranges[1]) * s ,
                       0])
+def jacobian(farray):
+    array = [[farray[i].diff(j) for j in range(len(farray))] for i in range(len(farray))]
+    return matrix(array)
 
 def laplace_t(function):
     return lambda s : simpInt(lambda x : function(x) * math.exp(-s*x), 0, 1000)
@@ -2241,6 +2287,10 @@ def pdeSolveSepVar(coeffs, boundary):
         function_y = lambda y : math.exp(-d/(2*b) * y) * (alpha_1 * math.cos(q*y) + beta_1 * math.sin(q*y))
         fin_func = lambda x, y : function_x(x) * function_y(y)
         return [fin_func, alpha_1, beta_1]
+    
+def repCol(array, ind, col):
+    new_array = [[array[i][j] if j != ind else col[i] for j in range(len(array[i]))] for i in range(len(array))]
+    return new_array
 
 def solveLineq(coeffs_array, solutions_array):
     A = matrix(coeffs_array[:])
@@ -2668,8 +2718,8 @@ def generate_rand_func_arr(ndigits=5, n=3):
     fres = [func[i][0](nums[i]) for i in range(n)]
     return fstr, fres, nums
 
-def generate_matrix_str_ent(fstr, fres, dim):
-    res_mat = [[fres[j * dim + i] for i in range(dim)] for j in range(dim)]
+def generate_matrix_str_ent(fstr, fres, dim, calc_ndigits=3):
+    res_mat = [[round(fres[j * dim + i], ndigits=calc_ndigits) for i in range(dim)] for j in range(dim)]
     array = [[fstr[j * dim + i] for i in range(dim)] for j in range(dim)]
     res_det = det(res_mat[:])
     tot_cells = []
@@ -2707,7 +2757,7 @@ def generate_matrix_item(ndigits=3, dim=3):
     narray = [syms[i] + " = " + str(nums[i]) for i in range(dim**2)]
     return generate_matrix_str_ent(fstr, fres, dim), narray
 
-def generate_function_item(ndigits=3, n=2):
+def generate_function_item(ndigits=3, calc_ndigits=3, n=2):
     p = 1
     fstr, fres, nums = generate_rand_func_arr(ndigits=ndigits, n=n)
     syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
@@ -2717,6 +2767,23 @@ def generate_function_item(ndigits=3, n=2):
         newstr = connect(newstr, i)
         
     for i in fres:
-        p *= i
+        p *= round(i, ndigits=calc_ndigits)
     
     return strpprint(newstr), p, "\n".join(narray)
+
+def non_linear_system_eq(farray, n=15):
+    vars = len(farray)
+    
+    
+    points = [0 for i in range(vars)]
+    for i in range(n):
+        nfpoints = [-farray[i].evalArray(points) for i in range(vars)]
+        j = jacobian(farray).array[:]
+        jdet = det(j).evalArray(points)
+        if jdet == 0:
+            return points
+        steps = [det(repCol(j, i, nfpoints)).evalArray(points) / jdet for i in range(vars)]
+        for k in range(len(points)):
+            points[k] += steps[k]
+    
+    return points
