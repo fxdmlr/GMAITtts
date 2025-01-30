@@ -2751,11 +2751,11 @@ def generate_matrix_str_ent(fstr, fres, dim, calc_ndigits=3):
     string = matrixpprint(tot_lines[:])
     return res_det, string
 
-def generate_matrix_item(ndigits=3, dim=3):
+def generate_matrix_item(ndigits=3, dim=3, calc_ndigits=3):
     fstr, fres, nums = generate_rand_func_arr(ndigits=ndigits, n=dim**2)
     syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
     narray = [syms[i] + " = " + str(nums[i]) for i in range(dim**2)]
-    return generate_matrix_str_ent(fstr, fres, dim), narray
+    return generate_matrix_str_ent(fstr, fres, dim, calc_ndigits=calc_ndigits), narray
 
 def generate_function_item(ndigits=3, calc_ndigits=3, n=2):
     p = 1
