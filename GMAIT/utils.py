@@ -2719,7 +2719,7 @@ def generate_rand_func_arr(ndigits=5, n=3):
     return fstr, fres, nums
 
 def generate_matrix_str_ent(fstr, fres, dim, calc_ndigits=3):
-    res_mat = [[round(fres[j * dim + i], ndigits=calc_ndigits) for i in range(dim)] for j in range(dim)]
+    res_mat = [[int(fres[j * dim + i]*10**calc_ndigits)/(10**calc_ndigits) for i in range(dim)] for j in range(dim)]
     array = [[fstr[j * dim + i] for i in range(dim)] for j in range(dim)]
     res_det = det(res_mat[:])
     tot_cells = []
@@ -2767,23 +2767,7 @@ def generate_function_item(ndigits=3, calc_ndigits=3, n=2):
         newstr = connect(newstr, i)
         
     for i in fres:
-        p *= round(i, ndigits=calc_ndigits)
+        p *= int(i*10**calc_ndigits)/(10**calc_ndigits)
     
     return strpprint(newstr), p, "\n".join(narray)
 
-def non_linear_system_eq(farray, n=15):
-    vars = len(farray)
-    
-    
-    points = [0 for i in range(vars)]
-    for i in range(n):
-        nfpoints = [-farray[i].evalArray(points) for i in range(vars)]
-        j = jacobian(farray).array[:]
-        jdet = det(j).evalArray(points)
-        if jdet == 0:
-            return points
-        steps = [det(repCol(j, i, nfpoints)).evalArray(points) / jdet for i in range(vars)]
-        for k in range(len(points)):
-            points[k] += steps[k]
-    
-    return points

@@ -630,8 +630,9 @@ def static(prechoice=None):
         
         input_digits = int(input("Input digits after floating point : "))
         digits_output = int(input("Result digits after floating point : "))
+        N = int(input("Number of functions to multiply : "))
         
-        inpt_dict = {"ndigits" : input_digits, "dig" : digits_output}
+        inpt_dict = {"ndigits" : input_digits, "dig" : digits_output, "N" : N}
         stats = gr.general_runner(gh.funcEval, rounds, inpt_dict, md)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))

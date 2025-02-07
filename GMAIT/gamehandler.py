@@ -510,8 +510,9 @@ def funcMatDet(inpt_dict):
 def funcEval(inpt_dict):
     ndigits = inpt_dict["ndigits"]
     dig = inpt_dict["dig"]
+    n = inpt_dict["N"]
     
-    newstr, res, vars = utils.generate_function_item(ndigits=ndigits, calc_ndigits=dig)
+    newstr, res, vars = utils.generate_function_item(ndigits=ndigits, calc_ndigits=dig, n=n)
     print("\n", vars, "\n")
     cond = lambda x : res - 0.5 * 10 ** (-dig) <= x < res + 0.5 * 10 ** (-dig)
     return newstr+"\n", res, lambda x : res if cond(float(x)) else res+1 
