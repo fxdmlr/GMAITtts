@@ -501,9 +501,7 @@ def funcMatDet(inpt_dict):
     dim = inpt_dict["dim"]
     dig = inpt_dict["dig"]
     
-    [res, string], vars = utils.generate_matrix_item(ndigits=ndigits, dim=dim, calc_ndigits=dig)
-    for i in vars:
-        print(i)
+    res, string = utils.generate_matrix_item(ndigits=ndigits, dim=dim, calc_ndigits=dig)
     cond = lambda x : res - 0.5 * 10 ** (-dig) <= x < res + 0.5 * 10 ** (-dig)
     return string+"\n", res, lambda x : res if cond(float(x)) else res+1
 
@@ -512,8 +510,7 @@ def funcEval(inpt_dict):
     dig = inpt_dict["dig"]
     n = inpt_dict["N"]
     
-    newstr, res, vars = utils.generate_function_item(ndigits=ndigits, calc_ndigits=dig, n=n)
-    print("\n", vars, "\n")
+    newstr, res = utils.generate_function_item(ndigits=ndigits, calc_ndigits=dig, n=n)
     cond = lambda x : res - 0.5 * 10 ** (-dig) <= x < res + 0.5 * 10 ** (-dig)
     return newstr+"\n", res, lambda x : res if cond(float(x)) else res+1 
 

@@ -2711,8 +2711,9 @@ def generate_rand_mseries(nranges , max_deg):
     return fstring, res
 
 def generate_rand_func_arr(ndigits=5, n=3):
-    syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
-    nums = [round(random.random(), ndigits=ndigits) for i in range(n)]
+    #syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
+    nums = [int(random.random() * 10 ** ndigits) / 10 ** ndigits for i in range(n)]
+    syms = [str(i) for i in nums]
     func = [rndF(nranges=[1, 1], symbol=syms[i]) for i in range(n)]
     fstr = [func[i][1]for i in range(n)]
     fres = [func[i][0](nums[i]) for i in range(n)]
@@ -2755,13 +2756,12 @@ def generate_matrix_item(ndigits=3, dim=3, calc_ndigits=3):
     fstr, fres, nums = generate_rand_func_arr(ndigits=ndigits, n=dim**2)
     syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
     narray = [syms[i] + " = " + str(nums[i]) for i in range(dim**2)]
-    return generate_matrix_str_ent(fstr, fres, dim, calc_ndigits=calc_ndigits), narray
+    return generate_matrix_str_ent(fstr, fres, dim, calc_ndigits=calc_ndigits)#, narray
 
 def generate_function_item(ndigits=3, calc_ndigits=3, n=2):
     p = 1
     fstr, fres, nums = generate_rand_func_arr(ndigits=ndigits, n=n)
     syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
-    narray = [syms[i] + " = " + str(nums[i]) for i in range(n)]
     newstr = [[], [], []]
     for i in fstr:
         newstr = connect(newstr, i)
@@ -2769,5 +2769,5 @@ def generate_function_item(ndigits=3, calc_ndigits=3, n=2):
     for i in fres:
         p *= int(i*10**calc_ndigits)/(10**calc_ndigits)
     
-    return strpprint(newstr), p, "\n".join(narray)
+    return strpprint(newstr), p
 
