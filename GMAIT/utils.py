@@ -2110,7 +2110,20 @@ def rndF(nranges=[-10, 10], symbol="x"):
                  (lambda x : math.cos(e * x), [[" ", " ", " ", " "] + [" " for i in (str(e) if a != 1 else "")] + [ " ", " "], ["c", "o", "s", "("] + [i for i in (str(e) if a != 1 else "")] + [symbol, ")"], [" ", " ", " ", " "] + [" " for i in (str(e) if a != 1 else "")] + [ " ", " "]]), 
                  ]
     return functions[random.randint(0, len(functions) - 1)]
-
+def rndFeval(symbol="x"):
+    functions = [(lambda x : math.sinh(x), [[" ", " ", " ", " ", " "] +  [ " ", " "], ["s", "i", "n", "h", "("] + [symbol, ")"], [" ", " ", " ", " ", " "]  + [ " ", " "]]), 
+                 (lambda x : math.cosh(x), [[" ", " ", " ", " ", " "]  + [ " ", " "], ["c", "o", "s", "h", "("]  + [symbol, ")"], [" ", " ", " ", " ", " "] + [ " ", " "]]), 
+                 (lambda x : math.exp(x), [[" "]  + [symbol], ["e"," "] , [" ", " "] ]),
+                 (lambda x : math.sin(x), [[" ", " ", " ", " "]  + [ " ", " "], ["s", "i", "n", "("] + [symbol, ")"], [" ", " ", " ", " "] + [ " ", " "]]), 
+                 (lambda x : math.cos(x), [[" ", " ", " ", " "]  + [ " ", " "], ["c", "o", "s", "("] + [symbol, ")"], [" ", " ", " ", " "] + [ " ", " "]]),
+                 (lambda x : math.log(x), [[" ", " ", " ", " "]  + [ " ", " "], ["l", "o", "g", "("] + [symbol, ")"], [" ", " ", " ", " "] + [ " ", " "]]),
+                 (lambda x : math.tan(x), [[" ", " ", " ", " "]  + [ " ", " "], ["t", "a", "n", "("] + [symbol, ")"], [" ", " ", " ", " "] + [ " ", " "]]),
+                 (lambda x : math.asin(x), [[" ", " ", " ", " ", " "] +  [ " ", " "], ["a", "s", "i", "n", "("] + [symbol, ")"], [" ", " ", " ", " ", " "]  + [ " ", " "]]),
+                 (lambda x : math.acos(x), [[" ", " ", " ", " ", " "] +  [ " ", " "], ["a", "c", "o", "s", "("] + [symbol, ")"], [" ", " ", " ", " ", " "]  + [ " ", " "]]),
+                 (lambda x : math.atan(x), [[" ", " ", " ", " ", " "] +  [ " ", " "], ["a", "t", "a", "n", "("] + [symbol, ")"], [" ", " ", " ", " ", " "]  + [ " ", " "]]),
+                  
+                 ]
+    return functions[random.randint(0, len(functions) - 1)]
 def CrndF(nranges=[-10, 10], symbol="z"):
     a, b, c, d, e, f = [random.randint(nranges[0], nranges[1]) for i in range(6)]
     functions = [(lambda x : cmath.sinh(a * x), [[" ", " ", " ", " "] + [" " for i in str(a)] + [" ",  " ", " "], ["s", "i", "n", "h", "("] + [i for i in str(a)] + [ symbol, ")"], [ " ", " ", " ", " "] + [" " for i in str(a)] + [" " , " ", " "]]), 
@@ -2714,7 +2727,7 @@ def generate_rand_func_arr(ndigits=5, n=3):
     #syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
     nums = [int(random.random() * 10 ** ndigits) / 10 ** ndigits for i in range(n)]
     syms = [str(i) for i in nums]
-    func = [rndF(nranges=[1, 1], symbol=syms[i]) for i in range(n)]
+    func = [rndFeval(symbol=syms[i]) for i in range(n)]
     fstr = [func[i][1]for i in range(n)]
     fres = [func[i][0](nums[i]) for i in range(n)]
     return fstr, fres, nums
