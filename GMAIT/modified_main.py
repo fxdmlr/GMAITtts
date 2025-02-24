@@ -227,7 +227,7 @@ def static(prechoice=None):
         
         max_deg = int(input("Maximum degree : "))
         ndigits = int(input("Digits after floating point : "))
-        mode = int(input("Enter the mode : \n 1-Rational Expressions\n 2-Algebraic Expression\n 3-Trig Expression\n 4-Shuffle\n"))
+        mode = int(input("Enter the mode : \n 1-Rational Expressions\n 2-Algebraic Expression\n 3-Trig Expression\n 4-Rational Expression(random)\n 5-Shuffle\n"))
         os.system("clear")
         inpt_dict = {"nranges" : ranges, "boundary_ranges" : branges, "deg" : max_deg, "ndigits" : ndigits, "mode" : mode}
         stats = gr.general_runner(gh.subIntGame, rounds, inpt_dict, md)#multgame.integralGame(number_of_rounds=rounds, deg=max_deg, mode=mode, nranges=ranges[:], boundranges=branges[:], ndigits=ndigits)

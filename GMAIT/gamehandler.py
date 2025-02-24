@@ -156,7 +156,7 @@ def partialFraction(inpt_dict):#(max_deg=4, nrange=[1, 10]):
     return new_str, res, lambda x : x
 
 def subIntGame(inpt_dict):#(mode=1, deg=2, nranges=[1, 10], boundranges=[1, 10], ndigits=2):
-    mode = inpt_dict["mode"] if inpt_dict["mode"] != 4 else random.randint(1, 3)
+    mode = inpt_dict["mode"] if inpt_dict["mode"] != 5 else random.randint(1, 4)
     deg = inpt_dict["deg"]
     nranges = inpt_dict["nranges"]
     boundranges = inpt_dict["boundary_ranges"]
@@ -169,7 +169,7 @@ def subIntGame(inpt_dict):#(mode=1, deg=2, nranges=[1, 10], boundranges=[1, 10],
             
             
     elif mode == 2:
-        f, string = utils.generate_eulersub(deg, nranges=nranges[:])
+        f, string = utils.generate_eulersub_rand(deg, nranges=nranges[:])
         a, b = random.randint(boundranges[0], boundranges[1]), random.randint(boundranges[0], boundranges[1])
         res = round(utils.numericIntegration(f, min(a, b), max(a, b)), ndigits=ndigits)
         string2 = "Evaluate the integral of the function below from %d to %d\n"%(min(a, b), max(a, b)) + string + "\nI = "
@@ -181,6 +181,13 @@ def subIntGame(inpt_dict):#(mode=1, deg=2, nranges=[1, 10], boundranges=[1, 10],
         a, b = random.randint(boundranges[0], boundranges[1]), random.randint(boundranges[0], boundranges[1])
         res = round(utils.numericIntegration(f, min(a, b), max(a, b)), ndigits=ndigits)
         string2 = "Evaluate the integral of the function below from %d to %d\n"%(min(a, b), max(a, b)) + string + "\nI = "
+    
+    elif mode == 4:
+            p, q, string = utils.generate_ratExpr(deg, nranges=nranges[:])
+            a, b = random.randint(boundranges[0], boundranges[1]), random.randint(boundranges[0], boundranges[1])
+            res = round(utils.numericIntegration(lambda x : p(x) / q(x), min(a, b), max(a, b)), ndigits=ndigits)
+            string2 = "Evaluate the integral of the function below from %d to %d\n"%(min(a, b), max(a, b)) + string + "\nI = "
+            
     
     return [string2, res, lambda x : integral_conv_func(x, ndigits)]
 

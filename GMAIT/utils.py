@@ -1676,9 +1676,89 @@ def generate_integrable_ratExpr(deg=3, nranges = [1, 10]):
     str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
     z = str1 + "\n" + str3 + "\n" + str2 + "\n"
     return [p, q, z]
-
+def generate_ratExpr(max_deg=3, nranges=[1, 10]):
+    p = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    q = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    str1 = str(p)
+    str2 = str(q)
+    str1cpy = str1[:]
+    str2cpy = str2[:]
+    len_measure1 = len(str1cpy.split("\n")[0])
+    len_measure2 = len(str2cpy.split("\n")[0])
+    str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
+    z = str1 + "\n" + str3 + "\n" + str2 + "\n"
+    return [p, q, z]
 def generate_eulersub(deg=2, nranges=[1, 10]):
     rat1 = generate_integrable_ratExpr(deg=deg, nranges=nranges[:])
+    sq_term = poly.rand(2, coeff_range=nranges[:])
+    for i in range(len(sq_term.coeffs[:])):
+        sq_term.coeffs[i] = abs(sq_term.coeffs[i])
+    sqf = lambda x : math.sqrt(sq_term(x)) if sq_term(x) > 0 else 1
+    rat2seed = random.randint(1, 2)%2
+    rat2 = (lambda x : sqf(x)) if rat2seed else (lambda x : 1/sqf(x))
+    tot_func = lambda x : (rat1[0](x) / rat1[1](x)) * rat2(x)
+    p1, q1, z1 = rat1[:]
+    z3 = sq_term.pprint()[:]
+    z3_cp2 = ["\\", "/"] + z3[1]
+    z3_cp1 = ["  ", "/"] + z3[0]
+    v = [" " for i in range(len(z3_cp1))]
+    z3_cpy = [
+                [" ", " "] + ["-" for i in range(len(z3[2]) - 2)], 
+                z3_cp1[:],
+                z3_cp2[:],
+                v
+            ]
+    z1, z2 = p1.pprint(), q1.pprint()
+    l1 = max([len("".join(i)) for i in z1])
+    l2 = max([len("".join(i)) for i in z2])
+    l3 = max(l1, l2)
+    p1pprintmod = p1.pprint()[:-1]
+    q1pprintmod = q1.pprint()[:-1]
+    for i in range(len(p1pprintmod)):
+        string = p1pprintmod[i] + [" " for i in range(l3-len("".join(p1pprintmod[i])))]
+        p1pprintmod[i] = string
+        
+    for i in range(len(q1pprintmod)):
+        string = q1pprintmod[i] + [" " for i in range(l3-len("".join(q1pprintmod[i])))]
+        q1pprintmod[i] = string
+    
+    p1pprint = [[" " for i in range(l3)]] + [[" " for i in range(l3)]] + p1pprintmod[:]
+    q1pprint = q1pprintmod[:]+[[" " for i in range(l3)]]
+    ratstr1 = p1pprint + [["-"for i in range(l3)]] + q1pprint
+    ratstr1 = connect([["/"], ["|"], ["|"], ["|"], ["|"], ["|"], ["|"], ["\\"]], ratstr1)
+    ratstr1 = connect(ratstr1, [["\\"], ["|"], ["|"], ["|"], ["|"], ["|"], ["|"], ["/"]])
+    
+    
+    if rat2seed:
+            z3_cpy2 = [
+                v,
+                v,
+                [" ", "  "] + ["-" for i in range(len(z3[2]) - 2)],
+                z3_cp1[:],
+                z3_cp2[:],
+                v,
+                v,
+                v    
+            ]
+            
+            finstr = connect(ratstr1, z3_cpy2)
+            return [tot_func, strpprint(finstr)]
+    
+    else:
+        z3_cpy2 = [
+                v,
+                v,
+                v,
+                [" " for i in range((len(v)-1) // 2)] + ["1"] + [" " for i in range((len(v)-1) // 2 + (len(v)-1) % 2)],
+                ["-" for i in range(len(v))],
+                [" ", "  "] + ["-" for i in range(len(z3[2]) - 2)], 
+                z3_cp1[:],
+                z3_cp2[:],
+            ]
+        finstr = connect(ratstr1, z3_cpy2)
+        return [tot_func, strpprint(finstr)]
+def generate_eulersub_rand(deg=2, nranges=[1, 10]):
+    rat1 = generate_ratExpr(max_deg=deg, nranges=nranges[:])
     sq_term = poly.rand(2, coeff_range=nranges[:])
     for i in range(len(sq_term.coeffs[:])):
         sq_term.coeffs[i] = abs(sq_term.coeffs[i])
