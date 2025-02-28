@@ -2317,12 +2317,12 @@ def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, 
         s.append(Prod([Comp([tot_array[random.randint(1, len(tot_array) - 1)] for j in range(random.randint(1, max_layer))]) for i in range(random.randint(1, max_prod))]))
     
     return Sum(s)
-def generate_random_function_integral_II(nranges=[0, 100], n=9, k=5, max_deg=2):
+def generate_random_function_integral_II(nranges=[0, 100], n=9, k=5, max_deg=2, comp=4, sums=3, prod=1):
     function_array = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), atan()]
     p=1/5
     tot_array = function_array + [poly.rand(random.randint(1, max_deg), coeff_range=nranges[:]) for i in range(int(len(function_array)*(1/(1-p) - 1)))]
     s = [tot_array[random.randint(0, len(tot_array))] for i in range(n)]
-    a = [Sum, Comp, Comp, Comp, Prod]
+    a = [Sum for i in range(sums)] + [Comp for i in range(comp)] + [Prod for i in range(prod)]
     while len(s) > 3:
         funs = []
         for i in range(int(len(s) / k)):
@@ -2338,13 +2338,13 @@ def generate_random_function_integral_II(nranges=[0, 100], n=9, k=5, max_deg=2):
     return seed(s[:])
 
 
-def generate_integral_problem(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, k=5, max_deg=2):
+def generate_integral_problem(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, k=5, max_deg=2, comp=4, sums=3, prod=1):
     
     lb = random.randint(boundary_ranges[0], boundary_ranges[1] - 1)
     hb = random.randint(lb + 1, boundary_ranges[1])
     while True:
         try:
-            p = generate_random_function_integral_II(nranges=nranges, n=n, k=k, max_deg=max_deg)
+            p = generate_random_function_integral_II(nranges=nranges, n=n, k=k, max_deg=max_deg, comp=comp, sums=sums, prod=prod)
             result = p(hb) - p(lb)
             break
         except:
@@ -2385,6 +2385,52 @@ def generate_integral_problem(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, k
     string = strpprint(int_ppr)[:]
     return result, string, lb, hb
 
+def generate_integral_problem_II(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, k=5, max_deg=2, comp=4, sums=3, prod=1):
+    
+    lb = random.randint(boundary_ranges[0], boundary_ranges[1] - 1)
+    hb = random.randint(lb + 1, boundary_ranges[1])
+    while True:
+        try:
+            p = generate_random_function_integral_II(nranges=nranges, n=n, k=k, max_deg=max_deg, comp=comp, sums=sums, prod=prod)
+            result = numericIntegration(p, lb, hb)
+            break
+        except:
+            continue
+    int_ppr = [[" ", "/"], 
+               ["/", " "],
+               ["|", " "],
+               ["|", " "],
+               ["|", " "],
+               ["|", " "],
+               ["|", " "],
+               [" ", "/"],
+               ["/", " "]]
+    for i in range(max(len(str(lb)), len(str(hb)))):
+        curr = [[str(hb)[i] if i < len(str(hb)) else " "],
+                [" "],
+                [" "],
+                [" "],
+                [" "],
+                [" "],
+                [" "],
+                [" "],
+                [str(lb)[i] if i < len(str(lb)) else " "]]
+        int_ppr[:] = connect(int_ppr[:], curr[:])[:]
+    x = p.npprint()
+    r = [" " for i in x[0]]
+    dx = [[" ", " "],
+          [" ", " "],
+          [" ", " "],
+          [" ", " "],
+          ["d", "x"],
+          [" ", " "],
+          [" ", " "],
+          [" ", " "],
+          [" ", " "]]
+    int_ppr[:] = connect(int_ppr[:], [r] + x + [r])[:]
+    int_ppr[:] = connect(int_ppr[:], dx[:])[:]
+    string = strpprint(int_ppr)[:]
+    return result, string, lb, hb
 
     
 def jacobian(farray):

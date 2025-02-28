@@ -8,7 +8,7 @@ def static(prechoice=None):
         choice = prechoice
     print("\n")
     if prechoice is None:
-        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n"))
+        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
         rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : ")) 
@@ -649,15 +649,40 @@ def static(prechoice=None):
         max_deg = int(input("Maximum polynomial degree : "))
         n = int(input("N : "))
         k = float(input("K : "))
+        comp = int(input("Number of Comps : "))
+        sums = int(input("Number of Sums : "))
+        prod = int(input("Number of Prods : "))
         moe = float(input("Margin of Error : "))
         
         os.system("clear")
-        inpt_dict = {"nranges" : nranges, "branges" : branges, "maxd" : max_deg, "n":n, "k":k, "moe": moe}
+        inpt_dict = {"nranges" : nranges, "branges" : branges, "maxd" : max_deg, "n":n, "k":k, "moe": moe, "comp":comp, "sums":sums, "prod":prod}
         stats = gr.general_runner(gh.realIntGame, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
         print("Time spent per item : ", round(stats[2]))
     
+    if choice == 41:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of numbers (seperated by blank space): ").split(" ")
+        nranges = [int(a), int(b)]
+        c, d = input("Range of boundaries (seperated by blank space): ").split(" ")
+        branges = [int(c), int(d)]
+        
+        max_deg = int(input("Maximum polynomial degree : "))
+        n = int(input("N : "))
+        k = float(input("K : "))
+        comp = int(input("Number of Comps : "))
+        sums = int(input("Number of Sums : "))
+        prod = int(input("Number of Prods : "))
+        moe = float(input("Margin of Error : "))
+        
+        os.system("clear")
+        inpt_dict = {"nranges" : nranges, "branges" : branges, "maxd" : max_deg, "n":n, "k":k, "moe": moe, "comp":comp, "sums":sums, "prod":prod}
+        stats = gr.general_runner(gh.realIntGameHARD, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
 while True:
     static()
     z = input("Press Enter to continue...")
