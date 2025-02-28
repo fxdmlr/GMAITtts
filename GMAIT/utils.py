@@ -636,6 +636,45 @@ class poly:
         
         return lines[:]
     
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        new_array = self.coeffs[:]
+        new_array.reverse()
+        lines = [[], [], [], [], [], [], []]
+        right_pr = [[" "], [" "], [" "], ["("], [" "], [" "], [" "]]
+        left_pr = [[" "], [" "], [" "], [")"], [" "], [" "], [" "]]
+        nppr = prev_ppr[:]
+        if len(prev_ppr[0]) > 1:
+            nppr = connect(right_pr, connect(prev_ppr[:], left_pr))
+        
+        for i in range(len(new_array)):
+            pow, coeff_abs, sgn_ppr = self.deg - i, abs(new_array[i]), [[" "], [" "], [" "], [("+" if i != 0 else " ") if sgn(new_array[i]) else "-"], [" "], [" "], [" "]]
+            coeff_abs_ppr = [[" " for j in str(coeff_abs)],
+                             [" " for j in str(coeff_abs)],
+                             [" " for j in str(coeff_abs)],
+                             [j for j in str(coeff_abs)],
+                             [" " for j in str(coeff_abs)],
+                             [" " for j in str(coeff_abs)],
+                             [" " for j in str(coeff_abs)]]
+            pow_ppr = [[" " for j in str(pow)],
+                       [" " for j in str(pow)],
+                       [j for j in str(pow)],
+                       [" " for j in str(pow)],
+                       [" " for j in str(pow)],
+                       [" " for j in str(pow)],
+                       [" " for j in str(pow)]]
+            if pow == 1:
+                pow_ppr = [[], [], [], [], [], [], []]
+            if coeff_abs == 1 and pow != 0:
+                coeff_abs_ppr = [[], [], [], [], [], [], []]
+            if coeff_abs == 0:
+                continue
+            else:
+                if pow != 0:
+                    lines = connect(lines[:], connect(sgn_ppr[:], connect(coeff_abs_ppr[:], connect(nppr[:], pow_ppr[:]))))[:]
+                else:
+                    lines = connect(lines[:], connect(sgn_ppr[:], coeff_abs_ppr[:]))[:]
+        return lines[:]
+    
     def __add__(self, other):
         if isinstance(other, (int, float)):
             x = self.coeffs[:]
@@ -1626,6 +1665,728 @@ class vectF:
         return vectF([random.randint(nranges[0], nranges[1]) * c,
                       random.randint(nranges[0], nranges[1]) * s ,
                       0])
+        
+class Sum:
+    def __init__(self, array):
+        self.arr = array[:]
+    
+    def __call__(self, x):
+        s = 0
+        for i in self.arr:
+            if not callable(i):
+                s += i
+            else:
+                s += i(x)
+        
+        return s
+    
+    def __add__(self, other):
+        if isinstance(other, Sum):
+            new_arr  = self.arr[:] + other.arr[:]
+        elif isinstance(other, (int, float)):
+            new_arr  = self.arr[:] + [other]
+        else:
+            new_arr = self.arr[:] + [other]  
+        
+        return Sum(new_arr[:])
+    
+    def __mul__(self, other):
+        if isinstance(other, Sum):
+            new_arr  = []
+            for i in self.arr[:]:
+                for j in other.arr[:]:
+                    new_arr.append(Prod([i, j]))
+            
+            return Sum(new_arr[:])
+        
+        elif isinstance(other, (int, float)):
+            return Sum([other * i for i in self.arr[:]])
+        
+        elif isinstance(other, Prod):
+            return Sum([Prod([i] + other.arr[:]) for i in self.arr[:]])
+        
+        else:
+            return Prod([self, other])
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        array = [[], [], [], [], [], [], []] 
+        if hasattr(self.arr[0], 'npprint'):
+                array[:] = connect(array[:], self.arr[0].npprint(prev_ppr=prev_ppr[:])[:])[:] 
+        elif isinstance(self.arr[0], (int, float)):
+            arg = [[" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [j for j in str(self.arr[0])], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))]]
+            array[:] = connect(array[:], arg[:])[:]
+        for i in self.arr[1:]:
+            if hasattr(i, 'npprint'):
+                array[:] = connect(array[:], connect([[" "], [" "], [" "], ["+"], [" "], [" "], [" "]], i.npprint(prev_ppr=prev_ppr[:])[:]))[:] 
+            elif isinstance(i, (int, float)):
+                arg = [[" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [j for j in str(i)], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))]]
+                array[:] = connect(array[:], connect([[" "], [" "], [" "], ["+"], [" "], [" "], [" "]], arg[:]))[:]
+        return array
+    
+    def diff(self):
+        return Sum([i.diff() for i in self.arr[:]]) 
+class Prod:
+    def __init__(self, array):
+        
+        self.arr = array[:]
+    
+    def __call__(self, x):
+        s = 1
+        for i in self.arr:
+            if not callable(i):
+                s *= i
+            else:
+                s *= i(x)
+        
+        return s
+    
+    def __add__(self, other):
+        if isinstance(other, Sum):
+            new_arr  = [self] + other.arr[:]
+        
+        else:
+            new_arr = [self, other] 
+        
+        return Sum(new_arr[:])
+    
+    def __mul__(self, other):
+        if isinstance(other, Prod):
+            new_arr  = Prod(self.arr[:] + other.arr[:])
+        
+        elif isinstance(other, (int, float)):
+            new_arr  = Prod(self.arr[:] + [other])
+        
+        elif isinstance(other, Sum):
+            new_arr = Sum([Prod(self.arr[:] + [i]) for i in other.arr[:]])
+        
+        else:
+            new_arr = Prod(self.arr[:] + [other])
+            
+        
+        return new_arr
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        array = [[], [], [], [], [], [], []] 
+        spaces = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        op = [[" "], [" "], [" "], ["("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [")"], [" "], [" "], [" "]]
+        op_inv = [[" "], [" "], [" "], ["("], [" "], [" "], [" "]]
+        clsd_inv = [[" "], [" "], [" "], [")"], [" "], [" "], [" "]]
+        if hasattr(self.arr[0], 'npprint'):
+                array[:] = connect(array[:], connect(op, connect(self.arr[0].npprint(prev_ppr=prev_ppr)[:], clsd)))[:]  
+        elif isinstance(self.arr[0], (int, float)):
+            arg = [[" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [j for j in str(self.arr[0])], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))]]
+            if sgn(self.arr[0]):
+                array[:] = connect(array[:], arg[:])[:] 
+            else:
+                array[:] = connect(array[:], connect(op, connect(arg[:], clsd)))[:]
+        for i in self.arr[1:]:
+            array[:] = connect(array[:], spaces[:])[:]
+            if hasattr(i, 'npprint'):
+                array[:] = connect(array[:], connect(op, connect(i.npprint(prev_ppr=prev_ppr)[:], clsd)))[:] 
+            elif isinstance(i, (int, float)):
+                arg = [[" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [j for j in str(i)], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))]]
+                if sgn(i):
+                    array[:] = connect(array[:], arg[:])[:] 
+                else:
+                    array[:] = connect(array[:], connect(op, connect(arg[:], clsd)))[:]
+        return array
+    
+    def diff(self):
+        return Sum([Prod(self.arr[:i] + [self.arr[i].diff()] + self.arr[i+1:]) for i in range(len(self.arr[:]))]) 
+    
+
+class Comp:
+    def __init__(self, array):
+        self.arr = array[:]
+    
+    def __call__(self, x):
+        s = self.arr[0](x)
+        for i in self.arr[1:]:
+            if not callable(i):
+                s = i
+            else:
+                k = s
+                s = i(k)
+        
+        return s
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+    
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        array = prev_ppr[:]
+        for i in self.arr[:]:
+            if hasattr(i, 'npprint'):
+                array[:] = i.npprint(prev_ppr=array[:])[:]
+            else:
+                arg = [[" " for j in range(len(str(i)))], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [j for j in str(self.arr[0])], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))]]
+                array[:] = connect(array[:], arg[:])[:]
+        
+        return array[:]
+        
+    def diff(self):
+        array = []
+        for i in range(len(self.arr[:])):
+            if i == 0:
+                array.append(self.arr[i].diff())
+            else:
+                array.append(Comp(self.arr[:i] + [self.arr[i].diff()]))
+        
+        return Prod(array[:])
+
+
+
+class sin:
+    def __init__(self):
+        self.function = math.sin
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "], 
+             ["s", "i", "n"],
+             [" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return cos()
+
+class cos:
+    def __init__(self):
+        self.function = math.cos
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "], 
+             ["c", "o", "s"],
+             [" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return Comp([sin(), poly([0, -1])])
+
+class tan:
+    def __init__(self):
+        self.function = math.tan
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "], 
+             ["t", "a", "n"],
+             [" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return Sum([1, Comp([tan(), poly([0, 0, 1])])]) 
+     
+class inv:
+    def __init__(self):
+        self.function = lambda x : 1 / x
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        div_sign = ["-" for i in prev_ppr[0]]
+        one_ind = int(len(prev_ppr[0]) / 2)
+        one = [" " if i != one_ind else "1" for i in range(len(prev_ppr[0]))]
+        new_ppr = [[" " for i in prev_ppr[0]], [" " for i in prev_ppr[0]]] + [one[:]] + [div_sign[:]] + prev_ppr[1:4]
+        return new_ppr[:]
+        
+    
+    def diff(self):
+        return Comp([poly([0, 0, -1]), inv()])
+    
+class sqrt:
+    def __init__(self):
+        self.function = math.sqrt
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        rad = [[" ", " "],
+               [" ", " "],
+               [" ", " /"],
+               ["\\", "/"],
+               [" ", " "],
+               [" ", " "],
+               [" ", " "]]
+        new_ppr = prev_ppr[:]
+        for i in range(1, len(prev_ppr[0])):
+            new_ppr[1][i] = "_"
+            
+        return connect(rad, new_ppr[:])[:]
+    
+    def diff(self):
+        return Comp([Prod([2, sqrt()]), inv()])
+
+class asin:
+    def __init__(self):
+        self.function = math.asin
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "], 
+             ["a", "s", "i", "n"],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return Comp([poly([1, 0, -1]), sqrt(), inv()])
+
+class atan:
+    def __init__(self):
+        self.function = math.atan
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "], 
+             ["a", "t", "a", "n"],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return Comp([poly([1, 0, 1]), inv()])
+
+class sinh:
+    def __init__(self):
+        self.function = math.sinh
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "], 
+             ["s", "i", "n", "h"],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return cosh()
+
+class cosh:
+    def __init__(self):
+        self.function = math.cosh
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "], 
+             ["s", "i", "n", "h"],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return cosh
+
+class tanh:
+    def __init__(self):
+        self.function = math.tanh
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "], 
+             ["t", "a", "n", "h"],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "],
+             [" ", " ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return Comp([tanh, poly([1, 0, -1])])
+class log:
+    def __init__(self):
+        self.function = math.log
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "], 
+             ["l", "o", "g"],
+             [" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return inv()
+
+class exp:
+    def __init__(self):
+        self.function = math.exp
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
+        clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
+        if len(prev_ppr[0]) == 1:
+            op = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+            clsd = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        s = [[" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "], 
+             ["e", "x", "p"],
+             [" ", " ", " "],
+             [" ", " ", " "],
+             [" ", " ", " "]]
+        return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
+    
+    def diff(self):
+        return exp()
+asinh = Comp([Sum([poly([0, 1]), Comp([poly([1, 0, 1]), sqrt()])]), log()])
+acosh = Comp([Sum([poly([0, 1]), Comp([poly([-1, 0, 1]), sqrt()])]), log()])
+atanh = Sum([Comp([Comp([poly([1, 1]), sqrt()]), log()]), Prod([-1, Comp([Comp([poly([1, -1]), sqrt()]), log()])])])
+
+def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, max_prod=1, max_deg=2):
+    function_array = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), asin(), atan(), atan(), asin(), asin(), sqrt(), sqrt(), sqrt(), log(), log(), log()]
+    p=1/3
+    tot_array = function_array + [poly.rand(random.randint(1, max_deg), coeff_range=nranges[:]) for i in range(int(len(function_array)*(1/(1-p) - 1)))]
+    s = []
+    for k in range(random.randint(1, max_sum)):
+        s.append(Prod([Comp([tot_array[random.randint(1, len(tot_array) - 1)] for j in range(random.randint(1, max_layer))]) for i in range(random.randint(1, max_prod))]))
+    
+    return Sum(s)
+def generate_random_function_integral_II(nranges=[0, 100], n=9, k=5, max_deg=2):
+    function_array = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), atan()]
+    p=1/3
+    tot_array = function_array + [poly.rand(random.randint(1, max_deg), coeff_range=nranges[:]) for i in range(int(len(function_array)*(1/(1-p) - 1)))]
+    s = [tot_array[random.randint(0, len(tot_array))] for i in range(n)]
+    a = [Sum, Comp, Comp, Comp, Prod]
+    while len(s) > 3:
+        funs = []
+        for i in range(int(len(s) / k)):
+            seed = a[random.randint(0, len(a) - 1)]
+            sub_arr = []
+            for j in range(random.randint(2, int(len(s) / 1.2))):
+                sub_arr.append(s[random.randint(0, len(s) - 1)])
+            funs.append(seed(sub_arr))
+        
+        s[:] = funs[:]
+    seed = a[random.randint(0, 2)]
+    
+    return seed(s[:])
+
+
+def generate_integral_problem(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, k=5, max_deg=2):
+    
+    lb = random.randint(boundary_ranges[0], boundary_ranges[1] - 1)
+    hb = random.randint(lb + 1, boundary_ranges[1])
+    while True:
+        try:
+            p = generate_random_function_integral_II(nranges=nranges, n=n, k=k, max_deg=max_deg)
+            result = p(hb) - p(lb)
+            break
+        except:
+            continue
+    int_ppr = [[" ", "/"], 
+               ["/", " "],
+               ["|", " "],
+               ["|", " "],
+               ["|", " "],
+               ["|", " "],
+               ["|", " "],
+               [" ", "/"],
+               ["/", " "]]
+    for i in range(max(len(str(lb)), len(str(hb)))):
+        curr = [[str(hb)[i] if i < len(str(hb)) else " "],
+                [" "],
+                [" "],
+                [" "],
+                [" "],
+                [" "],
+                [" "],
+                [" "],
+                [str(lb)[i] if i < len(str(lb)) else " "]]
+        int_ppr[:] = connect(int_ppr[:], curr[:])[:]
+    x = p.diff().npprint()
+    r = [" " for i in x[0]]
+    dx = [[" ", " "],
+          [" ", " "],
+          [" ", " "],
+          [" ", " "],
+          ["d", "x"],
+          [" ", " "],
+          [" ", " "],
+          [" ", " "],
+          [" ", " "]]
+    int_ppr[:] = connect(int_ppr[:], [r] + x + [r])[:]
+    int_ppr[:] = connect(int_ppr[:], dx[:])[:]
+    string = strpprint(int_ppr)[:]
+    return result, string, lb, hb
+
+
+    
 def jacobian(farray):
     array = [[farray[i].diff(j) for j in range(len(farray))] for i in range(len(farray))]
     return matrix(array)

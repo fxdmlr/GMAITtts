@@ -191,6 +191,17 @@ def subIntGame(inpt_dict):#(mode=1, deg=2, nranges=[1, 10], boundranges=[1, 10],
     
     return [string2, res, lambda x : integral_conv_func(x, ndigits)]
 
+def realIntGame(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    branges = inpt_dict["branges"]
+    n = inpt_dict["n"]
+    k = inpt_dict["k"]
+    max_d = inpt_dict["maxd"]
+    moe = inpt_dict["moe"]
+    res, string, lb, hb = utils.generate_integral_problem(nranges=nranges, boundary_ranges=branges, n=n, k=k, max_deg=max_d)
+    cond = lambda x : (1-moe) * res <= evl.evl(x) <= (1+moe)*res or (1+moe) * res <= evl.evl(x) <= (1-moe)*res
+    return [string, res, lambda x : res if cond(x) else res + 1000]
+    
 def regMulDig(inpt_dict):#(digits=5):
     digits = inpt_dict["ndigits"]
     n1 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
