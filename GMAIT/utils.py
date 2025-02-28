@@ -2319,7 +2319,7 @@ def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, 
     return Sum(s)
 def generate_random_function_integral_II(nranges=[0, 100], n=9, k=5, max_deg=2):
     function_array = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), atan()]
-    p=1/3
+    p=1/5
     tot_array = function_array + [poly.rand(random.randint(1, max_deg), coeff_range=nranges[:]) for i in range(int(len(function_array)*(1/(1-p) - 1)))]
     s = [tot_array[random.randint(0, len(tot_array))] for i in range(n)]
     a = [Sum, Comp, Comp, Comp, Prod]

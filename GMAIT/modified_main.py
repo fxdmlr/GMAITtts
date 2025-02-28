@@ -648,7 +648,7 @@ def static(prechoice=None):
         
         max_deg = int(input("Maximum polynomial degree : "))
         n = int(input("N : "))
-        k = int(input("K : "))
+        k = float(input("K : "))
         moe = float(input("Margin of Error : "))
         
         os.system("clear")
