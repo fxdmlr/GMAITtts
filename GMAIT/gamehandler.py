@@ -208,13 +208,10 @@ def realIntGameHARD(inpt_dict):
     nranges = inpt_dict["nranges"]
     branges = inpt_dict["branges"]
     n = inpt_dict["n"]
-    k = inpt_dict["k"]
-    comp = inpt_dict["comp"]
-    sums = inpt_dict["sums"]
-    prod = inpt_dict["prod"]
-    max_d = inpt_dict["maxd"]
+    fweights = [int(i) for i in inpt_dict["fweights"]]
+    wweights = [int(i) for i in inpt_dict["wweights"]]
     moe = inpt_dict["moe"]
-    res, string, lb, hb = utils.generate_integral_problem_II(nranges=nranges, boundary_ranges=branges, n=n, k=k, max_deg=max_d, comp=comp, sums=sums, prod=prod)
+    res, string, lb, hb = utils.generate_integral_problem_iii(nranges=nranges, boundary_ranges=branges, n=n, fweights=fweights, wweights=wweights)
     cond = lambda x : (1-moe) * res <= evl.evl(x) <= (1+moe)*res or (1+moe) * res <= evl.evl(x) <= (1-moe)*res
     return [string, res, lambda x : res if cond(x) else res + 1000] 
 def regMulDig(inpt_dict):#(digits=5):

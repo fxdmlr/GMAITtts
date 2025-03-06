@@ -671,14 +671,15 @@ def static(prechoice=None):
         
         max_deg = int(input("Maximum polynomial degree : "))
         n = int(input("N : "))
-        k = float(input("K : "))
-        comp = int(input("Number of Comps : "))
-        sums = int(input("Number of Sums : "))
-        prod = int(input("Number of Prods : "))
-        moe = float(input("Margin of Error : "))
-        
+        print("Enter function probability\nweights according to the table:")
+        print("sin cos tan log exp sqrt asin atan poly\n")
+        fweights = input("Function Weights : ")
+        print("Enter operator probability\nweights according to the table:")
+        print("Addition Composition Mult. Div. ")
+        wweights = input("Op. weights : ")
+        moe = float(input("Margin of error: "))
         os.system("clear")
-        inpt_dict = {"nranges" : nranges, "branges" : branges, "maxd" : max_deg, "n":n, "k":k, "moe": moe, "comp":comp, "sums":sums, "prod":prod}
+        inpt_dict = {"nranges" : nranges, "branges" : branges, "maxd" : max_deg, "n":n, "moe": moe, "fweights":fweights, "wweights":wweights}
         stats = gr.general_runner(gh.realIntGameHARD, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))

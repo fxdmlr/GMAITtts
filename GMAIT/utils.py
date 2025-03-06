@@ -1,6 +1,7 @@
 import math
 import random
 import cmath
+import copy
 
 DEFAULT_TAYLOR_N = 1000
 
@@ -140,6 +141,7 @@ def semiNIntegrate(function, lowerbound, h=0.0001):
 class integer:
     def __init__(self, n):
         self.n = n
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def prime(self):
         return integer.isprime(self.n)
@@ -248,6 +250,7 @@ class rational:
     def __init__(self, num):
         #num = [p, q] -> number = p / q
         self.num = num[:]
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __str__(self):
         return "%s / %s" % (str(self.num[0]), str(self.num[1]))
@@ -362,6 +365,7 @@ class AlgebraicReal:
     def __init__(self, num):
         # num = [rational_part(a) : rational, [coeff(b) : int, nth_root of (x:rational), n:int>0], [coeff(b2),n2th_root of (x2), n2], ...] -> num = a + b(x)^(1/n) + b2(x2)^(1/n2)+...
         self.num = num[:]
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     def __call__(self):
         s = self.num[0]() if hasattr(self.num[0], '__call__') else self.num[0]
         for r, x, n in self.num[1:]:
@@ -540,6 +544,7 @@ class poly:
             self.variable = "y"
         elif variable_type == 2:
             self.variable = "z"
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         s = 0
@@ -896,8 +901,11 @@ class poly:
         
         
     @staticmethod
-    def rand(deg, coeff_range = [0, 10]):
-        coeffs = [(-1)**random.randint(1, 10) * random.randint(coeff_range[0], coeff_range[1]) for i in range(deg + 1)]
+    def rand(deg, coeff_range = [0, 10], sgn_sensitive=1):
+        if sgn_sensitive:
+            coeffs = [(-1)**random.randint(1, 10) * random.randint(coeff_range[0], coeff_range[1]) for i in range(deg + 1)]
+        else:
+            coeffs = [random.randint(coeff_range[0], coeff_range[1]) for i in range(deg + 1)]
         return poly(coeffs)
     
     @staticmethod
@@ -922,6 +930,7 @@ class PowSeries:
     def __init__(self, c_n, name=None):
         self.function = c_n
         self.name = name
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def poly(self, n):
         return poly([self.function(i) for i in range(n + 1)])
@@ -1023,6 +1032,7 @@ class matrix:
     def __init__(self, array, name=None):
         self.name = name
         self.array = array[:]
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     def __str__(self):
         '''
         new_arr = []
@@ -1182,6 +1192,7 @@ class vect:
     def __init__(self, array):
         self.array = array[:]
         self.dim = len(array)
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
         
     def __add__(self, other):
         return vect([self.array[i] + other.array[i] for i in range(self.dim)])
@@ -1223,6 +1234,7 @@ class pcurve:
     def __init__(self, farr):
         self.array = farr[:]
         self.dim = len(farr)
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return vect([i(x) if callable(i) else i for i in self.array])
@@ -1313,6 +1325,7 @@ class polymvar:
         x^i y^j z^k 
         '''
         self.array = array[:]
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
 
     def __call__(self, x, y, z):
         s = 0
@@ -1598,6 +1611,7 @@ class vectF:
     def __init__(self, array):
         self.array = array[:]
         self.dim = len(array)
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
         
     def __add__(self, other):
         return vect([self.array[i] + other.array[i] for i in range(self.dim)])
@@ -1667,8 +1681,58 @@ class vectF:
                       0])
         
 class Sum:
+    def __new__(cls, array):
+        arr = []
+        for i in array:
+            if i == 0 or i == poly([0]):
+                continue
+            
+            
+            arr.append(i)
+            
+        if len(arr) == 1:
+            #return type(array[0]).__new__(**array[0].user_args) 
+            return arr[0]
+        else:
+            return super(Sum, cls).__new__(cls)
     def __init__(self, array):
-        self.arr = array[:]
+        self.arr = []
+        for i in array:
+            if i == 0 or i == poly([0]):
+                continue
+            if isinstance(i, Sum):
+                self.arr[:] += i.arr[:]
+                
+                continue
+            self.arr.append(i)
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
+        
+    def simplify(self):
+            
+        narr = []
+        for i in self.arr:
+            if i == 0 or i == poly([0]):
+                continue
+            if hasattr(i, 'simplify'):
+                narr.append(i.simplify())
+                continue
+            narr.append(i)
+        
+        new_array = []
+        types_array = []
+        for i in narr:
+            if isinstance(i, (int, float)):
+                i = poly([i])
+            if type(i) not in types_array:
+                types_array.append(type(i))
+                new_array.append(i)
+            
+            else:
+                new_array[types_array.index(type(i))] += i
+        
+        
+        #self.arr[:] = new_array[:]
+        return Sum(new_array[:])
     
     def __call__(self, x):
         s = 0
@@ -1724,11 +1788,62 @@ class Sum:
     
     def diff(self):
         return Sum([i.diff() for i in self.arr[:]]) 
+
+
 class Prod:
-    def __init__(self, array):
+    def __new__(cls, array):
+        arr = []
+        for i in array:
+            if i == 1 or i == poly([1]):
+                continue
+            arr.append(i)
+        if len(arr) == 1:
+            #return type(array[0]).__new__(**array[0].user_args) 
+            return arr[0]
         
-        self.arr = array[:]
-    
+        if 0 in arr or poly([0]) in arr:
+            return 0
+        else:
+            return super(Prod, cls).__new__(cls)
+    def __init__(self, array):
+        self.arr = []
+        for i in array:
+            if i == 1 or i == poly([1]):
+                continue
+            if isinstance(i, Prod):
+                self.arr[:] += i.arr[:]
+                
+                continue
+            self.arr.append(i)
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
+
+    def simplify(self):
+        narr = []
+        for i in self.arr:
+            if i == 1 or i == poly([1]):
+                continue
+            
+            if hasattr(i, 'simplify'):
+                narr.append(i.simplify())
+                continue
+            
+            narr.append(i)
+        
+        
+        new_array = []
+        types_array = []
+        for i in narr:
+            if isinstance(i, (int, float)):
+                i = poly([i])
+            if type(i) not in types_array:
+                types_array.append(type(i))
+                new_array.append(i)
+            
+            else:
+                new_array[types_array.index(type(i))] *= i
+
+        #self.arr[:] = new_array[:]
+        return Prod(new_array[:])
     def __call__(self, x):
         s = 1
         for i in self.arr:
@@ -1792,12 +1907,17 @@ class Prod:
         return array
     
     def diff(self):
-        return Sum([Prod(self.arr[:i] + [self.arr[i].diff()] + self.arr[i+1:]) for i in range(len(self.arr[:]))]) 
-    
+        return Sum([Prod(self.arr[:i] + [self.arr[i].diff()] + self.arr[i+1:]) for i in range(len(self.arr[:]))])    
 
 class Comp:
     def __init__(self, array):
         self.arr = array[:]
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
+    
+    def simplify(self):
+        narr = [i.simplify() if hasattr(i, 'simplify') else i for i in self.arr[:]]
+        #self.arr[:] = narr[:]
+        return Comp(narr)
     
     def __call__(self, x):
         s = self.arr[0](x)
@@ -1844,11 +1964,57 @@ class Comp:
         
         return Prod(array[:])
 
+class Div:
+    def __init__(self, array):
+        self.arr = array[:]
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
+    
+    def simplify(self):
+        a = self.arr[0]
+        b = self.arr[1]
+        if hasattr(self.arr[0], 'simplify'):
+            a = self.arr[0].simplify()
+        if hasattr(self.arr[1], 'simplify'):
+            b = self.arr[1].simplify()
+        
+        return Div([a, b])
+    
+    def __call__(self, x):
+        n1 = self.arr[0](x) if callable(self.arr[0]) else self.arr[0]
+        n2 = self.arr[1](x) if callable(self.arr[1]) else self.arr[1]
+        return n1 / n2
+    
+    def __add__(self, other):
+        if not isinstance(other, Div):
+            return Div([Sum([self.arr[0], Prod([other, self.arr[1]])]), self.arr[1]])
+        
+        else:
+            return Div([Sum([Prod([self.arr[0], other.arr[1]]), Prod([self.arr[1], other.arr[0]])]), Prod([self.arr[1], other.arr[1]])])
+    
+    def __mul__(self, other):
+        if not isinstance(other, Div):
+            return Div([Prod([self.arr[0], other]), self.arr[1]])
+        else:
+            return Div([Prod([self.arr[0], other.arr[0]]), Prod([self.arr[1], other.arr[1]])])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        z1 = self.arr[0].npprint(prev_ppr=prev_ppr[:])[:] if hasattr(self.arr[0], 'npprint') else poly([self.arr[0]]).npprint(prev_ppr=prev_ppr[:])[:]
+        z2 = self.arr[1].npprint(prev_ppr=prev_ppr[:])[:] if hasattr(self.arr[1], 'npprint') else poly([self.arr[1]]).npprint(prev_ppr=prev_ppr[:])[:]
+        div_sign = ["-" for i in range(max(len(z1[0]), len(z2[0])))]
+        new_ppr = z1[1:4] + [div_sign[:]] + z2[1:4]
+        
+        return new_ppr[:]
+    
+    def diff(self):
+        n1 = Sum([Prod([self.arr[0].diff(), self.arr[1]]), Prod([self.arr[1].diff(), self.arr[0], -1])])
+        n2 = Prod([self.arr[1], self.arr[1]])
+        return Div([n1, n2])
 
 
 class sin:
     def __init__(self):
         self.function = math.sin
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -1888,6 +2054,7 @@ class sin:
 class cos:
     def __init__(self):
         self.function = math.cos
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -1924,9 +2091,11 @@ class cos:
     def diff(self):
         return Comp([sin(), poly([0, -1])])
 
+
 class tan:
     def __init__(self):
         self.function = math.tan
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -1966,6 +2135,7 @@ class tan:
 class inv:
     def __init__(self):
         self.function = lambda x : 1 / x
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -1998,6 +2168,7 @@ class inv:
 class sqrt:
     def __init__(self):
         self.function = math.sqrt
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -2036,6 +2207,7 @@ class sqrt:
 class asin:
     def __init__(self):
         self.function = math.asin
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -2075,6 +2247,7 @@ class asin:
 class atan:
     def __init__(self):
         self.function = math.atan
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -2114,6 +2287,7 @@ class atan:
 class sinh:
     def __init__(self):
         self.function = math.sinh
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -2153,6 +2327,7 @@ class sinh:
 class cosh:
     def __init__(self):
         self.function = math.cosh
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -2192,6 +2367,7 @@ class cosh:
 class tanh:
     def __init__(self):
         self.function = math.tanh
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -2230,6 +2406,7 @@ class tanh:
 class log:
     def __init__(self):
         self.function = math.log
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -2237,7 +2414,6 @@ class log:
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
             return other + self
-        
         else:
             return Sum([self, other])
         
@@ -2269,6 +2445,7 @@ class log:
 class exp:
     def __init__(self):
         self.function = math.exp
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
         return self.function(x)
@@ -2308,6 +2485,8 @@ asinh = Comp([Sum([poly([0, 1]), Comp([poly([1, 0, 1]), sqrt()])]), log()])
 acosh = Comp([Sum([poly([0, 1]), Comp([poly([-1, 0, 1]), sqrt()])]), log()])
 atanh = Sum([Comp([Comp([poly([1, 1]), sqrt()]), log()]), Prod([-1, Comp([Comp([poly([1, -1]), sqrt()]), log()])])])
 
+
+
 def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, max_prod=1, max_deg=2):
     function_array = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), asin(), atan(), atan(), asin(), asin(), sqrt(), sqrt(), sqrt(), log(), log(), log()]
     p=1/3
@@ -2319,9 +2498,9 @@ def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, 
     return Sum(s)
 def generate_random_function_integral_II(nranges=[0, 100], n=9, k=5, max_deg=2, comp=4, sums=3, prod=1):
     function_array = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), atan()]
-    p=1/5
+    p=1/3
     tot_array = function_array + [poly.rand(random.randint(1, max_deg), coeff_range=nranges[:]) for i in range(int(len(function_array)*(1/(1-p) - 1)))]
-    s = [tot_array[random.randint(0, len(tot_array))] for i in range(n)]
+    s = [tot_array[random.randint(0, len(tot_array) - 1)] for i in range(n)]
     a = [Sum for i in range(sums)] + [Comp for i in range(comp)] + [Prod for i in range(prod)]
     while len(s) > 3:
         funs = []
@@ -2334,9 +2513,41 @@ def generate_random_function_integral_II(nranges=[0, 100], n=9, k=5, max_deg=2, 
         
         s[:] = funs[:]
     seed = a[random.randint(0, 2)]
-    
-    return seed(s[:])
+    q = seed(s[:]).simplify()
+    return q
 
+def rand_func_iii(nranges=[0, 10], max_deg=4, n=5, fweights=[1, 1, 1, 1, 1, 1, 1, 1, 1], wweights=[1, 1, 1, 1], prev_wraps=[]):
+    functions = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), atan(), 'p']
+    function_array = []
+    for i in range(len(fweights)):
+        for j in range(fweights[i]):
+            function_array.append(functions[i])
+    if n == 1:
+        f = function_array[random.randint(0, len(function_array) - 1)]
+        if f == 'p':
+            f = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+        
+        if isinstance(f, sqrt):
+            return Comp([poly.rand(random.randint(0, max_deg), coeff_range=nranges[:], sgn_sensitive=0), sqrt()])
+        return f
+    
+    else:
+        wrappers_array = [Sum, Comp, Prod, Div]
+        s = 0
+        if Div in prev_wraps:
+            s = 1
+            wrappers_array.remove(Div)
+        wrappers = []
+        for i in range(len(wweights) - s):
+            for j in range(wweights[i]):
+                wrappers.append(wrappers_array[i])
+        f = function_array[random.randint(0, len(function_array) - 1)]
+        if f == sqrt:
+            f = Comp([poly.rand(random.randint(0, max_deg), coeff_range=nranges[:], sgn_sensitive=0), sqrt()])
+        if f == 'p':
+            f = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+        wrapper = wrappers[random.randint(0, len(wrappers) - 1)]
+        return wrapper([f, rand_func_iii(nranges=nranges[:], n=n-1, fweights=fweights[:], wweights=wweights[:], prev_wraps=prev_wraps+[wrapper])]).simplify()
 
 def generate_integral_problem(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, k=5, max_deg=2, comp=4, sums=3, prod=1):
     
@@ -2432,7 +2643,59 @@ def generate_integral_problem_II(nranges=[0, 100], boundary_ranges=[-10, 10],n=9
     string = strpprint(int_ppr)[:]
     return result, string, lb, hb
 
+def generate_integral_problem_iii(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, max_deg=2, fweights=[1, 1, 1, 1, 1, 1, 1, 1, 1], wweights=[1, 1, 1, 1]):
     
+    lb = random.randint(boundary_ranges[0], boundary_ranges[1] - 1)
+    hb = random.randint(lb + 1, boundary_ranges[1])
+    while True:
+        try:
+            p = rand_func_iii(nranges=nranges, max_deg=max_deg, n=n, fweights=fweights, wweights=wweights)
+            result = numericIntegration(p, lb, hb)
+            int_ppr = [[" ", "/"], 
+                    ["/", " "],
+                    ["|", " "],
+                    ["|", " "],
+                    ["|", " "],
+                    ["|", " "],
+                    ["|", " "],
+                    [" ", "/"],
+                    ["/", " "]]
+            for i in range(max(len(str(lb)), len(str(hb)))):
+                curr = [[str(hb)[i] if i < len(str(hb)) else " "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [str(lb)[i] if i < len(str(lb)) else " "]]
+                int_ppr[:] = connect(int_ppr[:], curr[:])[:]
+            x = p.npprint()
+            r = [" " for i in x[0]]
+            dx = [[" ", " "],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "],
+                ["d", "x"],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "]]
+            int_ppr[:] = connect(int_ppr[:], [r] + x + [r])[:]
+            int_ppr[:] = connect(int_ppr[:], dx[:])[:]
+            string = strpprint(int_ppr)[:]
+            return result, string, lb, hb
+        except:
+            continue
+'''
+r, s, l, h = generate_integral_problem_iii(nranges=[1, 10], boundary_ranges=[-10, 10], n=5, max_deg=4, fweights=[1, 1, 1, 4, 4, 5, 0, 1, 9], wweights=[1, 0, 1, 0])
+print(s)
+print(r)
+'''
+#p = rand_func_iii(nranges=[1, 10], n=4, max_deg=4, fweights=[0, 0, 0, 2, 0, 5, 0, 0, 9], wweights=[1, 0, 0, 1])
+#print(strpprint(p.npprint()))
+
 def jacobian(farray):
     array = [[farray[i].diff(j) for j in range(len(farray))] for i in range(len(farray))]
     return matrix(array)
