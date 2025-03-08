@@ -8,7 +8,7 @@ def static(prechoice=None):
         choice = prechoice
     print("\n")
     if prechoice is None:
-        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n"))
+        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n42-IntegralSolve\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
         rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : ")) 
@@ -684,6 +684,49 @@ def static(prechoice=None):
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
         print("Time spent per item : ", round(stats[2]))
+    
+    if choice == 42:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of numbers (seperated by blank space): ").split(" ")
+        nranges = [int(a), int(b)]
+        c, d = input("Range of boundaries (seperated by blank space): ").split(" ")
+        branges = [int(c), int(d)]
+        moe = float(input("Margin of error: "))
+        tp = int(input("Type : \n0-rational \n1-by parts \n2-rational_sqrt \n3-trig \n4-poly\n"))
+        inpt_dict = {"nranges" : nranges, "branges" : branges, "moe": moe, "type":tp}
+        if tp == 0:
+            max_deg = int(input("Maximum polynomial degree : "))
+            a, b = input("Range of numbers(n) (seperated by blank space): ").split(" ")
+            n_ranges = [int(a), int(b)]
+            a, b = input("Range of numbers(m) (seperated by blank space): ").split(" ")
+            m_ranges = [int(a), int(b)]
+            inpt_dict.update({"mdeg" : max_deg, "n_range":n_ranges, "m_range":m_ranges})
+        elif tp == 1:
+            max_deg = int(input("Maximum polynomial degree : "))
+            n = int(input("number of functions : "))
+            mdeg_c = int(input("Max composition poly degree : "))
+            inpt_dict.update({"mdeg" : max_deg, "n":n, "mdeg_c":mdeg_c})
+        
+        elif tp == 2:
+            max_deg = int(input("Maximum polynomial degree : "))
+            deg_i = int(input("deg : "))
+            a, b = input("Range of numbers(n) (seperated by blank space): ").split(" ")
+            n_ranges = [int(a), int(b)]
+            inpt_dict.update({"mdeg" : max_deg, "n_range":n_ranges, "degi":deg_i})
+        
+        elif tp == 3:
+            pass
+        elif tp == 4:
+            a, b = input("Range of numbers(n) (seperated by blank space): ").split(" ")
+            n_ranges = [int(a), int(b)]
+            inpt_dict.update({"n_range":n_ranges})
+        os.system("clear")
+        stats = gr.general_runner(gh.solvableInt, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+        
 while True:
     static()
     z = input("Press Enter to continue...")

@@ -563,3 +563,53 @@ def PDE(inpt_dict):
     arr = [PDEConst, PDESpecial]
     return arr[random.randint(0, 1)](inpt_dict)
 
+def solvableInt(inpt_dict):
+    tp = inpt_dict["type"]
+    nranges = inpt_dict["nranges"]
+    branges = inpt_dict["branges"]
+    moe = inpt_dict["moe"]
+    if tp == 0: #rational expression
+        arr = [utils.rand_pfd_prop, 
+               utils.rand_rat_prop, 
+               utils.rand_rat_tan, 
+               utils.rand_rat_cos]
+        max_deg = inpt_dict["mdeg"]
+        n_range = inpt_dict["n_range"]
+        m_range = inpt_dict["m_range"]
+        seed = random.randint(0, 3)
+        if seed in [0, 1]:
+            r, s, lb, hb = utils.generate_general_int(arr[seed], [nranges[:], max_deg], branges[:])
+        
+        elif seed in [2, 3]:
+            r, s, lb, hb = utils.generate_general_int(arr[seed], [nranges[:], n_range, m_range], branges[:])
+    
+    elif tp == 1:#integration by parts
+        arr = [utils.rand_int_part_i, utils.rand_int_part_ii]
+        max_deg = inpt_dict["mdeg"]
+        n = inpt_dict["n"]
+        mdeg_c = inpt_dict["mdeg_c"]
+        seed = random.randint(0, 1)
+        r, s, lb, hb = utils.generate_general_int(arr[seed], [nranges[:], max_deg, n, mdeg_c], branges[:])
+    
+    elif tp == 2: #sqrt
+        arr = [utils.rand_sqrt_type_i,
+               utils.rand_sqrt_type_ii,
+               utils.rand_sqrt_type_iii,
+               utils.rand_sqrt_iv,
+               utils.rand_sqrt_v,
+               utils.rand_sqrt_vi]
+        max_deg = inpt_dict["mdeg"]
+        deg_i = inpt_dict["degi"]
+        n_range = inpt_dict["n_range"]
+        seed = random.randint(0, 5)
+        r, s, lb, hb = utils.generate_general_int(arr[seed], [nranges[:], max_deg, deg_i, n_range], branges[:])
+    
+    elif tp == 3:#rand trig
+        r, s, lb, hb = utils.generate_general_int(utils.rand_trig_i, [nranges[:]], branges[:])
+    
+    elif tp == 4:#rand poly
+        n_range = inpt_dict["n_range"]
+        r, s, lb, hb = utils.generate_general_int(utils.rand_poly_i, [nranges[:], n_range[:]], branges[:])
+    
+    cond = lambda x : abs(x - r) <= abs(moe*r)
+    return s, r, lambda x : r if cond(evl.evl(x)) else r+1

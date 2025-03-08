@@ -2000,8 +2000,22 @@ class Div:
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         z1 = self.arr[0].npprint(prev_ppr=prev_ppr[:])[:] if hasattr(self.arr[0], 'npprint') else poly([self.arr[0]]).npprint(prev_ppr=prev_ppr[:])[:]
         z2 = self.arr[1].npprint(prev_ppr=prev_ppr[:])[:] if hasattr(self.arr[1], 'npprint') else poly([self.arr[1]]).npprint(prev_ppr=prev_ppr[:])[:]
+        max_len = max(len(z1[0]), len(z2[0]))
+        min_len = min(len(z1[0]), len(z2[0]))
+        s = int((max_len - min_len)/2)
+        spaces = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
+        arr1 = [[], [], [], [], [], [], []]
+        arr2 = [[], [], [], [], [], [], []]
+        for i in range(s):
+            arr1[:] = connect(arr1[:], spaces[:])
+        for i in range(max_len - min_len - s):
+            arr2[:] = connect(arr2[:], spaces[:])
         div_sign = ["-" for i in range(max(len(z1[0]), len(z2[0])))]
-        new_ppr = z1[1:4] + [div_sign[:]] + z2[1:4]
+        if len(z1[0]) < len(z2[0]):
+            new_ppr = connect(arr1, connect(z1, arr2))[1:4] + [div_sign[:]] + z2[1:4]
+        
+        if len(z1[0]) >= len(z2[0]):
+            new_ppr = z1[1:4] + [div_sign[:]] + connect(arr1, connect(z2, arr2))[1:4] 
         
         return new_ppr[:]
     
@@ -2651,15 +2665,15 @@ def generate_integral_problem_iii(nranges=[0, 100], boundary_ranges=[-10, 10],n=
         try:
             p = rand_func_iii(nranges=nranges, max_deg=max_deg, n=n, fweights=fweights, wweights=wweights)
             result = numericIntegration(p, lb, hb)
-            int_ppr = [[" ", "/"], 
-                    ["/", " "],
-                    ["|", " "],
-                    ["|", " "],
-                    ["|", " "],
-                    ["|", " "],
-                    ["|", " "],
-                    [" ", "/"],
-                    ["/", " "]]
+            int_ppr = [[" ", " ", "/"], 
+                    [" ", "/", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "/", " "],
+                    ["/", " ", " "]]
             for i in range(max(len(str(lb)), len(str(hb)))):
                 curr = [[str(hb)[i] if i < len(str(hb)) else " "],
                         [" "],
@@ -3934,3 +3948,194 @@ def generate_function_item(ndigits=3, calc_ndigits=3, n=2):
     
     return strpprint(newstr), p
 
+def rand_pfd_prop(nranges=[1, 10], max_deg=3):
+    p1 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    p2 = poly([1])
+    curr_deg = 0
+    while curr_deg < max_deg:
+        if max_deg - curr_deg == 1:
+            p2 *= poly.rand(1, coeff_range=nranges[:])
+            curr_deg += 1
+        
+        elif max_deg - curr_deg == 2:
+            p2 *= poly.rand(2, coeff_range=nranges[:])
+            curr_deg += 2
+        
+        else:
+            cdeg = random.randint(1, max_deg)
+            p2 *= poly.rand(cdeg, coeff_range=nranges[:])
+            curr_deg += cdeg
+    
+    return Div([p1, p2])
+
+def rand_rat_prop(nranges=[1, 10], max_deg=3):
+    p1 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    p2 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    return Div([p1, p2])
+
+def rand_int_part_i(nranges=[1, 10], max_deg=3, n=2, max_deg_comp=2):
+    p1 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    func = [exp(), sin(), cos(), p1]
+    arr = []
+    for i in range(n):
+        z = random.randint(0, len(func) - 1)
+        if func[z] == p1:
+            arr += [func[z]]
+            func.remove(p1)
+            continue
+        if isinstance(func[z], exp):
+            arr += [Comp([poly.rand(1, coeff_range=nranges[:]), func[z]])]
+            func.pop(z)
+            continue
+        arr += [Comp([poly.rand(1, coeff_range=nranges[:]), func[z]])]
+        
+    p2 = Prod(arr[:])
+    return p2
+
+def rand_int_part_ii(nranges=[1, 10], max_deg=3, n=2, max_deg_comp=2, ):
+    p1 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    func = [exp(), sin(), cos(), p1]#, atan(), asin()]
+    arr = []
+    for i in range(n):
+        z = random.randint(0, len(func) - 1)
+        if func[z] == p1:
+            arr += [func[z]]
+            func.remove(p1)
+            continue
+        if isinstance(func[z], exp):
+            arr += [Comp([poly.rand(1, coeff_range=nranges[:]), func[z], poly.rand(random.randint(0, max_deg_comp), coeff_range=nranges[:])])]
+            func.pop(z)
+            continue
+        arr += [Comp([poly.rand(1, coeff_range=nranges[:]), func[z], poly.rand(random.randint(0, max_deg_comp), coeff_range=nranges[:])])]
+        
+    p2 = Prod(arr[:])
+    return p2
+
+def rand_sqrt_type_i(nranges=[1, 10], max_deg=3, deg_i=2, n_range=[1, 4]):
+    p1 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    p2 = Comp([poly.rand(deg_i, coeff_range=nranges[:]), sqrt()])
+    return Prod([p1, p2])
+
+def rand_sqrt_type_ii(nranges=[1, 10], max_deg=3, deg_i=2, n_range=[1, 4]):
+    p1 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    p2 = Comp([poly.rand(deg_i, coeff_range=nranges[:]), sqrt()])
+    return Div([p1, p2])
+
+def rand_sqrt_type_iii(nranges=[1, 10], max_deg=3, deg_i=2, n_range=[1, 4]):
+    p1 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    p2 = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    p3 = Comp([poly.rand(deg_i, coeff_range=nranges[:]), sqrt()])
+    return Div([p1, Prod([p2, p3])])
+
+def rand_rat_tan(nranges=[1, 10], n_range=[1, 4], m_range=[1, 4]):
+    n = random.randint(n_range[0], n_range[1])
+    p1 = poly([0 for i in range(n)] + [1])
+    p2 = []
+    for i in range(n):
+        p2 += [poly([abs(random.randint(nranges[0], nranges[1])), 0, 1])]
+    return Div([p1, Prod(p2[:])])
+
+def rand_rat_cos(nranges=[1, 10], n_range=[1, 4], m_range=[1, 4]):
+    n = random.randint(n_range[0], n_range[1])
+    m = random.randint(m_range[0], m_range[1])
+    p1 = poly([0 for i in range(m)] + [1])
+    p2 = poly([random.randint(nranges[0], nranges[1]) ** (2*n)] + [0 for i in range(n - 1)] + [-abs(random.randint(nranges[0], nranges[1]))] + [0 for i in range(n - 1)] + [1])
+    return Div([p1, p2])
+
+def rand_sqrt_iv(nranges=[1, 10], max_deg=3, deg_i=2, n_range=[1, 4]):
+    n = random.randint(n_range[0], n_range[1])
+    m = random.randint(nranges[0], nranges[1])
+    p1 = poly([0 for i in range(2 * n)] + [1])
+    p2 = Comp([Prod([poly([1, 0, -1]), poly([1, 0, -m**2])]), sqrt()])
+    return Div([p1, p2])
+
+def rand_sqrt_v(nranges=[1, 10], max_deg=3, deg_i=2, n_range=[1, 4]):
+    n = random.randint(n_range[0], n_range[1])
+    m = random.randint(nranges[0], nranges[1])
+    a = random.randint(nranges[0], nranges[1])
+    p1 = poly([0 for i in range(2 * n)] + [1])
+    p2 = Comp([Prod([poly([1, 0, -1]), poly([1, 0, -m**2])]), sqrt()])
+    p3 = Comp([poly([1, 0, a]), p1])
+    return Div([poly([1]), Prod([p3, p2])])
+
+def rand_trig_i(nranges=[1, 10]):
+    p = random.randint(nranges[0], nranges[1])
+    q = random.randint(nranges[0], nranges[1])
+    p1 = Comp([sin(), poly([0 for i in range(p)] + [1])])
+    p2 = Comp([cos(), poly([0 for i in range(q)] + [1])])
+    return Prod([p1, p2])
+
+def rand_poly_i(nranges=[1, 10], m_range = [1, 10]):
+    m = random.randint(m_range[0], m_range[1])
+    p = random.randint(m_range[0], m_range[1])
+    q = poly([0 for i in range(m)] + [1])
+    x = poly.rand(2, coeff_range=nranges[:])
+    xq = Comp([x, poly([0 for i in range(p)] + [1])])
+    return Prod([q, xq])
+
+def rand_sqrt_vi(nranges=[1, 10], max_deg=3, deg_i=2, n_range=[1, 10]):
+    n = random.randint(n_range[0], n_range[1])
+    q = poly([0 for i in range(n)] + [1])
+    a, b, c = random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])
+    p = poly([a, 0, b, 0, c])
+    return Div([q, Comp([p, sqrt()])])
+
+def generate_general_int(function, args, boundary_ranges = [-10, 10]):
+    lb = random.randint(boundary_ranges[0], boundary_ranges[1] - 1)
+    hb = random.randint(lb + 1, boundary_ranges[1])
+    while True:
+        try:
+            p = function(*args)
+            result = numericIntegration(p, lb, hb)
+            int_ppr = [[" ", " ", "/"], 
+                    [" ", "/", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "/", " "],
+                    ["/", " ", " "]]
+            for i in range(max(len(str(lb)), len(str(hb)))):
+                curr = [[str(hb)[i] if i < len(str(hb)) else " "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [str(lb)[i] if i < len(str(lb)) else " "]]
+                int_ppr[:] = connect(int_ppr[:], curr[:])[:]
+            x = p.npprint()
+            r = [" " for i in x[0]]
+            dx = [[" ", " "],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "],
+                ["d", "x"],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "]]
+            int_ppr[:] = connect(int_ppr[:], [r] + x + [r])[:]
+            int_ppr[:] = connect(int_ppr[:], dx[:])[:]
+            string = strpprint(int_ppr)[:]
+            return result, string, lb, hb
+        except:
+            continue
+
+rand_prop_generators = [rand_pfd_prop, 
+                        rand_rat_prop,
+                        rand_int_part_i,
+                        rand_int_part_ii,
+                        rand_sqrt_type_i,
+                        rand_sqrt_type_ii,
+                        rand_sqrt_type_iii,
+                        rand_sqrt_iv,
+                        rand_sqrt_v,
+                        rand_sqrt_vi,
+                        rand_rat_tan,
+                        rand_rat_cos,
+                        rand_trig_i,
+                        rand_poly_i,]
