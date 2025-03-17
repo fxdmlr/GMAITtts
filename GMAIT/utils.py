@@ -4326,6 +4326,14 @@ def solve_first_deg_ode_sys(equations, init_conds, target, n=10):
     return y_array[:]
 def inv_laplace_tr_rat(numerator, denominator, t):
     roots = denominator.roots()
+    lead_coeff = denominator.coeffs[-1]
+    if denominator.coeffs[:] == [0 for i in denominator.coeffs[:]]:
+        raise Exception(ValueError, "Denominator is zero.")
+    i = -1
+    while lead_coeff == 0:
+        i -= 1
+        lead_coeff = denominator.coeffs[i]
+
     mod_roots = []
     while len(roots) > 1:
         r_arr = [roots[0]]
@@ -4345,10 +4353,10 @@ def inv_laplace_tr_rat(numerator, denominator, t):
             other_terms = mroots[:i] + mroots[i+1:]
         else:
             other_terms = mroots[:i]
-        p1 = poly([1])
+        p1 = poly([lead_coeff])
         for j in range(len(other_terms)):
             p1 *= poly([-other_terms[j][0], 1]) ** other_terms[j][1]
-            
+        
         root, power = mroots[i]
         new_f = Prod([Div([numerator, p1]), Comp([poly([0, t]), exp()])])
         r = (1 / math.factorial(power - 1)) * ndiff(power - 1, new_f)(root)
@@ -4415,6 +4423,7 @@ def solve_ndeg_ode_sys(equations, rhs, init_conds, t):
     functions = [inv_laplace_tr_rat(i.arr[0], i.arr[1], t) for i in ans]
     
     return functions[:]
+
 def solve_ndeg_ode_sys_func(equations, rhs, init_conds):
     return lambda t : solve_ndeg_ode_sys(equations, rhs, init_conds, t)
 
