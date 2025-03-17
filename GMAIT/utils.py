@@ -35,6 +35,8 @@ def sdot(arr1, arr2):
     return s
 
 def sgn(x):
+    if isinstance(x, complex):
+        return 1
     return x >= 0 if not callable(x) else x() >= 0
 
 def gcd(a, b):
@@ -75,11 +77,14 @@ def det(array):
                 if isinstance(array[i][j], rational):
                     array[i][j] = float(array[i][j]) 
         for i in range(len(array)):
-            a.append(array[0][i] * det(minor(array, [0, i])) * (-1)**(i))
+            k = array[0][i] * det(minor(array, [0, i])) * (-1)**(i)
+            a.append(k.simplify() if hasattr(k, 'simplify') else k)
         
         z = a[0]
+        
         for i in range(1, len(a)):
             z+=a[i]
+        
         return z
 
 def numericIntegration(function, c, d, dx=0.0001):
@@ -530,6 +535,7 @@ class AlgebraicReal:
         return AlgebraicReal(arr[:]).simplify()
     
         
+        
 class poly:
     def __init__(self, coeffs, variable_type=0):
         self.coeffs = coeffs[:]
@@ -547,8 +553,10 @@ class poly:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        s = 0
-        for i in range(self.deg + 1):
+        if len(self.coeffs) == 0:
+            return 0
+        s = self.coeffs[0]
+        for i in range(1, self.deg + 1):
             s += self.coeffs[i] * x ** i
         
         return s
@@ -697,6 +705,7 @@ class poly:
             return poly(res_arr[:])
     
     def __mul__(self, other):
+        
         if isinstance(other, (int, float)):
             x = [other * i for i in self.coeffs[:]]
             return poly(x)
@@ -708,6 +717,9 @@ class poly:
                     arr[i + j] += self.coeffs[i] * other.coeffs[j]
             
             return poly(arr[:])
+        
+        elif isinstance(other, (Div, Prod, Sum)):
+            return other * self
     
     def __pow__(self, other):
         if isinstance(other, int):
@@ -721,7 +733,6 @@ class poly:
         return self.coeffs[:] == other.coeffs[:]
     
     def __truediv__(self, other):
-        
         def normalize(poly):
             while poly and poly[-1] == 0:
                 poly.pop()
@@ -807,6 +818,7 @@ class poly:
 
     def __round__(self, ndigits = 3):
         return poly([round(i, ndigits=ndigits) for i in self.coeffs])
+
     
     def diff(self):
         array = []
@@ -843,16 +855,25 @@ class poly:
         n = self.deg
         return (1/self.coeffs[-1])*((-1)**(n*(n-1)/2)) * self.resultant(self.diff())
     
-    def roots(self):
+    def roots(self, prevs=[]):
+        zeros = 0
+        i = 0
+        while self.coeffs[i] == 0 and i < len(self.coeffs):
+            zeros += 1
+            i += 1
+        if zeros > 0:
+            new_p = poly(self.coeffs[zeros:])
+            return new_p.roots(prevs=[0 for i in range(zeros)])
+        
         if self.deg == 1:
-            return rational([-self.coeffs[0], self.coeffs[1]]).simplify()
+            return [-self.coeffs[0] / self.coeffs[1]] + prevs[:]
         
         if self.deg == 2:
             a = self.coeffs[2]
             b = self.coeffs[1]
             c = self.coeffs[0]
             d = b**2 - 4*a*c
-            return [(-b + cmath.sqrt(d))/(2*a), (-b - cmath.sqrt(d))/(2*a)]
+            return [(-b + cmath.sqrt(d))/(2*a), (-b - cmath.sqrt(d))/(2*a)] + prevs[:]
         
         if self.deg == 3:
             a = self.coeffs[3]
@@ -866,7 +887,14 @@ class poly:
             r1 = (-1/(3*a)) * (b + C + d0/C)
             r2, r3 = (self / poly([-r1, 1])).roots()
             
-            return [r1, r2, r3]
+            return [r1, r2, r3] + prevs[:]
+        else:
+            guess = complex(0, 0)
+            max_iter = 100
+            current_root = poly.newtonsmethod(self, guess, max_iter)
+            new_poly = self / poly([-current_root, 1])
+            return new_poly.roots(prevs=prevs[:]+[current_root])
+            
             
     
     __rmul__ = __mul__
@@ -919,12 +947,17 @@ class poly:
         x_ig = start
         for i in range(max_iter):
             x_ig = x_i
+            
             x_i -= pl(x_i) / pl.diff()(x_i)
-            x_i = round(x_i, ndigits=10)
+            if not isinstance(x_i, complex) : 
+                x_i = round(x_i, ndigits=10)
+            else:
+                x_i = complex(round(x_i.real, ndigits=10), round(x_i.imag, ndigits=10))
             if x_i == x_ig:
                 break
         
         return x_i
+
 
 class PowSeries:
     def __init__(self, c_n, name=None):
@@ -1033,6 +1066,10 @@ class matrix:
         self.name = name
         self.array = array[:]
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
+    
+    def identity(self):
+        arr = [[1 if i == j else 0 for j in range(len(self.array[i]))] for i in range(len(self.array))]
+        return matrix(arr)
     def __str__(self):
         '''
         new_arr = []
@@ -1117,7 +1154,7 @@ class matrix:
         if isinstance(other, (int, float, poly)):
             x = self.array[:]
             for i in range(len(x)):
-                for j in range(x[i]):
+                for j in range(len(x[i])):
                     x[i][j] = other * x[i][j]
 
             return matrix(x)
@@ -1136,11 +1173,25 @@ class matrix:
                 
                 return matrix(arr)
     
+    def __neg__(self):
+        return self * (-1)
+    
+    def __sub__(self, other):
+        return self + (-other)
+    
     def det(self):
         return det(self.array[:])
     
     def __eq__(self, other):
         return self.array[:] == other.array[:]
+    
+    def __pow__(self, other):
+        if isinstance(other, int):
+            mat = matrix([[1 if i == j else 0 for j in range(len(self.array[i]))] for i in range(len(self.array))])
+            for i in range(other):
+                mat *= self
+            
+            return mat
     
     def charpoly(self):
         new_arr = [[j for j in i] for i in self.array[:]]
@@ -1151,6 +1202,16 @@ class matrix:
     
     def eigenvalue(self):
         return [i for i in self.charpoly().roots()[:]]
+    
+    def transpose(self):
+        new_array = []
+        for i in range(len(self.array[0])):
+            curr = []
+            for j in range(len(self.array[:])):
+                curr.append(self.array[j][i])
+            new_array += [curr[:]]
+        
+        return matrix(new_array[:])
     
     __rmul__ = __mul__
     __radd__ = __add__
@@ -1188,6 +1249,7 @@ class matrix:
             arr.append(sub)
         
         return matrix(arr)
+
 class vect:
     def __init__(self, array):
         self.array = array[:]
@@ -1195,6 +1257,8 @@ class vect:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
         
     def __add__(self, other):
+        if isinstance(other, (int, float)):
+            return vect([i + other for i in self.array[:]])
         return vect([self.array[i] + other.array[i] for i in range(self.dim)])
     
     def __mul__(self, other):
@@ -1225,6 +1289,10 @@ class vect:
     
     def cross(self, other):
         return vect(cross(self.array[:], other.array[:]))
+    
+    def diff(self):
+        return vect([i.diff() if hasattr(i, 'diff') else 0 for i in self.array[:]])
+    
     
     __radd__ = __add__
     __rmul__ = __mul__
@@ -1689,7 +1757,10 @@ class Sum:
             
             
             arr.append(i)
-            
+        '''
+        if len(arr) == 0:
+            return 0
+        '''
         if len(arr) == 1:
             #return type(array[0]).__new__(**array[0].user_args) 
             return arr[0]
@@ -1787,8 +1858,13 @@ class Sum:
         return array
     
     def diff(self):
-        return Sum([i.diff() for i in self.arr[:]]) 
-
+        return Sum([i.diff() if hasattr(i, 'diff') else 0 for i in self.arr[:]]) 
+    
+    def __str__(self):
+        return strpprint(self.npprint())
+    
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class Prod:
     def __new__(cls, array):
@@ -1800,6 +1876,7 @@ class Prod:
         if len(arr) == 1:
             #return type(array[0]).__new__(**array[0].user_args) 
             return arr[0]
+        
         
         if 0 in arr or poly([0]) in arr:
             return 0
@@ -1907,8 +1984,13 @@ class Prod:
         return array
     
     def diff(self):
-        return Sum([Prod(self.arr[:i] + [self.arr[i].diff()] + self.arr[i+1:]) for i in range(len(self.arr[:]))])    
-
+        return Sum([Prod(self.arr[:i] + [self.arr[i].diff() if hasattr(self.arr[i], "diff") else 0] + self.arr[i+1:]) for i in range(len(self.arr[:]))])
+    
+    def __str__(self):
+        return strpprint(self.npprint())    
+    
+    __rmul__ = __mul__
+    __radd__ = __add__
 class Comp:
     def __init__(self, array):
         self.arr = array[:]
@@ -1960,9 +2042,12 @@ class Comp:
             if i == 0:
                 array.append(self.arr[i].diff())
             else:
-                array.append(Comp(self.arr[:i] + [self.arr[i].diff()]))
+                array.append(Comp(self.arr[:i] + [self.arr[i].diff() if hasattr(self.arr[i], 'diff') else 0]))
         
         return Prod(array[:])
+    
+    def __str__(self):
+        return strpprint(self.npprint())
 
 class Div:
     def __init__(self, array):
@@ -1992,10 +2077,18 @@ class Div:
             return Div([Sum([Prod([self.arr[0], other.arr[1]]), Prod([self.arr[1], other.arr[0]])]), Prod([self.arr[1], other.arr[1]])])
     
     def __mul__(self, other):
+        if isinstance(other, (int, float)):
+            return Div([self.arr[0] * other, self.arr[1]])
         if not isinstance(other, Div):
             return Div([Prod([self.arr[0], other]), self.arr[1]])
         else:
             return Div([Prod([self.arr[0], other.arr[0]]), Prod([self.arr[1], other.arr[1]])])
+    
+    def __truediv__(self, other):
+        return Div([self.arr[0], Prod([self.arr[1], other])])
+    
+    def inv(self):
+        return Div([self.arr[1], self.arr[0]])
     
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         z1 = self.arr[0].npprint(prev_ppr=prev_ppr[:])[:] if hasattr(self.arr[0], 'npprint') else poly([self.arr[0]]).npprint(prev_ppr=prev_ppr[:])[:]
@@ -2020,9 +2113,18 @@ class Div:
         return new_ppr[:]
     
     def diff(self):
-        n1 = Sum([Prod([self.arr[0].diff(), self.arr[1]]), Prod([self.arr[1].diff(), self.arr[0], -1])])
+        n1 = Sum([Prod([self.arr[0].diff() if hasattr(self.arr[0], 'diff') else 0, self.arr[1]]), Prod([self.arr[1].diff()if hasattr(self.arr[1], 'diff') else 0, self.arr[0], -1])])
         n2 = Prod([self.arr[1], self.arr[1]])
         return Div([n1, n2])
+    
+    def __str__(self):
+        return strpprint(self.npprint())
+    
+    def __neg__(self):
+        return Div([-self.arr[0], self.arr[1]])
+    
+    def __sub__(self, other):
+        return self + (-other)
 
 
 class sin:
@@ -2458,7 +2560,7 @@ class log:
 
 class exp:
     def __init__(self):
-        self.function = math.exp
+        self.function = cmath.exp
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2495,6 +2597,38 @@ class exp:
     
     def diff(self):
         return exp()
+
+class Symbol:
+    def __init__(self, string):
+        self.string = string
+        
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        return [[" " for j in range(len(self.string))] for i in range(3)] + [[i for i in self.string]] + [[" " for j in range(len(self.string))] for i in range(3)]
+    
+    def __call__(self, x):
+        return x
+    
+    def __add__(self, other):
+        if isinstance(other, (int, poly, float)):
+            return Sum([self, other])
+        return Sum([self, other])
+    
+    def __mul__(self, other):
+        if isinstance(other, (int, poly, float)):
+            return Prod([self, other])
+        return Prod([self, other])
+    
+    def __eq__(self, other):
+        if isinstance(other, Symbol):
+            return self.string == other.string
+        return False
+    
+    def diff(self):
+        return 1
+    
+    __rmul__ = __mul__
+    __radd__ = __add__
+    
 asinh = Comp([Sum([poly([0, 1]), Comp([poly([1, 0, 1]), sqrt()])]), log()])
 acosh = Comp([Sum([poly([0, 1]), Comp([poly([-1, 0, 1]), sqrt()])]), log()])
 atanh = Sum([Comp([Comp([poly([1, 1]), sqrt()]), log()]), Prod([-1, Comp([Comp([poly([1, -1]), sqrt()]), log()])])])
@@ -4139,3 +4273,148 @@ rand_prop_generators = [rand_pfd_prop,
                         rand_rat_cos,
                         rand_trig_i,
                         rand_poly_i,]
+def ndiff(n, function):
+    if n == 0:
+        return function
+    if n == 1:
+        return function.diff() if hasattr(function, 'diff') else 0
+    else:
+        return ndiff(n - 1, function.diff() if hasattr(function, 'diff') else 0)
+
+def solve_first_deg_ode_sys(equations, init_conds, target, n=10):
+    '''
+    equations = [
+        f1(x, y1, y2, ..., ym),
+        f2(x, y1, y2, ..., ym),
+        .
+        .
+        .
+        fm(x, y1, y2, ..., ym)
+    ]
+    init_conds = [y1(0), y2(0), ..., ym(0)]
+    
+    is equivalent to :
+    y1' = f1(x, y1, y2, ..., ym)
+    y2' = f2(x, y1, y2, ..., ym)
+    .
+    .
+    .
+    ym' = fm(x, y1, y2, ..., ym)
+    '''
+    
+    y_array = init_conds[:]
+    func_array = [j for j in equations]
+    h = target / n
+    x = 0
+    i = 0
+    while i <= n:
+        inp_array_k1 = [x] + [i for i in y_array]
+        array_k1 = [h * f(*inp_array_k1) for f in func_array]
+        inp_array_k2 = [x + h/2] + [y_array[i] + array_k1[i]/2 for i in range(len(y_array))]
+        array_k2 = [h * f(*inp_array_k2) for f in func_array]
+        inp_array_k3 = [x + h/2] + [y_array[i] + array_k2[i]/2 for i in range(len(y_array))]
+        array_k3 = [h * f(*inp_array_k3) for f in func_array]
+        inp_array_k4 = [x + h] + [y_array[i] + array_k3[i] for i in range(len(y_array))]
+        array_k4 = [h * f(*inp_array_k4) for f in func_array]
+        
+        new_y = [y_array[i] + (array_k1[i] + 2*array_k2[i] + 2*array_k3[i] + array_k4[i]) / 6  for i in range(len(y_array))]
+        y_array[:] = new_y[:]
+        
+        i += 1
+        x += h
+    
+    return y_array[:]
+def inv_laplace_tr_rat(numerator, denominator, t):
+    roots = denominator.roots()
+    mod_roots = []
+    while len(roots) > 1:
+        r_arr = [roots[0]]
+        for i in range(1, len(roots)):
+            if abs(roots[i] - roots[0]) < 0.01:
+                r_arr.append(roots[i])
+        
+        mod_roots.append((sum(r_arr) / len(r_arr), len(r_arr)))
+        for i in r_arr:
+            roots.remove(i)
+    
+    mroots = mod_roots[:] + [(roots[0], 1)] if len(roots) > 0 else mod_roots[:]
+    
+    s = complex(0, 0)
+    for i in range(len(mroots)):
+        if i < len(mroots) - 1:
+            other_terms = mroots[:i] + mroots[i+1:]
+        else:
+            other_terms = mroots[:i]
+        p1 = poly([1])
+        for j in range(len(other_terms)):
+            p1 *= poly([-other_terms[j][0], 1]) ** other_terms[j][1]
+            
+        root, power = mroots[i]
+        new_f = Prod([Div([numerator, p1]), Comp([poly([0, t]), exp()])])
+        r = (1 / math.factorial(power - 1)) * ndiff(power - 1, new_f)(root)
+        s += r
+    return s  
+    
+def laplace_tr(f):
+    
+    if isinstance(f, poly):
+        s = []
+        for i in range(len(f.coeffs)):
+            s.append(Div([f.coeffs[i], poly([0 for j in range(f.deg + 1)] + [1])]))
+        
+        return Sum(s)
+    
+    elif isinstance(f, sin):
+        return Div([poly([0, 1]), poly([1, 0, 1])]) 
+    
+    elif isinstance(f, cos):
+        return Div([1, poly([1, 0, 1])])  
+    
+    elif isinstance(f, exp):
+        return Div([1, poly([-1, 1])])
+    
+def solve_ndeg_ode_sys(equations, rhs, init_conds, t):
+    '''
+    equations=[
+        [p11(D), p12(D), ..., p1m(D)],
+        [p21(D), p22(D), ..., p2m(D)],
+        .
+        .
+        .
+        [pm1(D), pm2(D), ..., pmm(D)]
+    ]
+    init_conds = [
+        [y1(0), Dy1(0), ..., D^(m-1) y1(0)],
+        [y2(0), Dy2(0), ..., D^(m-1) y2(0)],
+        .
+        .
+        .
+        [ym(0), Dym(0), ..., D^(m-1) ym(0)]
+    ]
+    rhs = [n1, n2, ..., nm]
+    with n_i as real numbers.
+    is equivalent to:
+    p11(D)y1 + p12(D)y2 + p13(D)y3 + ... + p1m(D)ym = n1
+    p21(D)y1 + p22(D)y2 + p23(D)y3 + ... + p2m(D)ym = n2
+    .
+    .
+    .
+    pm1(D)y1 + pm2(D)y2 + pm3(D)y3 + ... + pmm(D)ym = nm     
+    '''
+    laplacian_matrix = matrix(equations[:])
+    mod_rhs = []
+    for i in range(len(rhs)):
+        p = poly([0])
+        for j in range(len(equations[0])):
+            for k in range(len(equations[i][j].coeffs)):
+                narr = [init_conds[j][l] for l in range(k)]
+            p += poly(narr[:])
+        mod_rhs.append((Div([rhs[i], poly([0,1])])+p).simplify())
+    
+    ans = [i.simplify() for i in solveLineq(equations, mod_rhs)]
+    functions = [inv_laplace_tr_rat(i.arr[0], i.arr[1], t) for i in ans]
+    
+    return functions[:]
+def solve_ndeg_ode_sys_func(equations, rhs, init_conds):
+    return lambda t : solve_ndeg_ode_sys(equations, rhs, init_conds, t)
+

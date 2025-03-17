@@ -613,3 +613,20 @@ def solvableInt(inpt_dict):
     
     cond = lambda x : abs(x - r) <= abs(moe*r)
     return s, r, lambda x : r if cond(evl.evl(x)) else r+1
+
+def inv_laplace_game(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    mdeg = inpt_dict["mdeg"]
+    trange = inpt_dict["tranges"]
+    moe = inpt_dict["moe"]
+    p2 = utils.poly.rand(random.randint(1, mdeg), coeff_range=nranges[:])
+    p1 = utils.poly.rand(random.randint(0, p2.deg - 1), coeff_range=nranges[:])
+    
+    div_obj = utils.Div([p1, p2])
+    t = random.randint(trange[0], trange[1])
+    inv_lp = utils.inv_laplace_tr_rat(p1, p2, t)
+    cond = lambda x : abs(x - inv_lp) <= abs(moe*inv_lp)
+    s = utils.strpprint(div_obj.npprint()) + "\n\nat t = %d\n"%t
+    return s, inv_lp, lambda x : inv_lp if cond(evl.evl(x)) else inv_lp+1
+
+    
