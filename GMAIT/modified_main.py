@@ -736,9 +736,10 @@ def static(prechoice=None):
         branges = [int(c), int(d)]
         
         max_deg = int(input("Maximum polynomial degree : "))
+        special_mode = int(input("Special functions : 1-Yes 0-No : "))
         moe = float(input("Margin of Error : "))
         os.system("clear")
-        inpt_dict = {"nranges":nranges[:], "tranges":branges, "mdeg":max_deg, "moe":moe}
+        inpt_dict = {"nranges":nranges[:], "tranges":branges, "mdeg":max_deg, "moe":moe, "diffint":special_mode}
         stats = gr.general_runner(gh.inv_laplace_game, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))

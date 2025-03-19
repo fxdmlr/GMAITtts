@@ -4,7 +4,12 @@ import cmath
 import copy
 
 DEFAULT_TAYLOR_N = 1000
-
+def heaviside(t):
+    if t > 0:
+        return 1
+    else:
+        return 0
+    
 def minor(array, pos):
     new_arr = []
     for i in range(len(array)):
@@ -2129,7 +2134,7 @@ class Div:
 
 class sin:
     def __init__(self):
-        self.function = math.sin
+        self.function = cmath.sin
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2169,7 +2174,7 @@ class sin:
 
 class cos:
     def __init__(self):
-        self.function = math.cos
+        self.function = cmath.cos
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2210,7 +2215,7 @@ class cos:
 
 class tan:
     def __init__(self):
-        self.function = math.tan
+        self.function = cmath.tan
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2283,7 +2288,7 @@ class inv:
     
 class sqrt:
     def __init__(self):
-        self.function = math.sqrt
+        self.function = cmath.sqrt
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2322,7 +2327,7 @@ class sqrt:
 
 class asin:
     def __init__(self):
-        self.function = math.asin
+        self.function = cmath.asin
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2362,7 +2367,7 @@ class asin:
 
 class atan:
     def __init__(self):
-        self.function = math.atan
+        self.function = cmath.atan
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2402,7 +2407,7 @@ class atan:
 
 class sinh:
     def __init__(self):
-        self.function = math.sinh
+        self.function = cmath.sinh
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2442,7 +2447,7 @@ class sinh:
 
 class cosh:
     def __init__(self):
-        self.function = math.cosh
+        self.function = cmath.cosh
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2482,7 +2487,7 @@ class cosh:
 
 class tanh:
     def __init__(self):
-        self.function = math.tanh
+        self.function = cmath.tanh
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -2521,7 +2526,7 @@ class tanh:
         return Comp([tanh, poly([1, 0, -1])])
 class log:
     def __init__(self):
-        self.function = math.log
+        self.function = cmath.log
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
@@ -4426,4 +4431,39 @@ def solve_ndeg_ode_sys(equations, rhs, init_conds, t):
 
 def solve_ndeg_ode_sys_func(equations, rhs, init_conds):
     return lambda t : solve_ndeg_ode_sys(equations, rhs, init_conds, t)
+
+def numeric_inverse_laplace_transform(function, t, order=2):
+    k = order-t
+    if k < 0:
+        k = 0
+    return cnint(lambda x : function(x) * cmath.exp(t * x), lambda t:complex(order+1, t),-100 * k -10, 100, dt=0.001) / complex(0, 2*cmath.pi)
+
+def generate_invlaplace_transform_problem(nranges=[-10, 10], max_deg=2, diff_int=0, delay_deg=0):
+    p1 = poly.rand(random.randint(1, max_deg), coeff_range=nranges[:])
+    p2 = poly.rand(random.randint(0, p1.deg-1), coeff_range=nranges[:])
+
+    rat = Div([p2, p1])
+    new_func = rat
+    
+        
+    
+    #fin_func = Prod([delay_arr, new_func])
+    fin_func = new_func
+    if diff_int:
+        p1 = poly.rand(random.randint(1, max_deg), coeff_range=nranges[:])
+        p2 = poly.rand(random.randint(1, max_deg), coeff_range=nranges[:])
+        while p2.deg == p1.deg:
+            p2 = poly.rand(random.randint(1, max_deg), coeff_range=nranges[:])
+        fin_func = Div([p1, p2])
+        alg_diff_arr = [log(), atan()]
+        z = alg_diff_arr[random.randint(0, len(alg_diff_arr) - 1)]
+        new_func = Comp([fin_func, z])
+        fin_func = new_func
+        inv_l = lambda t : numeric_inverse_laplace_transform(fin_func, t, order=1)
+        return inv_l, fin_func
+    
+    else:
+        inv_l_obj = lambda t : inv_laplace_tr_rat(p2, p1, t)
+        
+        return inv_l_obj, fin_func
 
