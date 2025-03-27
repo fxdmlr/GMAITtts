@@ -628,4 +628,29 @@ def inv_laplace_game(inpt_dict):
     s = utils.strpprint(sf.npprint()) + "\nEvaluate inverse Laplace transform at t = "+str(t)+"\n>"
     return s, inv_lp, lambda x : inv_lp if cond(evl.evl(x)) else inv_lp+1
 
+def root_game_integer(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    root_ranges = inpt_dict["rrange"]
+    n = random.randint(root_ranges[0], root_ranges[1])
+    mod_nrange = [int(nranges[0]**(1/n)) + 1, int(nranges[1]**(1/n))]
+    res = random.randint(mod_nrange[0], mod_nrange[1])
+    s = res ** n
+    string = str(utils.AlgebraicReal([utils.rational([0, 1]), (1, s, n)]))
+    
+    return string, res, lambda x: int(x)
+
+def numerical_analysis(inpt_dict):
+    num_ranges = inpt_dict["numranges"]
+    rat_ranges = inpt_dict["ratranges"]
+    fun_ranges = inpt_dict["funranges"]
+    inp_ndigit = inpt_dict["inpndigit"]
+    var_number = inpt_dict["varnumber"]
+    pparts_num = inpt_dict["ppartsnum"]
+    pure_arith = inpt_dict["purearith"]
+    moe = inpt_dict["moe"]
+    
+    n, s = utils.generate_mult_arithm_item(num_ranges=num_ranges[:], rat_range=rat_ranges[:], number_of_parts=pparts_num, number_of_variables=var_number, pure_arithm=pure_arith, fun_ranges=fun_ranges[:], inp_ndigits=inp_ndigit)
+    cond = lambda x : abs(x - n) <= abs(moe*n)
+    return s+"\n", n, lambda x : n if cond(float(x)) else n+1
+
     

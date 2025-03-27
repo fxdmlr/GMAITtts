@@ -8,7 +8,7 @@ def static(prechoice=None):
         choice = prechoice
     print("\n")
     if prechoice is None:
-        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n42-IntegralSolve\n43-InverseLaplace\n"))
+        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n42-IntegralSolve\n43-InverseLaplace\n44-rootGameInteger\n45-NumericalAnalysis\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
         rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : ")) 
@@ -741,6 +741,44 @@ def static(prechoice=None):
         os.system("clear")
         inpt_dict = {"nranges":nranges[:], "tranges":branges, "mdeg":max_deg, "moe":moe, "diffint":special_mode}
         stats = gr.general_runner(gh.inv_laplace_game, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    if choice == 44:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of numbers whose nth root is to be found (seperated by blank space): ").split(" ")
+        nranges = [int(a), int(b)]
+        c, d = input("Range of n (seperated by blank space): ").split(" ")
+        rranges = [int(c), int(d)]
+        inpt_dict = {"nranges":nranges, "rrange":rranges}
+        stats = gr.general_runner(gh.root_game_integer, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    if choice == 45:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        a, b = input("Range of numbers (seperated by blank space): ").split(" ")
+        num_ranges = [int(a), int(b)]
+        c, d = input("Range of rational numbers (seperated by blank space): ").split(" ")
+        rat_ranges = [int(c), int(d)]
+        
+        var_num = int(input("number of variables (max 3): "))
+        ppart_num = int(input("number of parts (min 1) : "))
+        pure_arith = int(input("Purely arithmetic ? \n1-Yes\n0-No\n"))
+        fun_ranges = [0, 1]
+        inp_ndigit = 1
+        moe = 0
+        if not pure_arith:
+            c, d = input("Range of function input numbers (seperated by blank space): ").split(" ")
+            fun_ranges = [int(c), int(d)]
+            
+            inp_ndigit = int(input("Input digits after floating point : "))
+            moe = float(input("Margin of error : "))
+            
+        inpt_dict = {"numranges" : num_ranges[:], "ratranges":rat_ranges[:], "funranges":fun_ranges[:], "ppartsnum":ppart_num, "varnumber":var_num, "purearith":pure_arith, "inpndigit":inp_ndigit, "moe":moe}
+        stats = gr.general_runner(gh.numerical_analysis, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
         print("Time spent per item : ", round(stats[2]))

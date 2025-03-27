@@ -153,6 +153,12 @@ class integer:
         self.n = n
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
+    def pprint(self):
+        a  = [[" " for i in str(self.n)], [i for i in str(self.n)], [" " for i in str(self.n)]]
+        po = [[" "], ["("], [" "]]
+        pc = [[" "], [")"], [" "]]
+        return a[:]
+    
     def prime(self):
         return integer.isprime(self.n)
     
@@ -254,12 +260,16 @@ class integer:
     
     @staticmethod
     def rand(nrange=[1, 10]):
-        return random.randint(nrange[0], nrange[1])
+        return integer(random.randint(nrange[0], nrange[1]))
         
 class rational:
     def __init__(self, num):
         #num = [p, q] -> number = p / q
         self.num = num[:]
+        try:
+            self.n = self.num[0] / self.num[1]
+        except:
+            self.n = 1
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __str__(self):
@@ -282,8 +292,9 @@ class rational:
             lines = [[str12], ["".join(["-" for i in range(mlen)])], [str22]]
         else:
             lines = [[" " for i in range(len(str1))], [str1], [" " for i in range(len(str1))]]
-        
-        return lines
+        po = [[" "], ["("], [" "]]
+        pc = [[" "], [")"], [" "]]
+        return lines[:]
         
     
     def simplify(self):
@@ -1398,6 +1409,9 @@ class polymvar:
         x^i y^j z^k 
         '''
         self.array = array[:]
+        self.x_ppr = [[" "], ["x"] , [" "]]
+        self.y_ppr = [[" "], ["y"] , [" "]]
+        self.z_ppr = [[" "], ["z"] , [" "]]
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
 
     def __call__(self, x, y, z):
@@ -1481,31 +1495,38 @@ class polymvar:
     def pprint(self):
         new_array = self.array[:]
         lines = [[], [], []]
+        first_term = True
         for i in range(len(new_array)):
             for j in range(len(new_array)):
                 for k in range(len(new_array)):
             
                     temp_lines1 = [[" "], ["+" if sgn(new_array[i][j][k]) else "-"], [" "]]
+                    if first_term:
+                        temp_lines1 = [[" "], [" " if sgn(new_array[i][j][k]) else "-"], [" "]]
                     if new_array[i][j][k] == 0:
                         continue
+                    first_term = False
                     temp_lines2 = [[], [], []]
-                    sarr = [[" " for l in range(len(str(abs(new_array[i][j][k]))))], [l for l in str(abs(new_array[i][j][k]))], [" " for l in range(len(str(abs(new_array[i][j][k]))))]]
+                    if abs(new_array[i][j][k]) != 1:
+                        sarr = [[" " for l in range(len(str(abs(new_array[i][j][k]))))], [l for l in str(abs(new_array[i][j][k]))], [" " for l in range(len(str(abs(new_array[i][j][k]))))]]
+                    else:
+                        sarr = [[], [], []]
                     #nsubarr = connect(sub_arr[:], [[" "] + [l for l in str(i)] + [" "] + [l for l in str(j)] + [" "] + [l for l in str(k)], ["x"] + [" " for l in range(len(str(i)))] + ["y"] + [" " for l in range(len(str(j)))] + ["z"] + [" " for l in range(len(str(k)))], [" " for l in range(3 + len(str(i)) + len(str(j)) + len(str(k)))]])
                     
                     if i != 0:
                         z = [[" "] + [l for l in str(i)], ["x"] + [" " for l in range(len(str(i)))], [" " for l in range(1 + len(str(i)))]]
                         if i == 1:
-                            z = [[" "], ["x"] , [" "]]
+                            z = self.x_ppr[:]
                         sarr = connect(sarr, z)[:]
                     if j != 0:
                         z = [[" "] + [l for l in str(j)], ["y"] + [" " for l in range(len(str(j)))], [" " for l in range(1 + len(str(j)))]]
                         if j == 1:
-                            z = [[" "], ["y"] , [" "]]
+                            z = self.y_ppr[:]
                         sarr = connect(sarr, z)[:]
                     if k != 0:
                         z = [[" "] + [l for l in str(k)], ["z"] + [" " for l in range(len(str(k)))], [" " for l in range(1 + len(str(k)))]]
                         if k == 1:
-                            z = [[" "], ["z"] , [" "]]
+                            z = self.z_ppr[:]
                         sarr = connect(sarr, z)[:]                    
                     lines = connect(lines[:], connect(temp_lines1[:], sarr[:]))
         
@@ -2638,7 +2659,17 @@ asinh = Comp([Sum([poly([0, 1]), Comp([poly([1, 0, 1]), sqrt()])]), log()])
 acosh = Comp([Sum([poly([0, 1]), Comp([poly([-1, 0, 1]), sqrt()])]), log()])
 atanh = Sum([Comp([Comp([poly([1, 1]), sqrt()]), log()]), Prod([-1, Comp([Comp([poly([1, -1]), sqrt()]), log()])])])
 
-
+class DummyFunc:
+    def __init__(self, function, string, x):
+        self.function = function
+        self.n = function(x)
+        self.string = string[:]
+        self.x = x
+    
+    def pprint(self):
+        s = self.string + "(" + str(self.x) + ")"
+        return [[" " for i in s], [i for i in s], [" " for i in s]]
+    
 
 def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, max_prod=1, max_deg=2):
     function_array = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), asin(), atan(), atan(), asin(), asin(), sqrt(), sqrt(), sqrt(), log(), log(), log()]
@@ -4466,4 +4497,42 @@ def generate_invlaplace_transform_problem(nranges=[-10, 10], max_deg=2, diff_int
         inv_l_obj = lambda t : inv_laplace_tr_rat(p2, p1, t)
         
         return inv_l_obj, fin_func
+
+def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of_parts = 1, number_of_variables=3, pure_arithm = True, fun_ranges = [0, 1], inp_ndigits=1):
+    poly_arr = []
+    arr = [[[0 for k in range(3)] for j in range(3)] for i in range(3)]
+    arr[1][1][1] = 1
+    for i in range(number_of_parts):
+        empty_ppr = [[], [], []]
+        ppr_arr = [empty_ppr[:] for j in range(3)]
+        sub_arr_n = [1 for j in range(3)]
+        rand_arr = [(integer.rand, num_ranges), (rational.rand, rat_range)]
+        if not pure_arithm:
+            
+            func_arr = [(math.tan, "tan"), (math.sin, "sin"), (math.cos, "cos"), (math.log, "log"), (math.exp, "exp")]
+            f, string = random.choice(func_arr)
+            rand_arr.append((lambda nranges: DummyFunc(f, string, random.randint(nranges[0], nranges[1]) + round(random.random(), ndigits=inp_ndigits)), fun_ranges[:]))
+            
+        for j in range(number_of_variables):
+            ind = random.randint(0, len(rand_arr) - 1)
+            a, b = rand_arr[ind]
+            k = a(b[:])
+            #print(k)
+            sub_arr_n[j] = k.n
+            ppr_arr[j] = connect(k.pprint()[:], [[" "], ["*"], [" "]]) if j < number_of_variables - 1 else k.pprint()[:]
+        
+        p = polymvar(arr[:])
+        p.x_ppr, p.y_ppr, p.z_ppr = ppr_arr[0][:], ppr_arr[1][:], ppr_arr[2][:]  
+        poly_arr.append([p, sub_arr_n[:]])
+    
+    ans = 0
+    ppr = [[], [], []]
+    for p, s in poly_arr:
+        ans += p(*s[:])
+        if ppr != [[], [], []]:
+            ppr = connect(ppr[:], connect([[" "], ["+"], [" "]], p.pprint()[:]))[:]
+        else:
+            ppr = connect(ppr[:], p.pprint()[:])[:]
+    
+    return ans, strpprint(ppr[:])
 

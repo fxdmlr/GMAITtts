@@ -164,15 +164,20 @@ def connect_points_straight(array, p1, p2):
             char_arr.append([y, x])
             curr_x += x_step
             prev_x = x
-        x, y = int(curr_x), int(round(slope * curr_x + h))
-        char_arr.append([y, x])
+        #x, y = int(curr_x), int(round(slope * curr_x + h))
+        #char_arr.append([y, x])
         c = "\\"
         if slope < 0:
             c = "/"
         if slope == 0:
             c = "-"
+        k = 0
         for i, j in char_arr:
+            if k != 0 and j == char_arr[k][1]:
+                #c = "-"
+                pass
             new_array[int(i)][int(j)] = c
+            k += 1
         
         for i in range(int(abs(x - p2[1]))):
                 new_array[y][int(x+x_step)] = "-"
@@ -218,7 +223,8 @@ def draw_circuit_graph(graph_matrix):
     state = 0
     for i, j in couples:
         narr = connect_points_straight(grid[:], i, j)
-        print("\n")
+        #print("\n")
         grid = narr[:]
     
     return grid
+
