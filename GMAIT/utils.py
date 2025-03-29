@@ -149,7 +149,7 @@ def semiNIntegrate(function, lowerbound, h=0.0001):
     return simpInt(lambda x : function(lowerbound - 1 + 1/(1-x)) / ((1-x)**2) if x != 1 else 0, 0, 1, h=h)
 
 class integer:
-    def __init__(self, n):
+    def __init__(self, n, ndigits=4):
         self.n = n
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
@@ -259,17 +259,19 @@ class integer:
         return int(n * m / integer.gcd(n, m))
     
     @staticmethod
-    def rand(nrange=[1, 10]):
+    def rand(nrange=[1, 10], ndigits=4):
         return integer(random.randint(nrange[0], nrange[1]))
         
 class rational:
-    def __init__(self, num):
+    def __init__(self, num, ndigits=4):
         #num = [p, q] -> number = p / q
         self.num = num[:]
         try:
             self.n = self.num[0] / self.num[1]
         except:
             self.n = 1
+        
+        self.n = int(self.n * 10 ** ndigits) / (10 ** ndigits)
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __str__(self):
@@ -369,8 +371,8 @@ class rational:
     __rmul__ = __mul__
     __radd__ = __add__
     @staticmethod
-    def rand(nrange=[1000, 10000]):
-        return rational([random.randint(nrange[0], nrange[1]), random.randint(nrange[0], nrange[1])])
+    def rand(nrange=[1000, 10000], ndigits=4):
+        return rational([random.randint(nrange[0], nrange[1]), random.randint(nrange[0], nrange[1])], ndigits=ndigits)
     @staticmethod
     def convRat(num, digits_after):
         n = digits_after
@@ -2660,11 +2662,12 @@ acosh = Comp([Sum([poly([0, 1]), Comp([poly([-1, 0, 1]), sqrt()])]), log()])
 atanh = Sum([Comp([Comp([poly([1, 1]), sqrt()]), log()]), Prod([-1, Comp([Comp([poly([1, -1]), sqrt()]), log()])])])
 
 class DummyFunc:
-    def __init__(self, function, string, x):
+    def __init__(self, function, string, x, ndigits=4):
         self.function = function
-        self.n = function(x)
+        self.n = int(function(x) * 10 ** ndigits) / (10 ** ndigits)
         self.string = string[:]
         self.x = x
+        
     
     def pprint(self):
         s = self.string + "(" + str(self.x) + ")"
@@ -4498,7 +4501,7 @@ def generate_invlaplace_transform_problem(nranges=[-10, 10], max_deg=2, diff_int
         
         return inv_l_obj, fin_func
 
-def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of_parts = 1, number_of_variables=3, pure_arithm = True, fun_ranges = [0, 1], inp_ndigits=1):
+def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of_parts = 1, number_of_variables=3, pure_arithm = True, fun_ranges = [0, 1], inp_ndigits=1, div_ndigits=4, func_ndigits=4):
     poly_arr = []
     arr = [[[0 for k in range(3)] for j in range(3)] for i in range(3)]
     arr[1][1][1] = 1
@@ -4506,12 +4509,12 @@ def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of
         empty_ppr = [[], [], []]
         ppr_arr = [empty_ppr[:] for j in range(3)]
         sub_arr_n = [1 for j in range(3)]
-        rand_arr = [(integer.rand, num_ranges), (rational.rand, rat_range)]
+        rand_arr = [(integer.rand, num_ranges), (lambda arr : rational.rand(arr[:], ndigits=div_ndigits), rat_range)]
         if not pure_arithm:
             
             func_arr = [(math.tan, "tan"), (math.sin, "sin"), (math.cos, "cos"), (math.log, "log"), (math.exp, "exp")]
             f, string = random.choice(func_arr)
-            rand_arr.append((lambda nranges: DummyFunc(f, string, random.randint(nranges[0], nranges[1]) + round(random.random(), ndigits=inp_ndigits)), fun_ranges[:]))
+            rand_arr.append((lambda nranges: DummyFunc(f, string, random.randint(nranges[0], nranges[1]) + round(random.random(), ndigits=inp_ndigits), ndigits = func_ndigits), fun_ranges[:]))
             
         for j in range(number_of_variables):
             ind = random.randint(0, len(rand_arr) - 1)
@@ -4535,4 +4538,3 @@ def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of
             ppr = connect(ppr[:], p.pprint()[:])[:]
     
     return ans, strpprint(ppr[:])
-
