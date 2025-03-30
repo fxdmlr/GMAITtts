@@ -1,7 +1,7 @@
 import math
 import random
 import cmath
-import copy
+import decimal
 
 DEFAULT_TAYLOR_N = 1000
 def heaviside(t):
@@ -9,7 +9,15 @@ def heaviside(t):
         return 1
     else:
         return 0
-    
+def truncate(f, n):
+    '''Truncates/pads a float f to n decimal places without rounding'''
+    s = '{}'.format(f)
+    if 'e' in s or 'E' in s:
+        return '{0:.{1}f}'.format(f, n)
+    i, p, d = s.partition('.')
+    return float('.'.join([i, (d+'0'*n)[:n]]))
+
+
 def minor(array, pos):
     new_arr = []
     for i in range(len(array)):
@@ -267,11 +275,11 @@ class rational:
         #num = [p, q] -> number = p / q
         self.num = num[:]
         try:
-            self.n = self.num[0] / self.num[1]
+            self.n = self.num[0] / self.num[0]
         except:
             self.n = 1
         
-        self.n = int(self.n * 10 ** ndigits) / (10 ** ndigits)
+        self.n = truncate(self.n, ndigits)
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __str__(self):
@@ -2664,7 +2672,7 @@ atanh = Sum([Comp([Comp([poly([1, 1]), sqrt()]), log()]), Prod([-1, Comp([Comp([
 class DummyFunc:
     def __init__(self, function, string, x, ndigits=4):
         self.function = function
-        self.n = int(function(x) * 10 ** ndigits) / (10 ** ndigits)
+        self.n = truncate(function(x), ndigits)
         self.string = string[:]
         self.x = x
         
@@ -4536,5 +4544,5 @@ def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of
             ppr = connect(ppr[:], connect([[" "], ["+"], [" "]], p.pprint()[:]))[:]
         else:
             ppr = connect(ppr[:], p.pprint()[:])[:]
-    
+        
     return ans, strpprint(ppr[:])
