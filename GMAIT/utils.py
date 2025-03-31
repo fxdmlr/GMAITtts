@@ -275,11 +275,11 @@ class rational:
         #num = [p, q] -> number = p / q
         self.num = num[:]
         try:
-            self.n = self.num[0] / self.num[0]
+            self.n = self.num[0] / self.num[1]
         except:
             self.n = 1
         
-        self.n = truncate(self.n, ndigits)
+        #self.n = truncate(self.n, ndigits)
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __str__(self):
@@ -2672,14 +2672,14 @@ atanh = Sum([Comp([Comp([poly([1, 1]), sqrt()]), log()]), Prod([-1, Comp([Comp([
 class DummyFunc:
     def __init__(self, function, string, x, ndigits=4):
         self.function = function
-        self.n = truncate(function(x), ndigits)
+        self.n = function(x)#truncate(function(x), ndigits)
         self.string = string[:]
         self.x = x
-        
+        s = self.string + "(" + str(self.x) + ")"
+        self.ppr = [[" " for i in s], [i for i in s], [" " for i in s]]
     
     def pprint(self):
-        s = self.string + "(" + str(self.x) + ")"
-        return [[" " for i in s], [i for i in s], [" " for i in s]]
+        return self.ppr[:]
     
 
 def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, max_prod=1, max_deg=2):
@@ -4509,7 +4509,7 @@ def generate_invlaplace_transform_problem(nranges=[-10, 10], max_deg=2, diff_int
         
         return inv_l_obj, fin_func
 
-def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of_parts = 1, number_of_variables=3, pure_arithm = True, fun_ranges = [0, 1], inp_ndigits=1, div_ndigits=4, func_ndigits=4):
+def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of_parts = 1, number_of_variables=3, pure_arithm = True, fun_ranges = [0, 1], inp_ndigits=1, res_ndigits=4):
     poly_arr = []
     arr = [[[0 for k in range(3)] for j in range(3)] for i in range(3)]
     arr[1][1][1] = 1
@@ -4517,12 +4517,11 @@ def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of
         empty_ppr = [[], [], []]
         ppr_arr = [empty_ppr[:] for j in range(3)]
         sub_arr_n = [1 for j in range(3)]
-        rand_arr = [(integer.rand, num_ranges), (lambda arr : rational.rand(arr[:], ndigits=div_ndigits), rat_range)]
+        rand_arr = [(integer.rand, num_ranges), (lambda arr : rational.rand(arr[:]), rat_range)]
         if not pure_arithm:
-            
             func_arr = [(math.tan, "tan"), (math.sin, "sin"), (math.cos, "cos"), (math.log, "log"), (math.exp, "exp")]
             f, string = random.choice(func_arr)
-            rand_arr.append((lambda nranges: DummyFunc(f, string, random.randint(nranges[0], nranges[1]) + round(random.random(), ndigits=inp_ndigits), ndigits = func_ndigits), fun_ranges[:]))
+            rand_arr.append((lambda nranges: DummyFunc(f, string, random.randint(nranges[0], nranges[1]) + round(random.random(), ndigits=inp_ndigits)), fun_ranges[:]))
             
         for j in range(number_of_variables):
             ind = random.randint(0, len(rand_arr) - 1)
@@ -4545,4 +4544,8 @@ def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of
         else:
             ppr = connect(ppr[:], p.pprint()[:])[:]
         
-    return ans, strpprint(ppr[:])
+    return truncate(ans, res_ndigits), strpprint(ppr[:])
+
+a, s = generate_mult_arithm_item(num_ranges=[1, 10000], rat_range=[1, 1000], number_of_parts=1, number_of_variables=3, pure_arithm=0, fun_ranges=[0, 1], inp_ndigits=1, res_ndigits=3)
+print(a)
+print(s)

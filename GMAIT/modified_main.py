@@ -769,17 +769,16 @@ def static(prechoice=None):
         pure_arith = int(input("Purely arithmetic ? \n1-Yes\n0-No\n"))
         fun_ranges = [0, 1]
         inp_ndigit = 1
-        div_ndigits = int(input("Digits after floating point for division : "))
-        func_ndigits = 0
+        res_ndigits = int(input("Digits after floating point for result : "))
         if not pure_arith:
             c, d = input("Range of function input numbers (seperated by blank space): ").split(" ")
             fun_ranges = [int(c), int(d)]
             
             inp_ndigit = int(input("Function input digits after floating point : "))
-            func_ndigits = int(input("Digits after floating point for functions : "))
             
             
-        inpt_dict = {"numranges" : num_ranges[:], "ratranges":rat_ranges[:], "funranges":fun_ranges[:], "ppartsnum":ppart_num, "varnumber":var_num, "purearith":pure_arith, "inpndigit":inp_ndigit, "divndigit":div_ndigits, "funndigit":func_ndigits}
+            
+        inpt_dict = {"numranges" : num_ranges[:], "ratranges":rat_ranges[:], "funranges":fun_ranges[:], "ppartsnum":ppart_num, "varnumber":var_num, "purearith":pure_arith, "inpndigit":inp_ndigit, "resndigit":res_ndigits}
         stats = gr.general_runner(gh.numerical_analysis, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))

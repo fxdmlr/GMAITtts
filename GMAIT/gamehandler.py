@@ -647,10 +647,10 @@ def numerical_analysis(inpt_dict):
     var_number = inpt_dict["varnumber"]
     pparts_num = inpt_dict["ppartsnum"]
     pure_arith = inpt_dict["purearith"]
-    div_ndigit = inpt_dict["divndigit"]
-    fun_ndigit = inpt_dict["funndigit"]
+    res_ndigit = inpt_dict["resndigit"]
     
-    n, s = utils.generate_mult_arithm_item(num_ranges=num_ranges[:], rat_range=rat_ranges[:], number_of_parts=pparts_num, number_of_variables=var_number, pure_arithm=pure_arith, fun_ranges=fun_ranges[:], inp_ndigits=inp_ndigit, div_ndigits=div_ndigit, func_ndigits=fun_ndigit)
+    
+    n, s = utils.generate_mult_arithm_item(num_ranges=num_ranges[:], rat_range=rat_ranges[:], number_of_parts=pparts_num, number_of_variables=var_number, pure_arithm=pure_arith, fun_ranges=fun_ranges[:], inp_ndigits=inp_ndigit, res_ndigits=res_ndigit)
     
     return s+"\n", n, lambda x : n if abs(float(x) - n) < 10 ** (-7) else n+1
 
