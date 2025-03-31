@@ -11,7 +11,11 @@ def static(prechoice=None):
         choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n42-IntegralSolve\n43-InverseLaplace\n44-rootGameInteger\n45-NumericalAnalysis\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : ")) 
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -29,7 +33,11 @@ def static(prechoice=None):
     
     if choice == 2:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -43,7 +51,11 @@ def static(prechoice=None):
     
     if choice == 3:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         dims = int(input("Dim : "))
@@ -56,7 +68,11 @@ def static(prechoice=None):
     
     if choice == 4:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         dims = int(input("Dims : "))
@@ -72,7 +88,11 @@ def static(prechoice=None):
     
     if choice == 5:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of abs of coeffs (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         c, d = input("Range of abs of inputs (seperated by blank space): ").split(" ")
@@ -88,7 +108,11 @@ def static(prechoice=None):
     
     if choice == 6:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of surds (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         c, d = input("Range of roots: ").split(" ")
@@ -103,7 +127,11 @@ def static(prechoice=None):
     
     if choice == 7:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of surds (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         c, d = input("Range of roots: ").split(" ")
@@ -119,7 +147,11 @@ def static(prechoice=None):
     
     if choice == 8:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of surds (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         c, d = input("Range of roots: ").split(" ")
@@ -134,7 +166,11 @@ def static(prechoice=None):
     
     if choice == 9:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         a_fl = int(input("Digits after floating point : "))
@@ -147,7 +183,11 @@ def static(prechoice=None):
     
     if choice == 10:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -162,7 +202,11 @@ def static(prechoice=None):
     
     if choice == 11:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         dims = int(input("Dim : "))
@@ -177,7 +221,11 @@ def static(prechoice=None):
     
     if choice == 12:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of abs of roots (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         deg = int(input("Polynomial degree : "))
@@ -190,7 +238,11 @@ def static(prechoice=None):
     
     if choice == 13:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -204,7 +256,11 @@ def static(prechoice=None):
     
     if choice == 14:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -218,7 +274,11 @@ def static(prechoice=None):
     
     if choice == 15:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -237,7 +297,11 @@ def static(prechoice=None):
     
     if choice == 16:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a = int(input("Number of Digits : "))
         
         os.system("clear")
@@ -248,7 +312,11 @@ def static(prechoice=None):
         print("Time spent per item : ", round(stats[2]))
     if choice == 17:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         n_partite = int(input("Number of parts : "))
@@ -271,7 +339,11 @@ def static(prechoice=None):
     
     if choice == 18:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of coeffs (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         c, d = input("Range of answers (seperated by blank space): ").split(" ")
@@ -286,7 +358,11 @@ def static(prechoice=None):
     
     if choice == 19:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -300,7 +376,11 @@ def static(prechoice=None):
         print("Time spent per item : ", round(stats[2]))
     if choice == 20:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -315,7 +395,11 @@ def static(prechoice=None):
     
     if choice == 21:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         order = int(input("Order : "))
@@ -331,7 +415,11 @@ def static(prechoice=None):
     
     if choice == 22:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -346,7 +434,11 @@ def static(prechoice=None):
     
     if choice == 23:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -361,7 +453,11 @@ def static(prechoice=None):
     
     if choice == 24:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -376,7 +472,11 @@ def static(prechoice=None):
     
     if choice == 25:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -391,7 +491,11 @@ def static(prechoice=None):
     
     if choice == 26:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -406,7 +510,11 @@ def static(prechoice=None):
     
     if choice == 27:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         c, d = input("Range of answers (seperated by blank space): ").split(" ")
@@ -430,7 +538,11 @@ def static(prechoice=None):
     
     if choice == 28:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         n_partite = int(input("Number of parts : "))
@@ -453,7 +565,11 @@ def static(prechoice=None):
     
     if choice == 29:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of coeffs (seperated by blank space): ").split(" ")
         ranges_coeffs = [int(a), int(b)]
         
@@ -470,7 +586,11 @@ def static(prechoice=None):
     
     if choice == 30:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -485,7 +605,11 @@ def static(prechoice=None):
     
     if choice == 31:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of coeffs (seperated by blank space): ").split(" ")
         ranges_coeffs = [int(a), int(b)]
         
@@ -504,7 +628,11 @@ def static(prechoice=None):
     
     if choice == 32:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of coeffs (seperated by blank space): ").split(" ")
         ranges_coeffs = [int(a), int(b)]
         
@@ -522,7 +650,11 @@ def static(prechoice=None):
     
     if choice == 33:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of coeffs (seperated by blank space): ").split(" ")
         ranges_coeffs = [int(a), int(b)]
         
@@ -541,7 +673,11 @@ def static(prechoice=None):
     
     if choice == 34:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         order = int(input("Order : "))
@@ -556,7 +692,11 @@ def static(prechoice=None):
     
     if choice == 35:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -580,7 +720,11 @@ def static(prechoice=None):
         print("Time spent per item : ", round(stats[2]))
     if choice == 36:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         mode = int(input("Mode : 0-rational 1-Trig : "))
@@ -597,7 +741,11 @@ def static(prechoice=None):
     
     if choice == 37:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
@@ -612,7 +760,11 @@ def static(prechoice=None):
     
     if choice == 38:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         
         input_digits = int(input("Input digits after floating point : "))
         digits_output = int(input("Result digits after floating point : "))
@@ -626,7 +778,11 @@ def static(prechoice=None):
     
     if choice == 39:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         
         input_digits = int(input("Input digits after floating point : "))
         digits_output = int(input("Result digits after floating point : "))
@@ -640,7 +796,11 @@ def static(prechoice=None):
     
     if choice == 40:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         nranges = [int(a), int(b)]
         c, d = input("Range of boundaries (seperated by blank space): ").split(" ")
@@ -663,7 +823,11 @@ def static(prechoice=None):
     
     if choice == 41:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         nranges = [int(a), int(b)]
         c, d = input("Range of boundaries (seperated by blank space): ").split(" ")
@@ -687,7 +851,11 @@ def static(prechoice=None):
     
     if choice == 42:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         nranges = [int(a), int(b)]
         c, d = input("Range of boundaries (seperated by blank space): ").split(" ")
@@ -729,7 +897,11 @@ def static(prechoice=None):
     
     if choice == 43:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         nranges = [int(a), int(b)]
         c, d = input("Range of input (seperated by blank space): ").split(" ")
@@ -746,7 +918,11 @@ def static(prechoice=None):
         print("Time spent per item : ", round(stats[2]))
     if choice == 44:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers whose nth root is to be found (seperated by blank space): ").split(" ")
         nranges = [int(a), int(b)]
         c, d = input("Range of n (seperated by blank space): ").split(" ")
@@ -758,7 +934,11 @@ def static(prechoice=None):
         print("Time spent per item : ", round(stats[2]))
     if choice == 45:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
-        rounds = int(input("Number of rounds : ")) if md == 1 else int(input("Duration : "))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         num_ranges = [int(a), int(b)]
         c, d = input("Range of rational numbers (seperated by blank space): ").split(" ")

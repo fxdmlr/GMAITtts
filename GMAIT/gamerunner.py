@@ -1,7 +1,9 @@
 import time
 import gamehandler as gh
+import os
 
-def static_runner(function, number_of_rounds, inpt_dict):
+def static_runner(function, rounds, inpt_dict):
+    null, number_of_rounds = rounds
     start = time.time()
     pts = 0
     for i in range(number_of_rounds):
@@ -18,29 +20,30 @@ def static_runner(function, number_of_rounds, inpt_dict):
     end = time.time()
     return [pts / number_of_rounds * 100, end - start, (end - start) / number_of_rounds]
 
-def dynamic_runner(function, total_time, inpt_dict):
-    start = time.time()
+def dynamic_runner(function, time_tuple, inpt_dict):
+    time_per, rounds = time_tuple
     pts = 0
     number_of_rounds = 0
-    while time.time() - start < total_time:
+    while number_of_rounds < rounds:
         string, res, conv_function = function(inpt_dict)
         number_of_rounds += 1
-        entry = conv_function(input(string))
+        start = time.time()
+        print(string)
+        time.sleep(time_per)
+        os.system("clear")
+        entry = conv_function(input("> "))
         end = time.time()
-        if time.time() - start > total_time:
-            print("Time Elapsed before entry.")
-            return [pts / number_of_rounds * 100, end - start, (end - start) / number_of_rounds, total_time]
+        
         if entry == res:
             print("Correct.")
-            print("Remaining time : ", round(total_time - (time.time() - start)))
             pts += 1
         
         else:
             print("Incorrect. The answer was :\n%f \n" % res)
-            print("Remaining time : ", round(total_time - (time.time() - start)))
+            
     
     end = time.time()
-    return [pts / number_of_rounds * 100, end - start, (end - start) / number_of_rounds, total_time]
+    return [pts / number_of_rounds * 100, end - start, (end - start) / number_of_rounds, time_per]
 
 def general_runner(function, parameter, inpt_dict, md):
     if md == 1:
