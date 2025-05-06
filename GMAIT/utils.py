@@ -1244,8 +1244,10 @@ class matrix:
         n = len(self.array[:])
         if det == 0:
             raise Exception(ValueError, 'Determinant is zero.')
-        
-        new_array = [[det(minor(self.array[:], [i, j])) / d * (-1)**(i + j) for i in range(n)] for j in range(n)]
+        if isinstance(d, (int, float)):
+            new_array = [[det(minor(self.array[:], [i, j])) / d * (-1)**(i + j) for i in range(n)] for j in range(n)]
+        else:
+            new_array = [[Div([det(minor(self.array[:], [i, j])) , d * (-1)**(i + j)]) for i in range(n)] for j in range(n)]
         return matrix(new_array[:])
         
     __rmul__ = __mul__
@@ -2094,6 +2096,9 @@ class Comp:
     
     def __str__(self):
         return strpprint(self.npprint())
+    
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class Div:
     def __init__(self, array):
@@ -2171,6 +2176,9 @@ class Div:
     
     def __sub__(self, other):
         return self + (-other)
+    
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 
 class sin:
@@ -3479,6 +3487,7 @@ def rndFeval(symbol="x"):
                   
                  ]
     return functions[random.randint(0, len(functions) - 1)]
+
 def CrndF(nranges=[-10, 10], symbol="z"):
     a, b, c, d, e, f = [random.randint(nranges[0], nranges[1]) for i in range(6)]
     functions = [(lambda x : cmath.sinh(a * x), [[" ", " ", " ", " "] + [" " for i in str(a)] + [" ",  " ", " "], ["s", "i", "n", "h", "("] + [i for i in str(a)] + [ symbol, ")"], [ " ", " ", " ", " "] + [" " for i in str(a)] + [" " , " ", " "]]), 
@@ -4470,13 +4479,16 @@ def solve_ndeg_ode_sys(equations, rhs, init_conds, t):
     mod_rhs = []
     for i in range(len(rhs)):
         p = poly([0])
-        for j in range(len(equations[0])):
+        for j in range(len(equations[i])):
             for k in range(len(equations[i][j].coeffs)-1):
                 narr = [init_conds[j][l] for l in range(k)]
             p += poly(narr[:])
-        mod_rhs.append((Div([rhs[i], poly([0,1])])+p).simplify())
+        mod_rhs.append((Div([laplace_tr(rhs[i]), poly([0,1])])+p).simplify())
     
+    for i in solveLineq(equations, mod_rhs):
+        print(i)
     ans = [i.simplify() for i in solveLineq(equations, mod_rhs)]
+    
     functions = [inv_laplace_tr_rat(i.arr[0], i.arr[1], t) for i in ans]
     
     return functions[:]
@@ -4617,13 +4629,46 @@ def npprint_diffeq(array, syms, rhs_nppr):
         arr.append(strpprint(connect(sub_arr[:], connect(eq, rhs_nppr[i]))))
     
     return arr[:]
-
+def rndFLapDiffeqSys(symbol="x"):
+    functions = [sin(), cos(), exp()]
+    return functions[random.randint(0, len(functions) - 1)]
 def generate_sys_diffeq(n, mdeg, nranges=[-10, 10], rhs_mdeg=2, m=2, fweights=[1, 1, 1, 1, 1, 1, 1, 1, 1], wweights=[1, 1, 1, 1]):
     syms = ["y", "z", "w", "p", "q", "r", "s", "u", "v"]
     sys_arr = [[poly.rand(mdeg, coeff_range=nranges[:]) for i in range(n)] for j in range(n)]
     init_conds = [[random.randint(nranges[0], nranges[1]) for i in range(mdeg)] for j in range(n)]
-    rhs = [rand_func_iii(nranges=nranges[:], max_deg=rhs_mdeg, n=m, fweights=fweights[:], wweights=wweights[:]) for i in range(n)]
-    sols = solve_ndeg_ode_sys_func(sys_arr[:], rhs[:], init_conds[:])
-    return "\n".join(npprint_diffeq(sys_arr, syms, [i.npprint()[:] for i in rhs])), init_conds[:], sols
+    rhs_arr = [rndFLapDiffeqSys() for i in range(n)]#[rand_func_iii(nranges=nranges[:], max_deg=rhs_mdeg, n=m, fweights=fweights[:], wweights=wweights[:]) for i in range(n)]
 
+    sols = solve_ndeg_ode_sys_func(sys_arr[:], rhs_arr[:], init_conds[:])
+    return "\n".join(npprint_diffeq(sys_arr, syms, [i.npprint()[:] for i in rhs_arr])), init_conds[:], sols
+
+
+def generate_lap_matrix(dim=3, nranges=[-10, 10], mdeg=2):
+    arr = []
+    for i in range(dim):
+        sub = []
+        for j in range(dim):
+            p = poly.rand(random.randint(0, mdeg), coeff_range=nranges[:])
+            p.variable = "s"
+            sub.append(p)
+        arr.append(sub[:])
+
+    lap_mat = matrix(arr[:])
+    return lap_mat, lap_mat.inverse()
+
+def generate_sys_lap_problem(nranges=[1, 10], dim=3, mdeg=2, mdeg_rhs=2):
+    l, l_inv = generate_lap_matrix(dim=dim, nranges=nranges, mdeg=mdeg)
+    rhs_arr = []
+    for i in range(dim):
+        p1 = poly.rand(random.randint(0, mdeg_rhs), coeff_range=nranges[:])
+        p2 = poly.rand(random.randint(0, mdeg_rhs), coeff_range=nranges[:])
+        z = Div([p1, p2])
+        z.arr[0].variable = "s"
+        z.arr[1].variable = "s"
+        rhs_arr.append([z])
+
+
+    rhs = matrix(rhs_arr)
+    ans = matrix([[i[0].simplify()] for i in (l_inv * rhs).array[:]])
+    ans_time_domain = lambda t : matrix([[inv_laplace_tr_rat(i[0].arr[0], i[0].arr[1], t)] for i in ans.array[:]])
+    return l, rhs, ans, ans_time_domain
 

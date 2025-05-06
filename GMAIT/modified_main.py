@@ -8,7 +8,7 @@ def static(prechoice=None):
         choice = prechoice
     print("\n")
     if prechoice is None:
-        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n42-IntegralSolve\n43-InverseLaplace\n44-rootGameInteger\n45-NumericalAnalysis\n"))
+        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n42-IntegralSolve\n43-InverseLaplace\n44-rootGameInteger\n45-NumericalAnalysis\n46-LaplaceMatrix\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
         roundd = int(input("Number of rounds : ")) 
@@ -960,6 +960,30 @@ def static(prechoice=None):
             
         inpt_dict = {"numranges" : num_ranges[:], "ratranges":rat_ranges[:], "funranges":fun_ranges[:], "ppartsnum":ppart_num, "varnumber":var_num, "purearith":pure_arith, "inpndigit":inp_ndigit, "resndigit":res_ndigits}
         stats = gr.general_runner(gh.numerical_analysis, rounds, inpt_dict, md)#multgame.polyEval(rounds, deg, ranges[:], inp_ranges[:])
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    
+    if choice == 46:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
+        a, b = input("Range of numbers (seperated by blank space): ").split(" ")
+        ranges = [int(a), int(b)]
+        dims = int(input("Dims : "))
+        
+        mdeg = int(input("Maximum degree (Matrix): "))
+        mdeg_rhs = int(input("Maximum degree (R.H.S): "))
+        moe = float(input("Margin of error: "))
+        ndig = int(input("input digits after floating point: "))
+        os.system("clear")
+        print("For the Equation Ax=B Find\nthe length of inverse laplace\ntransform of x at t.\n")
+        inpt_dict = {"nranges" : ranges, "dim" : dims, "mdeg" : mdeg, "mdeg_rhs":mdeg_rhs, "moe":moe, "ndigits_t":ndig}
+
+        stats = gr.general_runner(gh.inv_lap_mat, rounds, inpt_dict, md)#matrixgames.polyDetGame(number_of_rounds=rounds, dims=dims, nrange=ranges, max_deg=max_deg)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
         print("Time spent per item : ", round(stats[2]))

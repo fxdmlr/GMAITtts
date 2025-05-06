@@ -654,4 +654,16 @@ def numerical_analysis(inpt_dict):
     
     return s+"\n", n, lambda x : n if abs(float(x) - n) < 10 ** (-7) else n+1
 
-    
+def inv_lap_mat(inpt_dict):
+    nranges = inpt_dict["nranges"]
+    dim = inpt_dict["dim"]
+    mdeg = inpt_dict["mdeg"]
+    mdeg_rhs = inpt_dict["mdeg_rhs"]
+    ndigits_t = inpt_dict["mdeg_rhs"]
+    moe = inpt_dict["moe"]
+    l, rhs, ans, ans_t = utils.generate_sys_lap_problem(nranges=nranges, dim=dim, mdeg=mdeg, mdeg_rhs=mdeg_rhs)
+    t = random.randint(-2, 2) + round(random.random(), ndigits=ndigits_t)
+    string  = "A = \n" + str(l) + "\n" + "B = \n" + str(rhs) + "\n" + "At t = " + str(t) + " "
+    answer = math.sqrt(sum([abs(i[0]) ** 2 for i in ans_t(t).array[:]]))
+    cond = lambda x : abs(x - answer) <= abs(moe*answer)
+    return string, answer, lambda x : answer if cond(float(x)) else answer+1
