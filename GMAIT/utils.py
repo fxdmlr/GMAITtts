@@ -1188,7 +1188,7 @@ class matrix:
         elif isinstance(other, matrix):
             if len(self.array[0]) != len(other.array):
                 raise Exception("Dimensions not compatible.")
-            
+             
             else:
                 arr = []
                 for i in range(len(self.array)):
@@ -1239,6 +1239,15 @@ class matrix:
         
         return matrix(new_array[:])
     
+    def inverse(self):
+        d = self.det()
+        n = len(self.array[:])
+        if det == 0:
+            raise Exception(ValueError, 'Determinant is zero.')
+        
+        new_array = [[det(minor(self.array[:], [i, j])) / d * (-1)**(i + j) for i in range(n)] for j in range(n)]
+        return matrix(new_array[:])
+        
     __rmul__ = __mul__
     __radd__ = __add__
     @staticmethod
@@ -1275,6 +1284,7 @@ class matrix:
             arr.append(sub)
         
         return matrix(arr)
+
 
 class vect:
     def __init__(self, array):
@@ -4461,7 +4471,7 @@ def solve_ndeg_ode_sys(equations, rhs, init_conds, t):
     for i in range(len(rhs)):
         p = poly([0])
         for j in range(len(equations[0])):
-            for k in range(len(equations[i][j].coeffs)):
+            for k in range(len(equations[i][j].coeffs)-1):
                 narr = [init_conds[j][l] for l in range(k)]
             p += poly(narr[:])
         mod_rhs.append((Div([rhs[i], poly([0,1])])+p).simplify())
@@ -4546,6 +4556,74 @@ def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of
         
     return truncate(ans, res_ndigits), strpprint(ppr[:])
 
-a, s = generate_mult_arithm_item(num_ranges=[1, 10000], rat_range=[1, 1000], number_of_parts=1, number_of_variables=3, pure_arithm=0, fun_ranges=[0, 1], inp_ndigits=1, res_ndigits=3)
-print(a)
-print(s)
+def diffeq_nppr(q, symbol):
+    p = q
+    prev_ppr=[[" "], [" "], [" "], [symbol], [" "], [" "], [" "]]
+    new_array = p.coeffs[:]
+    new_array.reverse()
+    lines = [[], [], [], [], [], [], []]
+    right_pr = [[" "], [" "], [" "], ["("], [" "], [" "], [" "]]
+    left_pr = [[" "], [" "], [" "], [")"], [" "], [" "], [" "]]
+    nppr = prev_ppr[:]
+    if len(prev_ppr[0]) > 1:
+        nppr = connect(right_pr, connect(prev_ppr[:], left_pr))
+    
+    for i in range(len(new_array)):
+        pow, coeff_abs, sgn_ppr = p.deg - i, abs(new_array[i]), [[" "], [" "], [" "], [("+" if i != 0 else " ") if sgn(new_array[i]) else "-"], [" "], [" "], [" "]]
+        coeff_abs_ppr = [[" " for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)],
+                            [j for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)]]
+        pow_ppr = [[" " for j in "(" + str(pow) + ")"],
+                    [" " for j in "(" + str(pow) + ")"],
+                    [j for j in "(" + str(pow) + ")"],
+                    [" " for j in "(" + str(pow) + ")"],
+                    [" " for j in "(" + str(pow) + ")"],
+                    [" " for j in "(" + str(pow) + ")"],
+                    [" " for j in "(" + str(pow) + ")"]]
+        if pow == 1:
+            pow_ppr = [[" "], ["'"], [" "], [" "], [" "], [" "], [" "]]
+        elif pow == 2:
+            pow_ppr = [["  "], ["''"], ["  "], ["  "], ["  "], ["  "], ["  "]]
+        elif pow == 3:
+            pow_ppr = [["   "], ["'''"], ["   "], ["   "], ["   "], ["   "], ["   "]]
+        elif pow == 0:
+            pow_ppr = [[], [], [], [], [], [], []]
+        if coeff_abs == 1 and pow != 0:
+            coeff_abs_ppr = [[], [], [], [], [], [], []]
+        if coeff_abs == 0:
+            continue
+        else:
+            if pow != 0:
+                lines = connect(lines[:], connect(sgn_ppr[:], connect(coeff_abs_ppr[:], connect(nppr[:], pow_ppr[:]))))[:]
+            else:
+                lines = connect(lines[:], connect(sgn_ppr[:], connect(coeff_abs_ppr[:], connect(nppr[:], pow_ppr[:]))))[:]
+                
+    return lines[:]
+
+def npprint_diffeq(array, syms, rhs_nppr):
+    arr = []
+    plus = [[" "], [" "], [" "], ["+"], [" "], [" "], [" "]]
+    eq = [[" "], [" "], [" "], ["="], [" "], [" "], [" "]]
+    for i in range(len(array)):
+        sub_arr = [[], [], [], [], [], [], []]
+        for j in range(len(array[i])):
+            symbol = syms[j]
+            sub_arr = connect(sub_arr[:], connect(plus, diffeq_nppr(array[i][j], symbol)))[:]
+        
+        arr.append(strpprint(connect(sub_arr[:], connect(eq, rhs_nppr[i]))))
+    
+    return arr[:]
+
+def generate_sys_diffeq(n, mdeg, nranges=[-10, 10], rhs_mdeg=2, m=2, fweights=[1, 1, 1, 1, 1, 1, 1, 1, 1], wweights=[1, 1, 1, 1]):
+    syms = ["y", "z", "w", "p", "q", "r", "s", "u", "v"]
+    sys_arr = [[poly.rand(mdeg, coeff_range=nranges[:]) for i in range(n)] for j in range(n)]
+    init_conds = [[random.randint(nranges[0], nranges[1]) for i in range(mdeg)] for j in range(n)]
+    rhs = [rand_func_iii(nranges=nranges[:], max_deg=rhs_mdeg, n=m, fweights=fweights[:], wweights=wweights[:]) for i in range(n)]
+    sols = solve_ndeg_ode_sys_func(sys_arr[:], rhs[:], init_conds[:])
+    return "\n".join(npprint_diffeq(sys_arr, syms, [i.npprint()[:] for i in rhs])), init_conds[:], sols
+
+
