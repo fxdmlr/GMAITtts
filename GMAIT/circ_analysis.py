@@ -30,6 +30,8 @@ import random
 import sys
 import turtle
 
+DEFAULT_SIZE = 15
+
 def find(array, key):
     for i in range(len(array)):
         if array[i] == key:
@@ -171,7 +173,7 @@ def draw_line(tr, start, end):
     teleport(tr, start[0], start[1])
     tr.goto(end[0], end[1])
 
-def write_text(tr, pos, text, size=15):
+def write_text(tr, pos, text, size=DEFAULT_SIZE):
     teleport(tr, pos[0], pos[1])
     tr.write(text, move=False, align='center', font=('Arial', size, 'normal'))
 
@@ -279,8 +281,11 @@ def draw_circuit(tr, net_array, nodes=[], dims=[600, 600]):
     #display = pg.display.set_mode((600, 600))
    
     node_disp_coords_0 = [(150, 150), (300, 150), (450, 150), (150, 300), (300, 300), (450, 300), (150, 450), (300, 450), (450, 450)]
-    node_disp_coords = []
+    node_disp_coords_1 = []
     for i, j in node_disp_coords_0:
+        node_disp_coords_1.append([i * dims[0] / 600, j * dims[1] / 600])
+    node_disp_coords = []
+    for i, j in node_disp_coords_1:
         p = add_vect([i, -j], [-dims[0] / 2, dims[1] / 2])
         node_disp_coords.append(p[:])
     if nodes is None:
@@ -423,12 +428,15 @@ def generate_circuit_problem(nranges, tndigits, nnode, nmesh, draw=True, labelle
             
     display = turtle.Screen()
     turtle.TurtleScreen._RUNNING=True
+    
     tr = turtle.Turtle()
-
+    turtle.clearscreen()
     
     tr.speed(0)
     turtle.tracer(0, 0)
-    display.screensize(600, 600, 'white')
+
+    sc_size = [600, 600]#display.screensize() #display.screensize(600, 600, 'white')
+    DEFAULT_SIZE = 15 * sc_size[0] / 600
     
     net = generate_random_circuit(nnode, nmesh, nranges[:])[:]
 
@@ -442,11 +450,11 @@ def generate_circuit_problem(nranges, tndigits, nnode, nmesh, draw=True, labelle
     td_net_f = time_domain_net_function(net, node)
     z = td_net_f(time)
     if draw:
-        draw_circuit(tr, net[:], nodes=nodes)
+        draw_circuit(tr, net[:], nodes=nodes, dims=sc_size)
         display.title('Evaluate the net function for node %d at t=%f (node %d is earth)'%(node + 1, time, len(nodes)))
     #tr.color('white')   
     tr.hideturtle()
-    turtle.update()
+    #turtle.update()
     turtle.done()
     
     
