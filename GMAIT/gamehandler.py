@@ -4,6 +4,9 @@ import time
 import utils
 import evaluator as evl
 import statistics as st
+import circ_analysis as circ
+import turtle
+#import circuit_analyze as circ
 
 '''
 The output of each function is as follows : 
@@ -667,3 +670,16 @@ def inv_lap_mat(inpt_dict):
     answer = math.sqrt(sum([abs(i[0]) ** 2 for i in ans_t(t).array[:]]))
     cond = lambda x : abs(x - answer) <= abs(moe*answer)
     return string, answer, lambda x : answer if cond(float(x)) else answer+1
+
+def circuit_game(inpt_dict):
+
+    nranges = inpt_dict['nranges']
+    tndigits = inpt_dict['tndigits']
+    nnode = inpt_dict['nnode']
+    nmesh = inpt_dict['nmesh']
+    moe = inpt_dict['moe']
+    t, answer = circ.generate_circuit_problem(nranges, tndigits, nnode, nmesh)
+    
+
+    cond = lambda x : abs(x - answer) <= abs(moe*answer)
+    return 'Network function(time domain) at t = %f : '%t, answer, lambda x : answer if cond(float(x)) else answer+1

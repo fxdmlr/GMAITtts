@@ -8,14 +8,18 @@ def static_runner(function, rounds, inpt_dict):
     pts = 0
     for i in range(number_of_rounds):
         string, res, conv_method = function(inpt_dict)
+        st = time.time()
 
         entry = conv_method(input("%s"%string))
+        en = time.time()
         if entry == res:
             print("Correct.")
             pts += 1
         
         else:
             print("Incorrect. The answer was :\n%s \n" % str(res))
+        
+        print("Input took %d seconds. " % round(en - st))
     
     end = time.time()
     return [pts / number_of_rounds * 100, end - start, (end - start) / number_of_rounds]

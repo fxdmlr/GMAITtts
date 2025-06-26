@@ -2,6 +2,7 @@ import math
 import random
 import cmath
 import decimal
+import utils2
 
 DEFAULT_TAYLOR_N = 1000
 def heaviside(t):
@@ -846,7 +847,7 @@ class poly:
         return poly([round(i, ndigits=ndigits) for i in self.coeffs])
 
     
-    def diff(self):
+    def diff(self, wrt=0):
         array = []
         for i in range(1, len(self.coeffs)):
             array.append(i * self.coeffs[i])
@@ -909,7 +910,15 @@ class poly:
             
             d0 = b**2 - 3*a*c
             d1 = 2*b**3-9*a*b*c+27*d*a**2
+            if d0 == d1 == 0:
+                r1 = (-1/(3*a)) * (b)
+                r2, r3 = (self / poly([-r1, 1])).roots()
+                return [r1, r2, r3] + prevs[:]
+                
             C = ((d1 + cmath.sqrt(d1**2-4*d0**3)) / 2)**(1/3)
+            if C == 0:
+                C = ((d1 - cmath.sqrt(d1**2-4*d0**3)) / 2)**(1/3)
+            
             r1 = (-1/(3*a)) * (b + C + d0/C)
             r2, r3 = (self / poly([-r1, 1])).roots()
             
@@ -973,7 +982,8 @@ class poly:
         x_ig = start
         for i in range(max_iter):
             x_ig = x_i
-            
+            #if pl.diff()(x_i) == 0:
+            #    x_i += 0.05
             x_i -= pl(x_i) / pl.diff()(x_i)
             if not isinstance(x_i, complex) : 
                 x_i = round(x_i, ndigits=10)
@@ -997,7 +1007,7 @@ class PowSeries:
     def __call__(self, x, n=DEFAULT_TAYLOR_N):
         return self.poly(n)(x)
 
-    def diff(self):
+    def diff(self, wrt=0):
         new_function = lambda n : self.function(n+1) * (n+1)
         return PowSeries(new_function)
     
@@ -1177,7 +1187,7 @@ class matrix:
         return matrix(self_copy)
     
     def __mul__(self, other):
-        if isinstance(other, (int, float, poly)):
+        if isinstance(other, (int, float, poly, Div, Sum, Prod)):
             x = self.array[:]
             for i in range(len(x)):
                 for j in range(len(x[i])):
@@ -1328,8 +1338,8 @@ class vect:
     def cross(self, other):
         return vect(cross(self.array[:], other.array[:]))
     
-    def diff(self):
-        return vect([i.diff() if hasattr(i, 'diff') else 0 for i in self.array[:]])
+    def diff(self, wrt=0):
+        return vect([i.diff(wrt=wrt) if hasattr(i, 'diff') else 0 for i in self.array[:]])
     
     
     __radd__ = __add__
@@ -1377,11 +1387,11 @@ class pcurve:
     def cross(self, other):
         return vect(cross(self.array[:], other.array[:]))
     
-    def diff(self):
+    def diff(self, wrt=0):
         a = []
         for i in self.array:
             if hasattr(i, 'diff'):
-                a.append(i.diff())
+                a.append(i.diff(wrt=wrt))
         
         return pcurve(a[:])
     
@@ -1403,11 +1413,11 @@ class pcurve:
     def __str__(self):
         return strpprint(self.pprint())
     
-    def curvature(self):
-        return lambda x : self.diff()(x).cross(self.diff().diff()(x)).length()/self.diff().length()(x)**3
+    def curvature(self, wrt=0):
+        return lambda x : self.diff(wrt=wrt)(x).cross(self.diff(wrt=wrt).diff(wrt=wrt)(x)).length()/self.diff(wrt=wrt).length()(x)**3
     
-    def T(self):
-        return lambda x : self.diff()(x) * (1/self.diff().length()(x))
+    def T(self, wrt=0):
+        return lambda x : self.diff(wrt=wrt)(x) * (1/self.diff(wrt=wrt).length()(x))
     
     def N(self):
         return lambda x : numericDiff(self.T(), x) * (1/numericDiff(self, x).length())* (1 / self.curvature()(x))
@@ -1436,8 +1446,25 @@ class polymvar:
         self.z_ppr = [[" "], ["z"] , [" "]]
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
 
-    def __call__(self, x, y, z):
+    def __call__(self, *args):
         s = 0
+        if len(args) == 1:
+            if isinstance(args[0], list):
+                if len(args[0]) == 1:
+                    x = args[0][0]
+                    y, z = 0, 0
+                elif len(args[0]) == 2:
+                    x, y = args[0][:]
+                    z = 0
+                elif len(args[0]) == 3:
+                    x, y, z = args[0][:]
+                    
+        elif len(args) == 2:
+            x, y = args[:]
+            z = 0
+        elif len(args) == 3:
+            x, y, z = args[:]
+        
         for i in range(len(self.array)):
             for j in range(len(self.array)):
                 for k in range(len(self.array)):
@@ -1554,10 +1581,15 @@ class polymvar:
         
         return lines[:]
     
+    def npprint(self, prev_ppr = None):
+        new_array = self.pprint()
+        line = [" " for i in new_array[0]]
+        return [line[:], line[:]] + new_array[:] + [line[:], line[:]]
+    
     def __str__(self):
         return strpprint(self.pprint())
     
-    def diff(self, wrt):
+    def diff(self, wrt = 0):
         new_array = [[[0 for k in range(len(self.array))] for j in range(len(self.array))] for i in range(len(self.array))]
         if wrt == 0:
             for i in range(len(self.array)):
@@ -1620,9 +1652,9 @@ class polymvar:
         else:
             return 0
         
-    def c_integrate(self, curve, t0, t1):
+    def c_integrate(self, curve, t0, t1, wrt=0):
         new_f = self(curve.array[0], curve.array[1], curve.array[2])
-        f = lambda x : new_f(x) * curve.diff().length()(x)
+        f = lambda x : new_f(x) * curve.diff(wrt = wrt).length()(x)
         return numericIntegration(f, t0, t1, dx=0.00001)
 
 
@@ -1892,7 +1924,9 @@ class Sum:
             return Prod([self, other])
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         array = [[], [], [], [], [], [], []] 
-        if hasattr(self.arr[0], 'npprint'):
+        if len(self.arr) == 0:
+            pass
+        elif hasattr(self.arr[0], 'npprint'):
                 array[:] = connect(array[:], self.arr[0].npprint(prev_ppr=prev_ppr[:])[:])[:] 
         elif isinstance(self.arr[0], (int, float)):
             arg = [[" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [j for j in str(self.arr[0])], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))], [" " for j in range(len(str(self.arr[0])))]]
@@ -1905,8 +1939,8 @@ class Sum:
                 array[:] = connect(array[:], connect([[" "], [" "], [" "], ["+"], [" "], [" "], [" "]], arg[:]))[:]
         return array
     
-    def diff(self):
-        return Sum([i.diff() if hasattr(i, 'diff') else 0 for i in self.arr[:]]) 
+    def diff(self, wrt=0):
+        return Sum([i.diff(wrt=wrt) if hasattr(i, 'diff') else 0 for i in self.arr[:]]) 
     
     def __str__(self):
         return strpprint(self.npprint())
@@ -1941,6 +1975,7 @@ class Prod:
                 continue
             self.arr.append(i)
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
+        
 
     def simplify(self):
         narr = []
@@ -2031,8 +2066,8 @@ class Prod:
                     array[:] = connect(array[:], connect(op, connect(arg[:], clsd)))[:]
         return array
     
-    def diff(self):
-        return Sum([Prod(self.arr[:i] + [self.arr[i].diff() if hasattr(self.arr[i], "diff") else 0] + self.arr[i+1:]) for i in range(len(self.arr[:]))])
+    def diff(self, wrt=0):
+        return Sum([Prod(self.arr[:i] + [self.arr[i].diff(wrt=wrt) if hasattr(self.arr[i], "diff") else 0] + self.arr[i+1:]) for i in range(len(self.arr[:]))])
     
     def __str__(self):
         return strpprint(self.npprint())    
@@ -2084,13 +2119,13 @@ class Comp:
         
         return array[:]
         
-    def diff(self):
+    def diff(self, wrt=0):
         array = []
         for i in range(len(self.arr[:])):
             if i == 0:
-                array.append(self.arr[i].diff())
+                array.append(self.arr[i].diff(wrt=wrt))
             else:
-                array.append(Comp(self.arr[:i] + [self.arr[i].diff() if hasattr(self.arr[i], 'diff') else 0]))
+                array.append(Comp(self.arr[:i] + [self.arr[i].diff(wrt=wrt) if hasattr(self.arr[i], 'diff') else 0]))
         
         return Prod(array[:])
     
@@ -2163,8 +2198,8 @@ class Div:
         
         return new_ppr[:]
     
-    def diff(self):
-        n1 = Sum([Prod([self.arr[0].diff() if hasattr(self.arr[0], 'diff') else 0, self.arr[1]]), Prod([self.arr[1].diff()if hasattr(self.arr[1], 'diff') else 0, self.arr[0], -1])])
+    def diff(self, wrt=0):
+        n1 = Sum([Prod([self.arr[0].diff(wrt=wrt) if hasattr(self.arr[0], 'diff') else 0, self.arr[1]]), Prod([self.arr[1].diff(wrt=wrt)if hasattr(self.arr[1], 'diff') else 0, self.arr[0], -1])])
         n2 = Prod([self.arr[1], self.arr[1]])
         return Div([n1, n2])
     
@@ -2218,7 +2253,7 @@ class sin:
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return cos()
 
 class cos:
@@ -2258,7 +2293,7 @@ class cos:
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return Comp([sin(), poly([0, -1])])
 
 
@@ -2299,7 +2334,7 @@ class tan:
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return Sum([1, Comp([tan(), poly([0, 0, 1])])]) 
      
 class inv:
@@ -2332,7 +2367,7 @@ class inv:
         return new_ppr[:]
         
     
-    def diff(self):
+    def diff(self, wrt=0):
         return Comp([poly([0, 0, -1]), inv()])
     
 class sqrt:
@@ -2371,7 +2406,7 @@ class sqrt:
             
         return connect(rad, new_ppr[:])[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return Comp([Prod([2, sqrt()]), inv()])
 
 class asin:
@@ -2411,7 +2446,7 @@ class asin:
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return Comp([poly([1, 0, -1]), sqrt(), inv()])
 
 class atan:
@@ -2451,7 +2486,7 @@ class atan:
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return Comp([poly([1, 0, 1]), inv()])
 
 class sinh:
@@ -2491,7 +2526,7 @@ class sinh:
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return cosh()
 
 class cosh:
@@ -2531,7 +2566,7 @@ class cosh:
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return cosh
 
 class tanh:
@@ -2571,7 +2606,7 @@ class tanh:
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return Comp([tanh, poly([1, 0, -1])])
 class log:
     def __init__(self):
@@ -2609,7 +2644,7 @@ class log:
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return inv()
 
 class exp:
@@ -2649,7 +2684,7 @@ class exp:
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
-    def diff(self):
+    def diff(self, wrt=0):
         return exp()
 
 class Symbol:
@@ -2677,7 +2712,7 @@ class Symbol:
             return self.string == other.string
         return False
     
-    def diff(self):
+    def diff(self, wrt=0):
         return 1
     
     __rmul__ = __mul__
@@ -4390,6 +4425,95 @@ def solve_first_deg_ode_sys(equations, init_conds, target, n=10):
         x += h
     
     return y_array[:]
+def rat_diff(numerator, denominator):
+    return numerator.diff() * denominator - denominator.diff() * numerator, denominator ** 2
+
+def rat_ndiff(numerator, denominator, n):
+    if n == 0:
+        return numerator, denominator
+    elif n == 1:
+        a, b = rat_diff(numerator, denominator)
+        return a, b
+    else:
+        nu, d = rat_diff(numerator, denominator)
+        return rat_ndiff(nu, d, n - 1)
+
+def rat_add(array):
+    n = 0
+    d = 1
+    for i in range(len(array)):
+        if i != len(array) - 1:
+            p = array[i][0]
+            for nj, pj in array[:i] + array[i+1:]:
+                p *= pj
+        
+        else:
+            p = array[i][0]
+            for nj, pj in array[:i]:
+                p *= pj
+        
+        n += p
+    
+    for i, j in array:
+        d *= j
+    
+    return n, d
+def rat_simplify(p, q):
+    p_zeros_0 = p.roots()[:]
+    p_zeros = []
+    for zero in p_zeros_0:
+        for key in range(len(p_zeros)):
+            if abs(zero - p_zeros[key][0]) <= 0.05:
+                p_zeros[key][1] += 1
+                break
+        else:
+            p_zeros.append([zero, 1])
+    q_zeros_0 = q.roots()[:]
+    q_zeros = []
+    for zero in q_zeros_0:
+        for key in range(len(q_zeros)):
+            if abs(zero - q_zeros[key][0]) <= 0.05:
+                q_zeros[key][1] += 1
+                break
+        else:
+            q_zeros.append([zero, 1])
+    
+    np, nq = p_zeros[:], q_zeros[:]
+    for i in range(len(np)):
+        for j in range(len(nq)):
+            if np[i][0] == nq[j][0]:
+                if np[i][1] > nq[j][1]:
+                    np[i][1] -= nq[j][1]
+                    nq.pop(j)
+                
+                elif np[i][1] < nq[j][1]:
+                    nq[j][1] -= np[i][1]
+                    np.pop(i) 
+                
+                else:
+                    np.pop(i)
+                    nq.pop(j)
+                break
+    np1 = 1
+    nq1 = 1
+    for z, po in np:
+        np1 *= poly([-z, 1]) ** po
+    for z, po in nq:
+        nq1 *= poly([-z, 1]) ** po
+    lead_coeff_q = q.coeffs[-1]
+    i = -1
+    while lead_coeff_q == 0:
+        i -= 1
+        lead_coeff_q = q.coeffs[i]
+    
+    lead_coeff_p = p.coeffs[-1]
+    i = -1
+    while lead_coeff_p == 0:
+        i -= 1
+        lead_coeff_p = p.coeffs[i]
+    
+    return np1 * lead_coeff_p, nq1 * lead_coeff_q
+
 def inv_laplace_tr_rat(numerator, denominator, t):
     roots = denominator.roots()
     lead_coeff = denominator.coeffs[-1]
@@ -4425,9 +4549,88 @@ def inv_laplace_tr_rat(numerator, denominator, t):
         
         root, power = mroots[i]
         new_f = Prod([Div([numerator, p1]), Comp([poly([0, t]), exp()])])
+        #p = Div([numerator, p1])
+        #n = power - 1
+        #S = Sum([Prod([(poly([0, 1]) ** i)(t), rat_ndiff(numerator, p1, n - i)]) for i in range(n + 1)])
+        #D = Prod([Comp([poly([0, t]), exp()]), S])
         r = (1 / math.factorial(power - 1)) * ndiff(power - 1, new_f)(root)
+        #r = (1 / math.factorial(power - 1)) * D(root)
         s += r
     return s  
+
+'''
+def partial_frac_decomp(numerator, denominator, t):
+    roots = denominator.roots()
+    lead_coeff = denominator.coeffs[-1]
+    if denominator.coeffs[:] == [0 for i in denominator.coeffs[:]]:
+        raise Exception(ValueError, "Denominator is zero.")
+    i = -1
+    while lead_coeff == 0:
+        i -= 1
+        lead_coeff = denominator.coeffs[i]
+
+    mod_roots = []
+    while len(roots) > 1:
+        r_arr = [roots[0]]
+        for i in range(1, len(roots)):
+            if abs(roots[i] - roots[0]) < 0.01:
+                r_arr.append(roots[i])
+        
+        mod_roots.append((sum(r_arr) / len(r_arr), len(r_arr)))
+        for i in r_arr:
+            roots.remove(i)
+    
+    mroots = mod_roots[:] + [(roots[0], 1)] if len(roots) > 0 else mod_roots[:]
+    
+    s = complex(0, 0)
+    for i in range(len(mroots)):
+        if i < len(mroots) - 1:
+            other_terms = mroots[:i] + mroots[i+1:]
+        else:
+            other_terms = mroots[:i]
+        p1 = poly([lead_coeff])
+        for j in range(len(other_terms)):
+            p1 *= poly([-other_terms[j][0], 1]) ** other_terms[j][1]
+        
+        root, power = mroots[i]
+        
+        a, b = rat_ndiff(numerator, p1, power - 1)
+        r = (1 / math.factorial(power - 1)) * a(root) / b(root)
+        
+        s += r
+    return s 
+'''
+
+def partial_fraction_decomp(p, q):
+    q_zeros_0 = q.roots()[:]
+    q_zeros = []
+    for zero in q_zeros_0:
+        for key in range(len(q_zeros)):
+            if abs(zero - q_zeros[key][0]) <= 0.05:
+                q_zeros[key][1] += 1
+                break
+        else:
+            q_zeros.append([zero, 1])
+    pfd_arr = [] #pfd_arr = [(r1, [c11, c12, c13, ...]), ...] where cij are the coefficients of 1/(x-rij)^j
+    for zero, pow in q_zeros:
+        coeff_arr = []
+        zero_arr = q_zeros[:]
+        zero_arr.remove([zero, pow])
+        denom = 1
+        for z, po in zero_arr:
+            denom *= poly([-z, 1]) ** po
+        
+        for i in range(1, pow + 1):
+            j = pow - i
+            a, b = rat_ndiff(p, denom, j)
+            ans = a(zero) / b(zero)
+            coeff_arr.append(ans / math.factorial(j))
+        
+        pfd_arr.append([zero, coeff_arr[:]])
+    
+    return pfd_arr[:]    
+
+        
     
 def laplace_tr(f):
     
@@ -4496,11 +4699,12 @@ def solve_ndeg_ode_sys(equations, rhs, init_conds, t):
 def solve_ndeg_ode_sys_func(equations, rhs, init_conds):
     return lambda t : solve_ndeg_ode_sys(equations, rhs, init_conds, t)
 
-def numeric_inverse_laplace_transform(function, t, order=2):
+def numeric_inverse_laplace_transform(function, t, order=2, dt=0.001):
     k = order-t
     if k < 0:
         k = 0
-    return cnint(lambda x : function(x) * cmath.exp(t * x), lambda t:complex(order+1, t),-100 * k -10, 100, dt=0.001) / complex(0, 2*cmath.pi)
+    return cnint(lambda x : function(x) * cmath.exp(t * x), lambda t:complex(order+1, t),-100 * k -10, 100, dt=dt) / complex(0, 2*cmath.pi)
+
 
 def generate_invlaplace_transform_problem(nranges=[-10, 10], max_deg=2, diff_int=0, delay_deg=0):
     p1 = poly.rand(random.randint(1, max_deg), coeff_range=nranges[:])

@@ -27,9 +27,8 @@ net_array[i][i] == []
 from utils import *
 import math
 import random
-import pygame as pg 
 import sys
-
+import turtle
 
 def find(array, key):
     for i in range(len(array)):
@@ -168,7 +167,33 @@ def scale_vect(vect, scale):
 def add_vect(v1, v2):
     return [v1[0] + v2[0], v1[1] + v2[1]]
 
-def draw_resistor(disp, start, end, name,length=30):
+def draw_line(tr, start, end):
+    teleport(tr, start[0], start[1])
+    tr.goto(end[0], end[1])
+
+def write_text(tr, pos, text, size=15):
+    teleport(tr, pos[0], pos[1])
+    tr.write(text, move=False, align='center', font=('Arial', size, 'normal'))
+
+def teleport(t, posx, posy):
+    t.penup()
+    t.goto(posx, posy)
+    t.pendown()
+    
+def draw_arc(t, center, radius, theta0, theta1, n=100):
+    teleport(t, center[0], center[1])
+    points = []
+    for i in range(n):
+        theta = theta0 + (i / n) * (theta1 - theta0)
+        points.append(add_vect(center[:], [radius * math.cos(theta), radius * math.sin(theta)]))
+    teleport(t, points[0][0], points[0][1])
+    for i in range(1, n):
+        t.goto(points[i][0], points[i][1])
+
+def draw_circle(t, center, radius):
+    draw_arc(t, center[:], radius, 0, 2*math.pi)
+    
+def draw_resistor(tr, start, end, name,length=30):
     '''
     The length of the resistor is 30px.
     the angle is 60 degrees.
@@ -177,26 +202,23 @@ def draw_resistor(disp, start, end, name,length=30):
     dist = math.sqrt((end[1] - start[1]) ** 2 + (end[0] - start[0]) ** 2)
     unit_vect = [(end[0] - start[0]) / dist, (end[1] - start[1]) / dist]
     ndist = int((dist - length) / 2)
-    pg.draw.line(disp, (0, 0, 0), start[:], (start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist))
-    pg.draw.line(disp, (0, 0, 0), (end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist), end[:])
+    draw_line(tr, start[:], (start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist))
+    draw_line(tr, (end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist), end[:])
     curr_point =  [start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist]
     p1 = add_vect(scale_vect(rotate_vect(unit_vect, math.pi/3)[:], l)[:], curr_point[:])[:]
-    pg.draw.line(disp, (0, 0, 0), curr_point[:], p1[:])
+    draw_line(tr, curr_point[:], p1[:])
     curr_point[:] = p1[:]
     for i in range(5):
         p1 = add_vect(scale_vect(rotate_vect(unit_vect, math.pi/3 * (-1) ** (i+1))[:], 2*l)[:], curr_point[:])[:]
-        pg.draw.line(disp, (0, 0, 0), curr_point[:], p1[:])
+        draw_line(tr, curr_point[:], p1[:])
         curr_point[:] = p1[:]
     p1 = add_vect(scale_vect(rotate_vect(unit_vect, math.pi/3)[:], l)[:], curr_point[:])[:]
-    pg.draw.line(disp, (0, 0, 0), curr_point[:], p1[:])
+    draw_line(tr, curr_point[:], p1[:])
     curr_point[:] = p1[:]
-    font = pg.font.SysFont(None, 15)
-    text_surface = font.render(name, True, (0, 0, 0))
-    disp.blit(text_surface, scale_vect(add_vect(start, end), 0.5))
-    pg.display.update()
+    write_text(tr, scale_vect(add_vect(start, end), 0.5), name)
     return
 
-def draw_capacitor(disp, start, end, name, length=10, height=20):
+def draw_capacitor(tr, start, end, name, length=10, height=20):
     '''
     The length of the resistor is 30px.
     the angle is 60 degrees.
@@ -206,21 +228,18 @@ def draw_capacitor(disp, start, end, name, length=10, height=20):
     dist = math.sqrt((end[1] - start[1]) ** 2 + (end[0] - start[0]) ** 2)
     unit_vect = [(end[0] - start[0]) / dist, (end[1] - start[1]) / dist]
     ndist = int((dist - length) / 2)
-    pg.draw.line(disp, (0, 0, 0), start[:], (start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist))
-    pg.draw.line(disp, (0, 0, 0), (end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist), end[:])
+    draw_line(tr, start[:], (start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist))
+    draw_line(tr, (end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist), end[:])
     curr_point =  [start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist]
     p1 = add_vect(scale_vect(rotate_vect(unit_vect, math.pi/2)[:], l)[:], curr_point[:])[:]
     p2 = add_vect(scale_vect(rotate_vect(unit_vect, -math.pi/2)[:], l)[:], curr_point[:])[:]
     new_u_vect = scale_vect(unit_vect, 8)
-    pg.draw.line(disp, (0, 0, 0), p1[:], p2[:])
-    pg.draw.line(disp, (0, 0, 0), add_vect(p1[:], new_u_vect[:]), add_vect(p2[:], new_u_vect[:]))
-    font = pg.font.SysFont(None, 15)
-    text_surface = font.render(name, True, (0, 0, 0))
-    disp.blit(text_surface, scale_vect(add_vect(start, end), 0.5))
-    pg.display.update()
+    draw_line(tr, p1[:], p2[:])
+    draw_line(tr, add_vect(p1[:], new_u_vect[:]), add_vect(p2[:], new_u_vect[:]))
+    write_text(tr, scale_vect(add_vect(start, end), 0.5), name)
     return
 
-def draw_inductor(disp, start, end, name, length=40):
+def draw_inductor(tr, start, end, name, length=40):
     '''
     The length of the resistor is 30px.
     the angle is 60 degrees.
@@ -229,46 +248,57 @@ def draw_inductor(disp, start, end, name, length=40):
     dist = math.sqrt((end[1] - start[1]) ** 2 + (end[0] - start[0]) ** 2)
     unit_vect = [(end[0] - start[0]) / dist, (end[1] - start[1]) / dist]
     ndist = int((dist - length) / 2)
-    pg.draw.line(disp, (0, 0, 0), start[:], (start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist))
-    pg.draw.line(disp, (0, 0, 0), (end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist), end[:])
+    draw_line(tr, start[:], (start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist))
+    draw_line(tr, (end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist), end[:])
     curr_point =  [start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist]
-    start_angle = -math.atan((end[1] - start[1]) / (end[0] - start[0])) if end[0] != start[0] else math.pi/2
+    start_angle = math.atan((end[1] - start[1]) / (end[0] - start[0])) if end[0] != start[0] else math.pi/2
+    '''
     p_rect = add_vect(curr_point, scale_vect(rotate_vect(unit_vect[:], math.pi/2), l/2))
     for i in range(4):
         pg.draw.arc(disp, (0, 0, 0), (p_rect[0] - l, p_rect[1] - l, l, l), start_angle, start_angle + math.pi)
         curr_point = add_vect(curr_point[:], scale_vect(unit_vect[:], l))[:]
         p_rect = add_vect(curr_point[:], scale_vect(rotate_vect(unit_vect[:], math.pi/2), l/2))
-    
+    '''
+    curr_point = add_vect(curr_point[:], scale_vect(unit_vect[:], l/2))[:]
+    for i in range(4):
+        draw_arc(tr, curr_point[:], l/2, start_angle, start_angle + math.pi)
+        curr_point = add_vect(curr_point[:], scale_vect(unit_vect[:], l))[:]
+    '''    
     font = pg.font.SysFont(None, 15)
     text_surface = font.render(name, True, (0, 0, 0))
     disp.blit(text_surface, scale_vect(add_vect(start, end), 0.5))
     pg.display.update()
+    '''
+    write_text(tr, scale_vect(add_vect(start, end), 0.5), name)
     return
 
-def draw_circuit(display, net_array, nodes=[]):
+def draw_circuit(tr, net_array, nodes=[], dims=[600, 600]):
     '''
     currently supports only one edge between any two nodes.
     '''
     #display = pg.display.set_mode((600, 600))
-    font = pg.font.SysFont(None, 15)
-    
-    display.fill((255, 255, 255))
-    node_disp_coords = [(150, 150), (300, 150), (450, 150), (150, 300), (300, 300), (450, 300), (150, 450), (300, 450), (450, 450)]
+   
+    node_disp_coords_0 = [(150, 150), (300, 150), (450, 150), (150, 300), (300, 300), (450, 300), (150, 450), (300, 450), (450, 450)]
+    node_disp_coords = []
+    for i, j in node_disp_coords_0:
+        p = add_vect([i, -j], [-dims[0] / 2, dims[1] / 2])
+        node_disp_coords.append(p[:])
     if nodes is None:
         for i in range(1, 9):
-            text_surface = font.render(str(i), True, (0, 0, 0))
-            pg.draw.circle(display, (0, 0, 0), add_vect(add_vect(node_disp_coords[i - 1], [0, -10]), [3, 3]), 10, 1)
-            display.blit(text_surface, add_vect(node_disp_coords[i - 1], [0, -10]))
+            
+            write_text(tr, add_vect(node_disp_coords[i - 1], [0, -10]), str(i))
+            draw_circle(tr, add_vect(add_vect(node_disp_coords[i - 1], [0, -10]), [0, 9]), 10)
+            
         
-        text_surface = font.render("0", True, (0, 0, 0))
-        pg.draw.circle(display, (0, 0, 0), add_vect(add_vect(node_disp_coords[- 1], [0, -10]), [3, 3]), 10, 1)
-        display.blit(text_surface, add_vect(node_disp_coords[- 1], [0, -10]))
+        write_text(tr, add_vect(node_disp_coords[- 1], [0, -10]), '0')
+        draw_circle(tr, add_vect(add_vect(node_disp_coords[- 1], [0, -10]), [0, 9]), 10)
+        
     
     else:
         for i in range(len(nodes)):
-            text_surface = font.render(str(i + 1), True, (0, 0, 0))
-            pg.draw.circle(display, (0, 0, 0), add_vect(add_vect(node_disp_coords[nodes[i]], [0, -10]), [3, 3]), 10, 1)
-            display.blit(text_surface, add_vect(node_disp_coords[nodes[i]], [0, -10]))
+            write_text(tr, add_vect(node_disp_coords[nodes[i]], [0, -10]), str(i + 1))
+            draw_circle(tr, add_vect(add_vect(node_disp_coords[nodes[i]], [0, -10]), [0, 9]), 10)
+            
         
         
     
@@ -282,22 +312,22 @@ def draw_circuit(display, net_array, nodes=[]):
                     elem, vs, js = net_array[i][j][0]
                     if isinstance(elem, poly):
                         if elem.deg == 1:
-                            draw_resistor(display, node_disp_coords[i], node_disp_coords[j], "R%d=%dΩ"%(c, 1/elem.coeffs[1]))
+                            draw_resistor(tr, node_disp_coords[i], node_disp_coords[j], "R%d=%dΩ"%(c, 1/elem.coeffs[1]))
                         elif elem.deg == 2:
-                            draw_capacitor(display, node_disp_coords[i], node_disp_coords[j], "C%d=%dF"%(c, elem.coeffs[2]))
+                            draw_capacitor(tr, node_disp_coords[i], node_disp_coords[j], "C%d=%dF"%(c, elem.coeffs[2]))
                         else:
-                            draw_inductor(display, node_disp_coords[i], node_disp_coords[j], "L%d=%dH"%(c, 1/elem.coeffs[0]))
+                            draw_inductor(tr, node_disp_coords[i], node_disp_coords[j], "L%d=%dH"%(c, 1/elem.coeffs[0]))
                 else:
                     elem = net_array[i][j][0]
 
                     if isinstance(elem, poly):
                         if elem.deg == 1:
-                            draw_resistor(display, node_disp_coords[i], node_disp_coords[j], "R%d=%dΩ"%(c, 1/elem.coeffs[1]))
+                            draw_resistor(tr, node_disp_coords[i], node_disp_coords[j], "R%d=%dΩ"%(c, 1/elem.coeffs[1]))
                         elif elem.deg == 2:
                             
-                            draw_capacitor(display, node_disp_coords[i], node_disp_coords[j], "C%d=%dF"%(c, elem.coeffs[2]))
+                            draw_capacitor(tr, node_disp_coords[i], node_disp_coords[j], "C%d=%dF"%(c, elem.coeffs[2]))
                         else:
-                            draw_inductor(display, node_disp_coords[i], node_disp_coords[j], "L%d=%dH"%(c, 1/elem.coeffs[0]))
+                            draw_inductor(tr, node_disp_coords[i], node_disp_coords[j], "L%d=%dH"%(c, 1/elem.coeffs[0]))
     #pg.display.update()
 
 '''
@@ -338,9 +368,16 @@ def generate_random_circuit(nodes_no, mesh_no, nranges):
     
     for i in range(mesh_no - 1):
         elem = randelem(nranges[:])
-        z1, z2 = nodes[random.randint(0, len(nodes) - 1)], nodes[random.randint(0, len(nodes) - 1)]
+        a, b = random.randint(0, len(nodes) - 1), random.randint(0, len(nodes) - 1)
+        while a == b:
+            a, b = random.randint(0, len(nodes) - 1), random.randint(0, len(nodes) - 1)
+        z1, z2 = nodes[a], nodes[b]
+        
         while len(net_array[z1][z2]):
-            z1, z2 = nodes[random.randint(0, len(nodes) - 1)], nodes[random.randint(0, len(nodes) - 1)]
+            a, b = random.randint(0, len(nodes) - 1), random.randint(0, len(nodes) - 1)
+            while a == b:
+                a, b = random.randint(0, len(nodes) - 1), random.randint(0, len(nodes) - 1)
+            z1, z2 = nodes[a], nodes[b]
         net_array[z1][z2] = [elem]
         net_array[z2][z1] = [elem]
     
@@ -382,43 +419,40 @@ sys.exit()
 
 def generate_circuit_problem(nranges, tndigits, nnode, nmesh, draw=True, labelled=True):
 
-    for i in range(10):
-        
-        try:
-            pg.init()
-            
-            display = pg.display.set_mode((600, 600))
-            display.fill((255, 255, 255))
-            net = generate_random_circuit(nnode, nmesh, nranges[:])[:]
 
-            time = round(random.random(), ndigits=tndigits)
-            node = random.randint(0, nnode - 2)
-            if labelled:
-                sol, nodes = find_Yn(net[:], labelled=True)
-            else:
-                nodes=[]
-
-            td_net_f = time_domain_net_function(net, node)
-            z = td_net_f(time)
-            if draw:
-                draw_circuit(display, net[:], nodes=nodes)
-                pg.display.set_caption('Evaluate the net function for node %d at t=%f (node %d is earth)'%(node + 1, time, len(nodes)))
-                pg.display.update()
-                running = True
-                while running:
-                    for event in pg.event.get():
-                        if event.type == pg.QUIT:
-                            running = False
-                        
-                        if event.type == pg.KEYDOWN:
-                            if event.key == pg.K_q:
-                                running = False
-                pg.quit()
             
-            return time, z
-        except Exception as x:
-            pass
-            #pg.quit()
+    display = turtle.Screen()
+    turtle.TurtleScreen._RUNNING=True
+    tr = turtle.Turtle()
+
     
+    tr.speed(0)
+    turtle.tracer(0, 0)
+    display.screensize(600, 600, 'white')
+    
+    net = generate_random_circuit(nnode, nmesh, nranges[:])[:]
 
-#print(generate_circuit_problem([1, 10], 1, 7, 4, draw=True, labelled=True))
+    time = round(random.random(), ndigits=tndigits)
+    node = random.randint(0, nnode - 2)
+    if labelled:
+        sol, nodes = find_Yn(net[:], labelled=True)
+    else:
+        nodes=[]
+
+    td_net_f = time_domain_net_function(net, node)
+    z = td_net_f(time)
+    if draw:
+        draw_circuit(tr, net[:], nodes=nodes)
+        display.title('Evaluate the net function for node %d at t=%f (node %d is earth)'%(node + 1, time, len(nodes)))
+    #tr.color('white')   
+    tr.hideturtle()
+    turtle.update()
+    turtle.done()
+    
+    
+    return time, z
+
+
+
+
+
