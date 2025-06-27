@@ -397,12 +397,11 @@ def yn_inv(yn):
 
 def network_function(net_array, node):
     yn = find_Yn(net_array[:])
-    print(yn)
+
     vect = [[0] for i in range(len(yn.array[:]))]
     vect[node][0] = 1
     i, d = yn_inv(yn)
-    print(i)
-    print(d)
+
     solution = i * matrix(vect[:])
     
     return Div([solution.array[node][0], d])
@@ -413,6 +412,17 @@ def time_domain_net_function(net_array, node):
     #print(freq_domain_n)
     #print(freq_domain_d)
     #func =  network_function(net_array[:], node)
+    lead_n_zeros = 0
+    while freq_domain_n.coeffs[lead_n_zeros] == 0 and lead_n_zeros < len(freq_domain_n.coeffs[:]):
+        lead_n_zeros += 1
+    
+    lead_d_zeros = 0
+    while freq_domain_d.coeffs[lead_d_zeros] == 0 and lead_d_zeros < len(freq_domain_d.coeffs[:]):
+        lead_d_zeros += 1
+    
+    k = min(lead_d_zeros, lead_n_zeros)
+    freq_domain_n = poly(freq_domain_n.coeffs[k:])
+    freq_domain_d = poly(freq_domain_d.coeffs[k:])
 
     return sym_inv_lap_rat(freq_domain_n, freq_domain_d)#lambda t: numeric_inverse_laplace_transform(func, t, order=0, dt=0.001)#lambda t: inv_laplace_tr_rat(freq_domain_n, freq_domain_d, t)#
 
