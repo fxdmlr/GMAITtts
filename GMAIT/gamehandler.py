@@ -674,11 +674,11 @@ def inv_lap_mat(inpt_dict):
 def circuit_game(inpt_dict):
 
     nranges = inpt_dict['nranges']
-    tndigits = inpt_dict['tndigits']
+    tranges = inpt_dict['tranges']
     nnode = inpt_dict['nnode']
     nmesh = inpt_dict['nmesh']
     moe = inpt_dict['moe']
-    t, answer = circ.generate_circuit_problem(nranges, tndigits, nnode, nmesh)
+    t, answer, a = circ.generate_circuit_problem(nranges, tranges, nnode, nmesh)
     
 
     cond = lambda x : abs(x - answer) <= abs(moe*answer)

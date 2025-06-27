@@ -997,12 +997,13 @@ def static(prechoice=None):
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         
-        tndigits = int(input('Time input digits after floating point : '))
+        c, d = input("Time input range (seperated by blank space): ").split(" ")
+        tranges = [int(c), int(d)]
         nnode = int(input('Number of nodes : '))
         nmesh = int(input('Number of Meshs : '))
         moe = float(input('margin of error : '))
         os.system("clear")
-        inpt_dict = {"nranges" : ranges, 'tndigits':tndigits, 'nnode':nnode, 'nmesh':nmesh, 'moe':moe}
+        inpt_dict = {"nranges" : ranges, 'tranges':tranges, 'nnode':nnode, 'nmesh':nmesh, 'moe':moe}
         stats = gr.general_runner(gh.circuit_game, rounds, inpt_dict, md)#multgame.polyMulGame(number_of_rounds=rounds, max_deg=max_deg, nrange=ranges[:])
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))

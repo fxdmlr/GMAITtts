@@ -640,7 +640,7 @@ class poly:
         string.reverse()
         return "".join(string)
         '''
-        return strpprint(self.pprint())
+        return strpprint(self.npprint())
     
     def pprint(self):
         new_array = self.coeffs[:]
@@ -687,7 +687,10 @@ class poly:
             nppr = connect(right_pr, connect(prev_ppr[:], left_pr))
         
         for i in range(len(new_array)):
-            pow, coeff_abs, sgn_ppr = self.deg - i, abs(new_array[i]), [[" "], [" "], [" "], [("+" if i != 0 else " ") if sgn(new_array[i]) else "-"], [" "], [" "], [" "]]
+            pow, coeff_abs, sgn_ppr = self.deg - i, abs(new_array[i].real), [[" "], [" "], [" "], [("+" if i != 0 else " ") if sgn(new_array[i].real) else "-"], [" "], [" "], [" "]]
+            if new_array[i].imag != 0:
+                coeff_abs = new_array[i]
+                sgn_ppr =  [[" "], [" "], [" "], ["+"], [" "], [" "], [" "]]
             coeff_abs_ppr = [[" " for j in str(coeff_abs)],
                              [" " for j in str(coeff_abs)],
                              [" " for j in str(coeff_abs)],
@@ -923,6 +926,39 @@ class poly:
             r2, r3 = (self / poly([-r1, 1])).roots()
             
             return [r1, r2, r3] + prevs[:]
+        
+        if self.deg == 4:
+            A = self.coeffs[4]
+            B = self.coeffs[3]
+            C = self.coeffs[2]
+            D = self.coeffs[1]
+            E = self.coeffs[0]
+            a = -3*B**2/(8*A**2) + C/A
+            b =  B**3/(8*A**3) - B*C/(2*A**2) + D/A
+            c = -3*B**4/(256*A**4)+ C*B**2/(16*A**3) - B*D/(4*A**2)+ E/A
+            d = -B / (4*A)
+            #depressed_quartic = [c, b, a, 0, 1]
+            if b == 0:
+                r1 = cmath.sqrt(-a/2 + 0.5*cmath.sqrt(a**2-4*c))
+                r2 = cmath.sqrt(-a/2 - 0.5*cmath.sqrt(a**2-4*c))
+                r3 = -cmath.sqrt(-a/2 + 0.5*cmath.sqrt(a**2-4*c))
+                r4 = -cmath.sqrt(-a/2 - 0.5*cmath.sqrt(a**2-4*c))
+                
+                return [r1+d, r2+d, r3+d, r4+d] + prevs[:]
+            else:
+                p = -a**2/12 - c
+                q = -a**3/108+a*c/3-b**2/8
+                w = (-q/2 + cmath.sqrt(q**2/4 + p**3/27))**(1/3)
+                if w != 0:
+                    y = a/6 + w-p/(3*w)
+                else:
+                    y = a/6
+                r1 = 0.5*(-cmath.sqrt(2*y - a) + cmath.sqrt(-2*y-a+2*b/cmath.sqrt(2*y - a)))
+                r2 = 0.5*(-cmath.sqrt(2*y - a) - cmath.sqrt(-2*y-a+2*b/cmath.sqrt(2*y - a)))
+                r3 = 0.5*(cmath.sqrt(2*y - a) + cmath.sqrt(-2*y-a-2*b/cmath.sqrt(2*y - a)))
+                r4 = 0.5*(cmath.sqrt(2*y - a) - cmath.sqrt(-2*y-a-2*b/cmath.sqrt(2*y - a)))
+                return [r1+d, r2+d, r3+d, r4+d] + prevs[:]
+
         else:
             guess = complex(0, 0)
             max_iter = 100
@@ -4426,7 +4462,17 @@ def solve_first_deg_ode_sys(equations, init_conds, target, n=10):
     
     return y_array[:]
 def rat_diff(numerator, denominator):
-    return numerator.diff() * denominator - denominator.diff() * numerator, denominator ** 2
+    if hasattr(numerator, 'diff'):
+        if hasattr(denominator, 'diff'):
+            return numerator.diff() * denominator - denominator.diff() * numerator, denominator ** 2
+        else:
+            return numerator.diff() * denominator, denominator ** 2
+    else:
+        if hasattr(denominator, 'diff'):
+            return - denominator.diff() * numerator, denominator ** 2
+        else:
+            return poly([0]), denominator ** 2
+    
 
 def rat_ndiff(numerator, denominator, n):
     if n == 0:
@@ -4458,61 +4504,55 @@ def rat_add(array):
         d *= j
     
     return n, d
+
+def approx_in(arr, e, item):
+    for i in range(len(arr)):
+        if abs(arr[i] - item) <= e:
+            return i
+    return -1
+
+def cmplx_rem(arr, item):
+    for i in range(len(arr)):
+        if abs(arr[i] - item) == 0:
+            arr.pop(i)
+            return 
+
+
 def rat_simplify(p, q):
-    p_zeros_0 = p.roots()[:]
-    p_zeros = []
-    for zero in p_zeros_0:
-        for key in range(len(p_zeros)):
-            if abs(zero - p_zeros[key][0]) <= 0.05:
-                p_zeros[key][1] += 1
-                break
-        else:
-            p_zeros.append([zero, 1])
-    q_zeros_0 = q.roots()[:]
-    q_zeros = []
-    for zero in q_zeros_0:
-        for key in range(len(q_zeros)):
-            if abs(zero - q_zeros[key][0]) <= 0.05:
-                q_zeros[key][1] += 1
-                break
-        else:
-            q_zeros.append([zero, 1])
-    
-    np, nq = p_zeros[:], q_zeros[:]
+    p_z = p.roots()[:]
+    q_z = q.roots()[:]
+    np = p_z[:]
+    nq = q_z[:]
+
+    for i in range(len(p_z)):
+
+        ind = approx_in(nq[:], 0.05, p_z[i])
+        if ind > -1:
+
+            cmplx_rem(np, p_z[i])
+            cmplx_rem(nq, nq[ind])
+    s = p.coeffs[-1]
+    r = q.coeffs[-1]
+    for i in range(len(nq)):
+        if nq[i].imag < 10 ** (-7):
+            nq[i] = nq[i].real
+        if nq[i].real < 10 ** (-7):
+            nq[i] = complex(0, nq[i].imag)
+            
     for i in range(len(np)):
-        for j in range(len(nq)):
-            if np[i][0] == nq[j][0]:
-                if np[i][1] > nq[j][1]:
-                    np[i][1] -= nq[j][1]
-                    nq.pop(j)
-                
-                elif np[i][1] < nq[j][1]:
-                    nq[j][1] -= np[i][1]
-                    np.pop(i) 
-                
-                else:
-                    np.pop(i)
-                    nq.pop(j)
-                break
-    np1 = 1
-    nq1 = 1
-    for z, po in np:
-        np1 *= poly([-z, 1]) ** po
-    for z, po in nq:
-        nq1 *= poly([-z, 1]) ** po
-    lead_coeff_q = q.coeffs[-1]
-    i = -1
-    while lead_coeff_q == 0:
-        i -= 1
-        lead_coeff_q = q.coeffs[i]
+        if np[i].imag < 10 ** (-7):
+            np[i] = np[i].real  
+        if np[i].real < 10 ** (-7):
+            np[i] = complex(0, np[i].imag) 
+                 
+    for i in np:
+        
+        s *= poly([-i, 1])
+        
+    for i in nq:
+        r *= poly([-i, 1])
     
-    lead_coeff_p = p.coeffs[-1]
-    i = -1
-    while lead_coeff_p == 0:
-        i -= 1
-        lead_coeff_p = p.coeffs[i]
-    
-    return np1 * lead_coeff_p, nq1 * lead_coeff_q
+    return s, r
 
 def inv_laplace_tr_rat(numerator, denominator, t):
     roots = denominator.roots()
@@ -4558,77 +4598,76 @@ def inv_laplace_tr_rat(numerator, denominator, t):
         s += r
     return s  
 
-'''
-def partial_frac_decomp(numerator, denominator, t):
-    roots = denominator.roots()
-    lead_coeff = denominator.coeffs[-1]
-    if denominator.coeffs[:] == [0 for i in denominator.coeffs[:]]:
-        raise Exception(ValueError, "Denominator is zero.")
-    i = -1
-    while lead_coeff == 0:
-        i -= 1
-        lead_coeff = denominator.coeffs[i]
+def create_poly_pow(arr_r, arr_pow):
+    s = 1
+    for i in range(len(arr_r)):
+        s *= poly([-arr_r[i], 1]) ** arr_pow[i]
+    
+    return s
 
-    mod_roots = []
-    while len(roots) > 1:
-        r_arr = [roots[0]]
-        for i in range(1, len(roots)):
-            if abs(roots[i] - roots[0]) < 0.01:
-                r_arr.append(roots[i])
-        
-        mod_roots.append((sum(r_arr) / len(r_arr), len(r_arr)))
-        for i in r_arr:
-            roots.remove(i)
-    
-    mroots = mod_roots[:] + [(roots[0], 1)] if len(roots) > 0 else mod_roots[:]
-    
-    s = complex(0, 0)
-    for i in range(len(mroots)):
-        if i < len(mroots) - 1:
-            other_terms = mroots[:i] + mroots[i+1:]
+def partial_frac_decomp(p, q):
+    adj_p_arr = p.coeffs[:]
+    while len(adj_p_arr):
+        if adj_p_arr[-1] == 0:
+            adj_p_arr.pop(-1)
         else:
-            other_terms = mroots[:i]
-        p1 = poly([lead_coeff])
-        for j in range(len(other_terms)):
-            p1 *= poly([-other_terms[j][0], 1]) ** other_terms[j][1]
+            break
+    if len(adj_p_arr) == 0:
+        return 0
+    
+    adj_q_arr = q.coeffs[:]
+    while len(adj_q_arr):
+        if adj_q_arr[-1] == 0:
+            adj_q_arr.pop(-1)
+        else:
+            break
+    if len(adj_q_arr) == 0:
+        raise Exception(ValueError, 'denominator zero.')
+    
+    adj_p, adj_q = poly(adj_p_arr[:]), poly(adj_q_arr[:]) #rat_simplify(poly(adj_p_arr[:]), poly(adj_q_arr[:]))
+    lead_q = adj_q_arr[-1]
+    
+    q_roots = adj_q.roots()[:]
+    q_root_keys = []
+    q_root_count = []
+    for i in q_roots:
+        ind = approx_in(q_root_keys, 0.05, i)
+        if ind > -1:
+            q_root_count[ind] += 1
+        else:
+            q_root_keys.append(i)
+            q_root_count.append(1)
+    
+    coeffs = []
+    for i in range(len(q_root_keys)):
+        arr = [0] * q_root_count[i]
+        new_arr_r = q_root_keys[:i] + q_root_keys[i + 1:] if i < len(q_root_keys) - 1 else q_root_keys[:-1]
+        new_arr_p = q_root_count[:i] + q_root_count[i + 1:] if i < len(q_root_count) - 1 else q_root_count[:-1]
+        nq = create_poly_pow(new_arr_r, new_arr_p)
+        for j in range(q_root_count[i]):
+            k = j + 1
+            t, u = rat_ndiff(adj_p, nq, j)
+            if not callable(u):
+                u = poly([u])
+            if not callable(t):
+                t = poly([t])
+            d = t(q_root_keys[i]) /  u(q_root_keys[i]) 
+            arr[q_root_count[i] - k] = (1/math.factorial(k - 1)) * d / lead_q
         
-        root, power = mroots[i]
-        
-        a, b = rat_ndiff(numerator, p1, power - 1)
-        r = (1 / math.factorial(power - 1)) * a(root) / b(root)
-        
-        s += r
-    return s 
-'''
+        coeffs.append((arr[:], q_root_keys[i]))
+    return coeffs[:]
 
-def partial_fraction_decomp(p, q):
-    q_zeros_0 = q.roots()[:]
-    q_zeros = []
-    for zero in q_zeros_0:
-        for key in range(len(q_zeros)):
-            if abs(zero - q_zeros[key][0]) <= 0.05:
-                q_zeros[key][1] += 1
-                break
-        else:
-            q_zeros.append([zero, 1])
-    pfd_arr = [] #pfd_arr = [(r1, [c11, c12, c13, ...]), ...] where cij are the coefficients of 1/(x-rij)^j
-    for zero, pow in q_zeros:
-        coeff_arr = []
-        zero_arr = q_zeros[:]
-        zero_arr.remove([zero, pow])
-        denom = 1
-        for z, po in zero_arr:
-            denom *= poly([-z, 1]) ** po
-        
-        for i in range(1, pow + 1):
-            j = pow - i
-            a, b = rat_ndiff(p, denom, j)
-            ans = a(zero) / b(zero)
-            coeff_arr.append(ans / math.factorial(j))
-        
-        pfd_arr.append([zero, coeff_arr[:]])
+def sym_inv_lap_rat(p, q):
+    pfd_arr = partial_frac_decomp(p, q)
+    fin_func_arr = []
+    for coeff, root in pfd_arr:
+        z = poly([coeff[i]/math.factorial(i) for i in range(len(coeff))])
+        fin_func_arr.append(Prod([z, Comp([poly([0, root]), exp()])]))
     
-    return pfd_arr[:]    
+    return Sum(fin_func_arr[:])
+
+
+   
 
         
     

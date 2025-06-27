@@ -388,41 +388,36 @@ def generate_random_circuit(nodes_no, mesh_no, nranges):
     
     return net_array[:]
 
+def yn_inv(yn):
+    d = yn.det()
+    n = len(yn.array[:])
+    new_arr = [[det(minor(yn.array[:], [i, j])) * (-1)**(i + j) for i in range(n)] for j in range(n)]
+    return matrix(new_arr[:]), d
+
+
 def network_function(net_array, node):
     yn = find_Yn(net_array[:])
+    print(yn)
     vect = [[0] for i in range(len(yn.array[:]))]
     vect[node][0] = 1
-    solution = yn.inverse() * matrix(vect[:])
-    return solution.array[node][0].simplify() if hasattr(solution.array[node][0], 'simplify') else solution.array[node][0]
+    i, d = yn_inv(yn)
+    print(i)
+    print(d)
+    solution = i * matrix(vect[:])
+    
+    return Div([solution.array[node][0], d])
 
 def time_domain_net_function(net_array, node):
-    #freq_domain_n1, freq_domain_d = network_function(net_array[:], node).arr[:]
-    #freq_domain_n = freq_domain_n1 * poly([0, 0, 1])
+    freq_domain_n1, freq_domain_d = network_function(net_array[:], node).arr[:]
+    freq_domain_n = freq_domain_n1 * poly([0, 1])
+    #print(freq_domain_n)
+    #print(freq_domain_d)
+    #func =  network_function(net_array[:], node)
 
-    func =  network_function(net_array[:], node)
-
-    return lambda t: numeric_inverse_laplace_transform(func, t, order=0, dt=0.001)#lambda t: inv_laplace_tr_rat(freq_domain_n, freq_domain_d, t)#
-
-'''
-arr = generate_random_circuit(4, 1, [1, 10])
-draw_circuit(arr[:])                    
-y = find_Yn(arr)
-print(y)
-print(network_function(arr[:], 1))
+    return sym_inv_lap_rat(freq_domain_n, freq_domain_d)#lambda t: numeric_inverse_laplace_transform(func, t, order=0, dt=0.001)#lambda t: inv_laplace_tr_rat(freq_domain_n, freq_domain_d, t)#
 
 
-running = True
-while running:
-    # 4a) Handle events
-    for event in pg.event.get():
-        if event.type == pg.QUIT:
-            running = False
-pg.quit()
-
-sys.exit()
-'''
-
-def generate_circuit_problem(nranges, tndigits, nnode, nmesh, draw=True, labelled=True):
+def generate_circuit_problem(nranges, tranges, nnode, nmesh, draw=True, labelled=True):
 
 
             
@@ -440,7 +435,7 @@ def generate_circuit_problem(nranges, tndigits, nnode, nmesh, draw=True, labelle
     
     net = generate_random_circuit(nnode, nmesh, nranges[:])[:]
 
-    time = round(random.random(), ndigits=tndigits)
+    time = random.randint(tranges[0], tranges[1])
     node = random.randint(0, nnode - 2)
     if labelled:
         sol, nodes = find_Yn(net[:], labelled=True)
@@ -458,9 +453,5 @@ def generate_circuit_problem(nranges, tndigits, nnode, nmesh, draw=True, labelle
     turtle.done()
     
     
-    return time, z
-
-
-
-
+    return time, z, td_net_f
 
