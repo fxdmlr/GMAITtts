@@ -722,4 +722,4 @@ def generate_circuit_problem(nranges, tranges, nnode, nmesh, source_arr=[0, 0, 0
     turtle.done()
     
     
-    return time, z, td_net_f
+    return time, z.real, td_net_f
