@@ -678,8 +678,10 @@ def circuit_game(inpt_dict):
     nnode = inpt_dict['nnode']
     nmesh = inpt_dict['nmesh']
     moe = inpt_dict['moe']
-    t, answer, a = circ.generate_circuit_problem(nranges, tranges, nnode, nmesh)
+    prob = inpt_dict['prob']
+    source_arr = [0 for i in range(prob - 1)] + [1]
+    t, answer, a = circ.generate_circuit_problem(nranges, tranges, nnode, nmesh, source_arr=source_arr[:])
     
 
     cond = lambda x : abs(x - answer) <= abs(moe*answer)
-    return 'Network function(time domain) at t = %f : '%t, answer, lambda x : answer if cond(float(x)) else answer+1
+    return 'Voltage at t = %f : '%t, answer, lambda x : answer if cond(float(x)) else answer+1

@@ -18,9 +18,6 @@ between nodes i and j. ---> net_array[i][j] = [(y1, v1, j1), (y2, v2, j2), ...]
 for the net_array[i][j], the set of edges are the same in the elemnts but the sources 
 should be reversed ----> y_ij = y_ji, Is_ij = -Is_ji, Vs_ij = -Vs_ji
 
-AND
-
-net_array[i][i] == []
 
 '''
 
@@ -55,57 +52,53 @@ class Element:
     def resistor(R):
         return poly([0, 1/R])
 
-def convert_net_Yn(net_array, solve=False):
+def find_Yn_sourced(net_array, labelled=False):
     '''
     Scanning net_array to find the dimentions of A.
+    the resulting matrix is multiplied by s^2
     '''
     
     edge_n = 0
     edges = []
-    v_s = []
-    j_s = []
+    node_count = 0
+    node_c = 0
+    nodes = []
     for i in range(len(net_array)):
+        node_c = 0
         for j in range(i + 1):
             if len(net_array[i][j]) != 0:
+                node_c = 1
+                nodes.append(i)
+                nodes.append(j)
                 edge_n += len(net_array[i][j])
                 for k in range(len(net_array[i][j])):
-                    if isinstance(net_array[i][j][k], (list, tuple)):
-                        edges.append([i, j, net_array[i][j][k][0]])
-                        v_s.append(net_array[i][j][k][1])
-                        j_s.append(net_array[i][j][k][2])
                     
-                    else:
-                        edges.append([i, j, net_array[i][j][k]])
-                        v_s.append(0)
-                        j_s.append(0)
-                 
-    A_arr = [[0 for j in range(edge_n)] for i in range(len(net_array))]
+                    edges.append([i, j, net_array[i][j][k]])
+
+        
+        node_count += node_c
+        
+    nnodes = list(set(nodes))             
+    A_arr = [[0 for j in range(edge_n)] for i in range(len(nnodes))]
     G_arr = [[0 for j in range(edge_n)] for i in range(edge_n)]
-    
+    i_s = []
+    v_s = []
     counter = 0
     for i, j, adm in edges:
-        A_arr[i][counter] = 1
-        A_arr[j][counter] = -1
-        G_arr[counter][counter] = adm
+        A_arr[find(nnodes, i)][counter] = 1
+        A_arr[find(nnodes, j)][counter] = -1
+        G_arr[counter][counter] = adm[0] if isinstance(adm, (list, tuple)) else adm
+        i_s.append(adm[-1] if isinstance(adm, (list, tuple)) else 0)
+        v_s.append(adm[1] if isinstance(adm, (list, tuple)) else 0)
         counter += 1
     
     A = matrix(A_arr[:-1])
     G = matrix(G_arr)
-    js = matrix([[i] for i in j_s])
-    vs = matrix([[i] for i in v_s])
-
-    i_s = A*G*vs - A*js
     Yn = A * G * A.transpose()
-    sol_simp = None
-    if solve:
-        sol = Yn.inverse() * i_s
-        narr = []
-        for i in sol.array[:]:
-            narr.append([i[0].simplify()])
-        
-        sol_simp = matrix(narr)
-    
-    return Yn, i_s, sol_simp
+    i_n = A * G * matrix([[i] for i in v_s]) - A * matrix([[i] for i in i_s])
+    if not labelled:
+        return Yn
+    return Yn, i_n, nnodes[:]
 
 def find_Yn(net_array, labelled=False):
     '''
@@ -220,7 +213,7 @@ def draw_resistor(tr, start, end, name,length=30):
     write_text(tr, scale_vect(add_vect(start, end), 0.5), name)
     return
 
-def draw_capacitor(tr, start, end, name, length=10, height=20):
+def draw_capacitor(tr, start, end, name, length=10, height=10):
     '''
     The length of the resistor is 30px.
     the angle is 60 degrees.
@@ -271,8 +264,90 @@ def draw_inductor(tr, start, end, name, length=40):
     disp.blit(text_surface, scale_vect(add_vect(start, end), 0.5))
     pg.display.update()
     '''
-    write_text(tr, scale_vect(add_vect(start, end), 0.5), name)
+    write_text(tr, add_vect(scale_vect(add_vect(start, end), 0.5), scale_vect(rotate_vect(unit_vect[:], math.pi/2), 2*l)), name)
     return
+
+
+def draw_voltage_source(tr, start, end, name,length=30):
+    '''
+    The length of the resistor is 30px.
+    the angle is 60 degrees.
+    '''
+    l = length / 2
+    dist = math.sqrt((end[1] - start[1]) ** 2 + (end[0] - start[0]) ** 2)
+    unit_vect = [(end[0] - start[0]) / dist, (end[1] - start[1]) / dist]
+    ndist = int((dist - length) / 2)
+    draw_line(tr, start[:], (start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist))
+    draw_line(tr, (end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist), end[:])
+    curr_point =  [start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist]
+    
+    center = scale_vect(add_vect((start[0] + unit_vect[0] * ndist, start[1] + unit_vect[1] * ndist), (end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist)), 0.5)
+    draw_circle(tr, center[:], l)
+    
+    draw_line(tr, add_vect(curr_point[:], scale_vect(unit_vect[:], l/3)), add_vect(curr_point[:], scale_vect(unit_vect[:], 0.8*l)))
+    curr_point = add_vect(curr_point[:], scale_vect(unit_vect[:], 7 * l / 30 + l / 3))[:]
+    draw_line(tr, add_vect(curr_point[:], scale_vect(rotate_vect(unit_vect[:], math.pi/2), 7*l/30)), add_vect(curr_point[:], scale_vect(rotate_vect(unit_vect[:], -math.pi/2), 7*l/30)))
+    
+    curr_point =  [end[0] - unit_vect[0] * ndist, end[1] - unit_vect[1] * ndist]
+    draw_line(tr, add_vect(curr_point[:], scale_vect(unit_vect[:], -l/3)), add_vect(curr_point[:], scale_vect(unit_vect[:], -0.8*l)))
+    
+    write_text(tr, add_vect(scale_vect(add_vect(start, end), 0.5), scale_vect(rotate_vect(unit_vect[:], math.pi/2), 2*l)), name)
+    return
+
+def draw_current_source(tr, start, end, name,length=30):
+    '''
+    The length of the resistor is 30px.
+    the angle is 60 degrees.
+    '''
+    l = length / 2
+    dist = math.sqrt((end[1] - start[1]) ** 2 + (end[0] - start[0]) ** 2)
+    unit_vect = [(end[0] - start[0]) / dist, (end[1] - start[1]) / dist]
+    ndist = int((dist - length) / 2)
+    
+    curr_start = add_vect(start[:], scale_vect(rotate_vect(unit_vect[:], math.pi/2), 2*l))
+    curr_end = add_vect(end[:], scale_vect(rotate_vect(unit_vect[:], math.pi/2), 2*l))
+    draw_line(tr, start[:], curr_start[:])
+    draw_line(tr, end[:], curr_end[:])
+    draw_line(tr, curr_start[:], (curr_start[0] + unit_vect[0] * ndist, curr_start[1] + unit_vect[1] * ndist))
+    draw_line(tr, (curr_end[0] - unit_vect[0] * ndist, curr_end[1] - unit_vect[1] * ndist), curr_end[:])
+    curr_point =  [curr_start[0] + unit_vect[0] * ndist, curr_start[1] + unit_vect[1] * ndist]
+    
+    center = scale_vect(add_vect((curr_start[0] + unit_vect[0] * ndist, curr_start[1] + unit_vect[1] * ndist), (curr_end[0] - unit_vect[0] * ndist, curr_end[1] - unit_vect[1] * ndist)), 0.5)
+    draw_circle(tr, center[:], l)
+    
+    draw_line(tr, add_vect(curr_point[:], scale_vect(unit_vect[:], l/3)), add_vect(curr_point[:], scale_vect(unit_vect[:], 5*l/3)))
+    curr_point = add_vect(curr_point[:], scale_vect(unit_vect[:], 5*l/3))[:]
+    
+    draw_line(tr, curr_point[:], add_vect(curr_point[:], scale_vect(rotate_vect(unit_vect[:], 3*math.pi/4), 4*l/9)))
+    draw_line(tr, curr_point[:], add_vect(curr_point[:], scale_vect(rotate_vect(unit_vect[:], -3*math.pi/4), 4*l/9)))
+    
+    write_text(tr, add_vect(scale_vect(add_vect(start, end), 0.5), scale_vect(rotate_vect(unit_vect[:], math.pi/2), 4*l)), name)
+    return
+
+def draw_branch(tr, start, end, elem_type, names):
+    mid_point = start[:]
+    if names[0] in ['0F', '0H', '0Ω']:
+        if names[1] != 0:
+            draw_voltage_source(tr, start[:], end[:], names[1])
+        
+        elif names[2] != 0:
+            draw_current_source(tr, start[:], end[:], names[2])
+        
+        return
+        
+    if names[1] != '0V':
+        mid_point = scale_vect(add_vect(start[:], end[:]), 0.5)
+        draw_voltage_source(tr, start[:], mid_point[:], names[1])
+        
+    if elem_type == 'r':
+        draw_resistor(tr, mid_point[:], end[:], names[0])
+    elif elem_type == 'c':
+        draw_capacitor(tr, mid_point[:], end[:], names[0])
+    elif elem_type == 'i':
+        draw_inductor(tr, mid_point[:], end[:], names[0])
+    if names[2] != '0A':
+        draw_current_source(tr, mid_point[:], end[:], names[2])
+        
 
 def draw_circuit(tr, net_array, nodes=[], dims=[600, 600]):
     '''
@@ -335,6 +410,69 @@ def draw_circuit(tr, net_array, nodes=[], dims=[600, 600]):
                             draw_inductor(tr, node_disp_coords[i], node_disp_coords[j], "L%d=%dH"%(c, 1/elem.coeffs[0]))
     #pg.display.update()
 
+def draw_circuit_sourced(tr, net_array, nodes=[], dims=[600, 600]):
+    '''
+    currently supports only one edge between any two nodes.
+    '''
+    #display = pg.display.set_mode((600, 600))
+   
+    node_disp_coords_0 = [(150, 150), (300, 150), (450, 150), (150, 300), (300, 300), (450, 300), (150, 450), (300, 450), (450, 450)]
+    node_disp_coords_1 = []
+    for i, j in node_disp_coords_0:
+        node_disp_coords_1.append([i * dims[0] / 600, j * dims[1] / 600])
+    node_disp_coords = []
+    for i, j in node_disp_coords_1:
+        p = add_vect([i, -j], [-dims[0] / 2, dims[1] / 2])
+        node_disp_coords.append(p[:])
+    if nodes is None:
+        for i in range(1, 9):
+            
+            write_text(tr, add_vect(node_disp_coords[i - 1], [0, -10]), str(i))
+            draw_circle(tr, add_vect(add_vect(node_disp_coords[i - 1], [0, -10]), [0, 9]), 10)
+            
+        
+        write_text(tr, add_vect(node_disp_coords[- 1], [0, -10]), '0')
+        draw_circle(tr, add_vect(add_vect(node_disp_coords[- 1], [0, -10]), [0, 9]), 10)
+        
+    
+    else:
+        for i in range(len(nodes)):
+            write_text(tr, add_vect(node_disp_coords[nodes[i]], [0, -10]), str(i + 1))
+            draw_circle(tr, add_vect(add_vect(node_disp_coords[nodes[i]], [0, -10]), [0, 9]), 10)
+            
+        
+        
+    
+    
+    for i in range(len(net_array)):
+        for j in range(i + 1):
+            
+            if len(net_array[i][j]) != 0:
+                
+                if isinstance(net_array[i][j][0], (tuple, list)):
+                    elem, vs, js = net_array[i][j][0]
+                    if isinstance(elem, poly):
+                        if elem.deg == 1:
+                            draw_branch(tr, node_disp_coords[i], node_disp_coords[j], 'r', ["%dΩ"%(1/elem.coeffs[1]), '%dV'%vs, '%dA'%js])
+                            #draw_resistor(tr, node_disp_coords[i], node_disp_coords[j], "%dΩ"%(1/elem.coeffs[1]))
+                        elif elem.deg == 2:
+                            draw_branch(tr, node_disp_coords[i], node_disp_coords[j], 'c', ["%dF"%(elem.coeffs[2]), '%dV'%vs, '%dA'%js])
+                            #draw_capacitor(tr, node_disp_coords[i], node_disp_coords[j], "%dF"%(elem.coeffs[2]))
+                        else:
+                            draw_branch(tr, node_disp_coords[i], node_disp_coords[j], 'i', ["%dH"%(1/elem.coeffs[0]), '%dV'%vs, '%dA'%js])
+                            #draw_inductor(tr, node_disp_coords[i], node_disp_coords[j], "%dH"%(1/elem.coeffs[0]))
+                else:
+                    elem = net_array[i][j][0]
+
+                    if isinstance(elem, poly):
+                        if elem.deg == 1:
+                            draw_resistor(tr, node_disp_coords[i], node_disp_coords[j], "%dΩ"%(1/elem.coeffs[1]))
+                        elif elem.deg == 2:
+                            
+                            draw_capacitor(tr, node_disp_coords[i], node_disp_coords[j], "%dF"%(elem.coeffs[2]))
+                        else:
+                            draw_inductor(tr, node_disp_coords[i], node_disp_coords[j], "%dH"%(1/elem.coeffs[0]))
+
 '''
 net_array = [[[] for j in range(9)] for i in range(9)]
 net_array[0][1], net_array[1][0] = [Element.resistor(1)], [Element.resistor(1)]
@@ -388,6 +526,45 @@ def generate_random_circuit(nodes_no, mesh_no, nranges):
     
     return net_array[:]
 
+def generate_random_circuit_sourced(nodes_no, mesh_no, nranges, source_arr = [0, 0, 0, 0, 0, 1]):
+    net_array = [[[] for j in range(9)] for i in range(9)]
+    nodes = []
+    for i in range(nodes_no):
+        choice = random.randint(0, 8)
+        while choice in nodes:
+            choice = random.randint(0, 8)
+        nodes.append(choice)
+    
+    for i in range(len(nodes)):
+        elem = randelem(nranges[:])
+        v = random.randint(nranges[0], nranges[1]) if random.choice(source_arr[:]) else 0
+        i_k = random.randint(nranges[0], nranges[1]) if random.choice(source_arr[:]) else 0
+        if i != len(nodes) - 1:
+            net_array[nodes[i]][nodes[i+1]] = [[elem, v, i_k]]
+            net_array[nodes[i+1]][nodes[i]] = [[elem, -v, -i_k]]
+        else:
+            net_array[nodes[i]][nodes[0]] = [[elem, v, i_k]]
+            net_array[nodes[0]][nodes[i]] = [[elem, -v, -i_k]]
+    
+    for i in range(mesh_no - 1):
+        elem = randelem(nranges[:])
+        a, b = random.randint(0, len(nodes) - 1), random.randint(0, len(nodes) - 1)
+        v = random.randint(nranges[0], nranges[1]) if random.choice(source_arr[:]) else 0
+        i_k = random.randint(nranges[0], nranges[1]) if random.choice(source_arr[:]) else 0
+        while a == b:
+            a, b = random.randint(0, len(nodes) - 1), random.randint(0, len(nodes) - 1)
+        z1, z2 = nodes[a], nodes[b]
+        
+        while len(net_array[z1][z2]):
+            a, b = random.randint(0, len(nodes) - 1), random.randint(0, len(nodes) - 1)
+            while a == b:
+                a, b = random.randint(0, len(nodes) - 1), random.randint(0, len(nodes) - 1)
+            z1, z2 = nodes[a], nodes[b]
+        net_array[z1][z2] = [[elem, v, i_k]]
+        net_array[z2][z1] = [[elem, -v, -i_k]]
+    
+    return net_array[:]
+
 def yn_inv(yn):
     d = yn.det()
     n = len(yn.array[:])
@@ -426,8 +603,43 @@ def time_domain_net_function(net_array, node):
 
     return sym_inv_lap_rat(freq_domain_n, freq_domain_d)#lambda t: numeric_inverse_laplace_transform(func, t, order=0, dt=0.001)#lambda t: inv_laplace_tr_rat(freq_domain_n, freq_domain_d, t)#
 
+def solve_voltages(net_array, node, labelled=True):
+    
+    yn, i_s, n = find_Yn_sourced(net_array[:], labelled=labelled)
+    
 
-def generate_circuit_problem(nranges, tranges, nnode, nmesh, draw=True, labelled=True):
+    
+    i, d = yn_inv(yn)
+
+    solution = i * i_s
+    
+    return Div([solution.array[node][0], d])
+
+def time_domain_voltages(net_array, node, labelled=True):
+    freq_domain_n, freq_domain_d = solve_voltages(net_array[:], node, labelled=labelled).arr[:]
+    #freq_domain_n = freq_domain_n1
+    #print(freq_domain_n)
+    #print(freq_domain_d)
+    #func =  network_function(net_array[:], node)
+    lead_n_zeros = 0
+    while freq_domain_n.coeffs[lead_n_zeros] == 0 and lead_n_zeros < len(freq_domain_n.coeffs[:]):
+        lead_n_zeros += 1
+    
+    lead_d_zeros = 0
+    while freq_domain_d.coeffs[lead_d_zeros] == 0 and lead_d_zeros < len(freq_domain_d.coeffs[:]):
+        lead_d_zeros += 1
+    
+    k = min(lead_d_zeros, lead_n_zeros)
+    freq_domain_n = poly(freq_domain_n.coeffs[k:])
+    freq_domain_d = poly(freq_domain_d.coeffs[k:])
+
+
+    return sym_inv_lap_rat(freq_domain_n, freq_domain_d)#lambda t: numeric_inverse_laplace_transform(func, t, order=0, dt=0.001)#lambda t: inv_laplace_tr_rat(freq_domain_n, freq_domain_d, t)#
+
+
+
+
+def generate_circuit_problem_unsourced(nranges, tranges, nnode, nmesh, draw=True, labelled=True):
 
 
             
@@ -465,3 +677,49 @@ def generate_circuit_problem(nranges, tranges, nnode, nmesh, draw=True, labelled
     
     return time, z, td_net_f
 
+def generate_circuit_problem(nranges, tranges, nnode, nmesh, source_arr=[0, 0, 0, 0, 0, 1], draw=True, labelled=True):
+
+
+            
+    display = turtle.Screen()
+    turtle.TurtleScreen._RUNNING=True
+    
+    tr = turtle.Turtle()
+    turtle.clearscreen()
+    
+    tr.speed(0)
+    turtle.tracer(0, 0)
+
+    sc_size = [600, 600]#display.screensize() #display.screensize(600, 600, 'white')
+    DEFAULT_SIZE = 15 * sc_size[0] / 600
+    
+    net = generate_random_circuit_sourced(nnode, nmesh, nranges[:], source_arr=source_arr[:])[:]
+
+    time = random.randint(tranges[0], tranges[1])
+    node = random.randint(0, nnode - 2)
+    if labelled:
+        sol, js, nodes = find_Yn_sourced(net[:], labelled=True)
+        
+        cond = True
+        for i in js.array:
+            
+            if sum([abs(j) for j in i[0].coeffs]):
+                cond = False
+        if cond:
+            return  generate_circuit_problem(nranges, tranges, nnode, nmesh, source_arr=source_arr[:], draw=draw, labelled=labelled)
+
+    else:
+        nodes=[]
+
+    td_net_f = time_domain_voltages(net[:], node)
+    z = td_net_f(time)
+    if draw:
+        draw_circuit_sourced(tr, net[:], nodes=nodes, dims=sc_size)
+        display.title('Evaluate the voltage of node %d at t=%f (node %d is earth)'%(node + 1, time, len(nodes)))
+    #tr.color('white')   
+    tr.hideturtle()
+    #turtle.update()
+    turtle.done()
+    
+    
+    return time, z, td_net_f

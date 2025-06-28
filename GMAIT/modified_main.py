@@ -1002,8 +1002,9 @@ def static(prechoice=None):
         nnode = int(input('Number of nodes : '))
         nmesh = int(input('Number of Meshs : '))
         moe = float(input('margin of error : '))
+        prob = int(input('Odds of a source appearing (One in ) : '))
         os.system("clear")
-        inpt_dict = {"nranges" : ranges, 'tranges':tranges, 'nnode':nnode, 'nmesh':nmesh, 'moe':moe}
+        inpt_dict = {"nranges" : ranges, 'tranges':tranges, 'nnode':nnode, 'nmesh':nmesh, 'moe':moe, 'prob':prob}
         stats = gr.general_runner(gh.circuit_game, rounds, inpt_dict, md)#multgame.polyMulGame(number_of_rounds=rounds, max_deg=max_deg, nrange=ranges[:])
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
