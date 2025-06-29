@@ -215,7 +215,7 @@ def realIntGameHARD(inpt_dict):
     wweights = [int(i) for i in inpt_dict["wweights"]]
     moe = inpt_dict["moe"]
     res, string, lb, hb = utils.generate_integral_problem_iii(nranges=nranges, boundary_ranges=branges, n=n, fweights=fweights, wweights=wweights)
-    cond = lambda x : (1-moe) * res <= evl.evl(x) <= (1+moe)*res or (1+moe) * res <= evl.evl(x) <= (1-moe)*res
+    cond = lambda x : abs(res - evl.evl(x)) <= abs(moe * res)
     return [string, res, lambda x : res if cond(x) else res + 1000] 
 def regMulDig(inpt_dict):#(digits=5):
     digits = inpt_dict["ndigits"]
