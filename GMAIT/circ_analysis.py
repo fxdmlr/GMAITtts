@@ -18,6 +18,16 @@ between nodes i and j. ---> net_array[i][j] = [(y1, v1, j1), (y2, v2, j2), ...]
 for the net_array[i][j], the set of edges are the same in the elemnts but the sources 
 should be reversed ----> y_ij = y_ji, Is_ij = -Is_ji, Vs_ij = -Vs_ji
 
+additional dependent sources can be added as below:
+net_array[i][j] = [(y1, v1, j1, arr1, arr2, arr3, arr4), ...]
+
+where arr_n = [<type of dependent source>, input_node_1, input_node_2, coefficient]
+
+<type of dependent source> can be:
+'vccs' : voltage controlled current source
+'vcvs' : voltage controlled voltage source
+'cccs' : current controlled current source
+'ccvs' : current controlled voltage source
 
 '''
 
@@ -28,6 +38,7 @@ import sys
 import turtle
 
 DEFAULT_SIZE = 15
+INF = 10000
 
 def find(array, key):
     for i in range(len(array)):
@@ -100,6 +111,207 @@ def find_Yn_sourced(net_array, labelled=False):
         return Yn
     return Yn, i_n, nnodes[:]
 
+
+
+def yn_finder(net_array):
+    edge_n = 0
+    edges = []
+    node_count = 0
+    node_c = 0
+    nodes = []
+    dependent_sources = []
+    for i in range(len(net_array)):
+        node_c = 0
+        for j in range(i + 1):
+            
+            if len(net_array[i][j]) != 0:
+                node_c = 1
+                nodes.append(i)
+                nodes.append(j)
+                edge_n += len(net_array[i][j])
+                for k in range(len(net_array[i][j])):
+                    if isinstance(net_array[i][j][k], (tuple, list)):
+                        if len(net_array[i][j][k]) <= 3:
+                            edges.append([i, j, net_array[i][j][k]])
+                        else:
+                            edges.append([i, j, net_array[i][j][k][:3]])
+                            dependent_sources.append([i, j, net_array[i][j][k][3:]])
+
+        
+        node_count += node_c
+        
+    nnodes = list(set(nodes))             
+    A_arr = [[0 for j in range(edge_n)] for i in range(len(nnodes))]
+    G_arr = [[0 for j in range(edge_n)] for i in range(edge_n)]
+    i_s = []
+    v_s = []
+    counter = 0
+    for i, j, adm in edges:
+        A_arr[find(nnodes, i)][counter] = 1
+        A_arr[find(nnodes, j)][counter] = -1
+        G_arr[counter][counter] = adm[0] if isinstance(adm, (list, tuple)) else adm
+        i_s.append(adm[-1] if isinstance(adm, (list, tuple)) else 0)
+        v_s.append(adm[1] if isinstance(adm, (list, tuple)) else 0)
+        counter += 1
+    
+    A = matrix(A_arr[:-1])
+    G = matrix(G_arr)
+    Yn = A * G * A.transpose()
+    i_n = A * G * matrix([[i] for i in v_s]) - A * matrix([[i] for i in i_s])
+    
+    return Yn, i_n
+
+
+
+def find_Yn_sourced_dependent_sources(net_array, labelled=False):
+    '''
+    Scanning net_array to find the dimentions of A.
+    the resulting matrix is multiplied by s^2
+    '''
+    
+    edge_n = 0
+    edges = []
+    node_count = 0
+    node_c = 0
+    nodes = []
+    dependent_sources = []
+    for i in range(len(net_array)):
+        node_c = 0
+        for j in range(i + 1):
+            
+            if len(net_array[i][j]) != 0:
+                node_c = 1
+                nodes.append(i)
+                nodes.append(j)
+                edge_n += len(net_array[i][j])
+                for k in range(len(net_array[i][j])):
+                    if isinstance(net_array[i][j][k], (tuple, list)):
+                        if len(net_array[i][j][k]) <= 3:
+                            edges.append([i, j, net_array[i][j][k]])
+                        else:
+                            edges.append([i, j, net_array[i][j][k][:3]])
+                            dependent_sources.append([i, j, net_array[i][j][k][3:]])
+
+        
+        node_count += node_c
+        
+    nnodes = list(set(nodes))             
+    A_arr = [[0 for j in range(edge_n)] for i in range(len(nnodes))]
+    G_arr = [[0 for j in range(edge_n)] for i in range(edge_n)]
+    i_s = []
+    v_s = []
+    counter = 0
+    for i, j, adm in edges:
+        A_arr[find(nnodes, i)][counter] = 1
+        A_arr[find(nnodes, j)][counter] = -1
+        G_arr[counter][counter] = adm[0] if isinstance(adm, (list, tuple)) else adm
+        i_s.append(adm[-1] if isinstance(adm, (list, tuple)) else 0)
+        v_s.append(adm[1] if isinstance(adm, (list, tuple)) else 0)
+        counter += 1
+    
+    A = matrix(A_arr[:-1])
+    G = matrix(G_arr)
+    Yn = A * G * A.transpose()
+    i_n = A * G * matrix([[i] for i in v_s]) - A * matrix([[i] for i in i_s])
+    if len(dependent_sources) != 0:
+        new_yn = Yn.array[:]
+        new_i_n = i_n.array[:]
+        for i, j, sources in dependent_sources:
+            for t, n1, n2, c in sources:
+                if t == 'vccs':
+                   new_yn[i][n1] += poly([0, c])
+                   new_yn[i][n2] -= poly([0, c])
+                   new_yn[j][n1] -= poly([0, c])
+                   new_yn[j][n2] += poly([0, c])
+                
+                elif t == 'vcvs':
+                    sub_arr_1 = [poly([0]) for i in range(len(new_yn[0]))]
+                    sub_arr_1[n1] = poly([0, -c])
+                    sub_arr_1[n2] = poly([0, c])
+                    sub_arr_1[i] = poly([0, 1])
+                    sub_arr_1[j] = poly([0, -1])
+                    new_yn.append(sub_arr_1[:])
+                    for k in range(len(new_yn)):
+                        new_yn[k].append(0)
+                    new_yn[i][-1] = poly([0, 1])
+                    new_yn[j][-1] = poly([0, -1])
+                    new_i_n.append([poly([0])])
+                
+                elif t == 'cccs':
+                    new_net = net_array[:]
+                    ind = len(new_net) - 2
+                    
+                    for k in range(len(net_array)):
+                        new_net[k].insert(ind, [])
+                    
+                    new_net.insert(ind, [[] for k in range(len(new_net[0]))])
+                    s = net_array[n1][n2]
+                    new_net[n1][n2] = []
+                    new_net[n2][n1] = []
+                    new_net[n1][ind] = [(0, 0, 0)]
+                    new_net[ind][n1] = [(0, 0, 0)]
+                    new_net[ind][n2] = s[:]
+                    
+                    if len(s)>0:
+                        t = list(s[0])
+                        if len(t) > 1:
+                            t[1] = -t[1]
+                            t[2] = -t[2]
+                        else:
+                            t = s[0]
+                        new_net[n2][ind] = [t]
+                    else:
+                        new_net[n2][ind] = []
+                    
+                    new_yn_m, new_i_n_m = yn_finder(new_net[:])
+                    new_yn[:] = new_yn_m.array[:]
+                    new_i_n[:] = new_i_n_m.array[:]
+                    
+                    
+                    for k in range(len(new_yn)):
+                        new_yn[k].append(0)
+                    
+                    new_yn[n1][-1] += poly([0, 1])
+                    new_yn[n2][-1] += poly([0, -1])
+                    new_yn[i][-1] += poly([0, c])
+                    new_yn[j][-1] += poly([0, -c])
+                    sub_arr = [poly([0]) for i in range(len(new_yn) + 1)]
+                    sub_arr[n1] += poly([0, 1])
+                    sub_arr[n2] += poly([0, -1])
+                    new_yn.append(sub_arr[:])
+                    new_i_n.append([poly([0])])
+                
+                elif t == 'ccvs':
+                    for k in range(len(new_yn)):
+                        new_yn[k] += [poly([0]), poly([0])]
+                    new_yn[n1][-2] = poly([0, 1])
+                    new_yn[n2][-2] = poly([0, -1])
+                    new_yn[i][-1] = poly([0, 1])
+                    new_yn[j][-1] = poly([0, -1])
+                    
+                    sub_arr_1 = [poly([0]) for i in range(len(new_yn) + 2)]
+                    sub_arr_1[n1] = poly([0, -1])
+                    sub_arr_1[n2] = poly([0, 1])
+                    
+                    sub_arr_2 = [poly([0]) for i in range(len(new_yn) + 2)]
+                    sub_arr_2[-1] = poly([0, -c])
+                    sub_arr_2[i] = poly([0, 1])
+                    sub_arr_2[j] = poly([0, -1])
+                    
+                    new_yn.append(sub_arr_1[:])
+                    new_yn.append(sub_arr_2[:])
+                    new_i_n.append([0])
+                    new_i_n.append([0])
+        Yn = matrix(new_yn[:])
+        i_n = matrix(new_i_n[:])
+                    
+                    
+                    
+    
+    if not labelled:
+        return Yn
+    return Yn, i_n, nnodes[:]
+
 def find_Yn(net_array, labelled=False):
     '''
     Scanning net_array to find the dimentions of A.
@@ -147,6 +359,53 @@ def find_Yn(net_array, labelled=False):
     if not labelled:
         return Yn
     return Yn, nnodes[:]
+
+'''
+def implement_transistor(net_array, base_ind, collector_ind, emitter_ind, beta, V_BE=0.7):
+    t_ind = len(net_array[:]) - 1
+    new_net = net_array[:]
+    for k in range(len(new_net)):
+        new_net[k].append([])
+    new_net.append([[] for i in range(len(new_net[0]))])
+    new_new_net = [[[k for k in j]for j in i] for i in new_net[:]]
+    a = new_new_net[-1][:]
+    new_new_net[-1] = new_new_net[-2][:]
+    new_new_net[-2] = a[:]
+    
+    for i in range(len(new_new_net)):
+        a = new_new_net[i][-1]
+        new_new_net[i][-1] = new_new_net[i][-2]
+        new_new_net[i][-2] = a[:]
+    new_net = [[[k for k in j]for j in i] for i in new_new_net[:]]
+    new_net[base_ind][t_ind] = [(Element.resistor(1/INF), 0, 0)]
+    new_net[t_ind][base_ind] = [(Element.resistor(1/INF), 0, 0)]
+    new_net[collector_ind][t_ind] = [(0, 0, 0, ['cccs', base_ind, t_ind, beta])]
+    new_net[t_ind][collector_ind] = [(0, 0, 0, ['cccs', base_ind, t_ind, -beta])]
+    new_net[emitter_ind][t_ind] = [(Element.resistor(1/INF), V_BE, 0)]
+    new_net[t_ind][emitter_ind] = [(Element.resistor(1/INF), -V_BE, 0)]
+    
+                
+                
+    
+    
+    return new_net[:]
+'''
+
+def implement_transistor(net_array, base_ind, collector_ind, emitter_ind, beta, V_BE=0.7):
+    
+    new_net = net_array[:]
+    
+    alpha = beta / (1+beta)
+    new_net[collector_ind][base_ind] = [(poly([0, 0.001]), 0, 0, ['cccs', base_ind, emitter_ind, alpha])]
+    new_net[base_ind][collector_ind] = [(poly([0, 0.001]), 0, 0, ['cccs', base_ind, emitter_ind, -alpha])]
+    new_net[emitter_ind][base_ind] = [(poly([0, 0.001]), V_BE, 0)]
+    new_net[base_ind][emitter_ind] = [(poly([0, 0.001]), -V_BE, 0)]
+
+    
+    return new_net[:]
+
+
+
 
 def rotation_matrix(angle):
     return matrix([[math.cos(angle), -math.sin(angle)], [math.sin(angle), math.cos(angle)]])
@@ -615,6 +874,22 @@ def solve_voltages(net_array, node, labelled=True):
     
     return Div([solution.array[node][0], d])
 
+def solve_voltages_dependent_source(net_array, node, labelled=True):
+    
+    yn, i_s, n = find_Yn_sourced_dependent_sources(net_array[:], labelled=labelled)
+    
+
+    
+    i, d = yn_inv(yn)
+    
+    
+
+    solution = i * i_s
+    
+    return Div([solution.array[node][0], d])
+
+
+
 def time_domain_voltages(net_array, node, labelled=True):
     freq_domain_n, freq_domain_d = solve_voltages(net_array[:], node, labelled=labelled).arr[:]
     #freq_domain_n = freq_domain_n1
@@ -634,8 +909,7 @@ def time_domain_voltages(net_array, node, labelled=True):
     freq_domain_d = poly(freq_domain_d.coeffs[k:])
 
 
-    return sym_inv_lap_rat(freq_domain_n, freq_domain_d)#lambda t: numeric_inverse_laplace_transform(func, t, order=0, dt=0.001)#lambda t: inv_laplace_tr_rat(freq_domain_n, freq_domain_d, t)#
-
+    return sym_inv_lap_rat(freq_domain_n, freq_domain_d)
 
 
 

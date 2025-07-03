@@ -314,10 +314,11 @@ def diffeq(inpt_dict):#(nranges=[1, 10], max_deg=2):
     nranges = inpt_dict["nranges"]
     max_deg = inpt_dict["deg"]
     order = inpt_dict["ord"]
-    f, s, iv = utils.random_diff_eq_ord(order=order, nranges=nranges, n=random.randint(0, 1), max_deg=max_deg)
-    z = round(random.random(), ndigits=2)
-    nstr = "y(0) = " + str(iv[0]) + "\n" + "y'(0) = " + str(iv[1]) + "\n" + s + "\n" + "y(%f) = "%z 
-    cond = lambda x : f(z) * 0.8 <round(evl.evl(x), ndigits=2)< f(z)*1.2
+    inp_ranges = inpt_dict['inprange']
+    f, s, iv = utils.rand_diffeq_sym(nranges[:], order, max_deg)
+    z = random.randint(inp_ranges[0], inp_ranges[1])
+    nstr = "y(0) = " + str(iv[0]) + "\n" + "y'(0) = " + str(iv[1]) + "\n" + s + "\n" + "y(%d) = "%z 
+    cond = lambda x : abs(round(evl.evl(x), ndigits=2) - f(z)) < abs(0.1 * f(z))
     return [nstr, f(z), lambda x : z if cond(x) else z + 1]
 
 def diffeq_mixed(inpt_dict):#(nranges=[1, 10], max_deg=2):

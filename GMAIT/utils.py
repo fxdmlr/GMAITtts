@@ -4676,7 +4676,7 @@ def laplace_tr(f):
     if isinstance(f, poly):
         s = []
         for i in range(len(f.coeffs)):
-            s.append(Div([f.coeffs[i], poly([0 for j in range(f.deg + 1)] + [1])]))
+            s.append(Div([f.coeffs[i] * math.factorial(i), poly([0, 1])**(i+1)]))
         
         return Sum(s)
     
@@ -4689,6 +4689,25 @@ def laplace_tr(f):
     elif isinstance(f, exp):
         return Div([1, poly([-1, 1])])
     
+def sym_laplace_tr(f):
+    if isinstance(f, poly):
+        s = Div([0, 1])
+        for i in range(len(f.coeffs)):
+            s = s + Div([f.coeffs[i] * math.factorial(i), poly([0, 1])**(i+1)])
+        return s
+        
+        
+    
+    elif isinstance(f, sin):
+        return Div([poly([0, 1]), poly([1, 0, 1])]) 
+    
+    elif isinstance(f, cos):
+        return Div([1, poly([1, 0, 1])])  
+    
+    elif isinstance(f, exp):
+        return Div([1, poly([-1, 1])])
+
+
 def solve_ndeg_ode_sys(equations, rhs, init_conds, t):
     '''
     equations=[
@@ -4914,4 +4933,97 @@ def generate_sys_lap_problem(nranges=[1, 10], dim=3, mdeg=2, mdeg_rhs=2):
     ans = matrix([[i[0].simplify()] for i in (l_inv * rhs).array[:]])
     ans_time_domain = lambda t : matrix([[inv_laplace_tr_rat(i[0].arr[0], i[0].arr[1], t)] for i in ans.array[:]])
     return l, rhs, ans, ans_time_domain
+
+
+def solve_diffeq_sym(coeffs, rhs_lap_arr, init_vals):
+    # coeffs = [1, 2, 3, 4] -> y + 2y' + 3y'' + 4y''
+    # init_vals = [a, b, c, ...] -> y(0) = a, y'(0) = b, y''(0) = c, ...
+    lhs_lap = poly(coeffs[:])
+    rhs_init_poly = 0
+    s = poly([0, 1])
+    for i in range(len(coeffs)):
+        p = 0
+        for j in range(1, i + 1):
+            p += init_vals[j - 1] * s ** (i - j)
+        rhs_init_poly += p * coeffs[i]
+    
+    p, q = rhs_lap_arr[0] + rhs_init_poly * rhs_lap_arr[1], rhs_lap_arr[1] * lhs_lap
+    
+    return sym_inv_lap_rat(p, q)
+
+def rand_poly_nice_roots(root_ranges, deg, all_real=True):
+    
+    if all_real:
+        p = poly([1])
+        for i in range(deg):
+            r = random.randint(root_ranges[0], root_ranges[1])
+            p = p * poly([-r, 1])
+
+        return p
+    
+    else:
+        p = poly([1])
+        if deg % 2:
+            r = random.randint(root_ranges[0], root_ranges[1])
+            p = p * poly([-r, 1])
+            deg -= 1
+        
+        for i in range(int(deg / 2)):
+            s = random.randint(0, 1)
+            a, b =  random.randint(root_ranges[0], root_ranges[1]), random.randint(root_ranges[0], root_ranges[1])
+            if s:
+                
+                p = p * poly([a ** 2 + b ** 2, -2*a, 1])
+            else:
+                p = p * poly([a * b, -(a+b), 1])
+        
+        return p
+        
+        
+def rand_diffeq_sym(nranges, deg, mdeg):
+    coeffs = rand_poly_nice_roots(nranges[:], deg, all_real=False)
+    p, q = rand_poly_nice_roots(nranges[:], mdeg - 1, all_real=False), rand_poly_nice_roots(nranges[:], mdeg, all_real=False)
+    arr = poly.rand(deg - 1, coeff_range=nranges[:])
+    s = sym_inv_lap_rat(p, q)
+    
+    ppr = coeffs.npprint(prev_ppr=[[" "], [" "], [" "], ["y"], [" "], [" "], [" "]])
+    
+    new_array = coeffs.coeffs[:]
+    new_array.reverse()
+    lines = [[], [], [], [], [], [], []]
+    
+    nppr = [[" "], [" "], [" "], ["y"], [" "], [" "], [" "]]
+    
+    for i in range(len(new_array)):
+        pow, coeff_abs, sgn_ppr = deg - i, abs(new_array[i].real), [[" "], [" "], [" "], [("+" if i != 0 else " ") if sgn(new_array[i].real) else "-"], [" "], [" "], [" "]]
+        if new_array[i].imag != 0:
+            coeff_abs = new_array[i]
+            sgn_ppr =  [[" "], [" "], [" "], ["+"], [" "], [" "], [" "]]
+        coeff_abs_ppr = [[" " for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)],
+                            [j for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)],
+                            [" " for j in str(coeff_abs)]]
+        pow_ppr = [[" " for j in range(pow)],
+                    [" " for j in range(pow)],
+                    ["'" for j in range(pow)],
+                    [" " for j in range(pow)],
+                    [" " for j in range(pow)],
+                    [" " for j in range(pow)],
+                    [" " for j in range(pow)]]
+        
+        if coeff_abs == 1 and pow != 0:
+            coeff_abs_ppr = [[], [], [], [], [], [], []]
+        if coeff_abs == 0:
+            continue
+        else:
+            
+            lines = connect(lines[:], connect(sgn_ppr[:], connect(coeff_abs_ppr[:], connect(nppr[:], pow_ppr[:]))))[:]
+            
+    #return lines[:]
+    ppr = connect(lines[:], connect([["   "], ["   "], ["   "], [" = "], ["   "], ["   "], ["   "]], s.npprint()))
+    
+    return solve_diffeq_sym(coeffs.coeffs[:], [p, q], arr.coeffs[:]), strpprint(ppr[:]), arr.coeffs[:]
 

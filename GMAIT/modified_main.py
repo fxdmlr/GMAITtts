@@ -403,10 +403,12 @@ def static(prechoice=None):
         a, b = input("Range of numbers (seperated by blank space): ").split(" ")
         ranges = [int(a), int(b)]
         order = int(input("Order : "))
+        a, b = input("Range of input (seperated by blank space): ").split(" ")
+        inp_ranges = [int(a), int(b)]
         
         max_deg = int(input("Maximum degree : "))
         os.system("clear")
-        inpt_dict = {"nranges" : ranges, "deg" : max_deg, "ord" : order}
+        inpt_dict = {"nranges" : ranges, "deg" : max_deg, "ord" : order, 'inprange':inp_ranges[:]}
         stats = gr.general_runner(gh.diffeq, rounds, inpt_dict, md)#multgame.diffeq(number_of_rounds=rounds, nranges=ranges[:], max_deg=max_deg)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
