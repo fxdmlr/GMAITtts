@@ -414,10 +414,10 @@ def polyDet(inpt_dict):
     nrange = inpt_dict["nranges"]
     max_deg = inpt_dict["deg"]
     m = utils.matrix.randpoly(dims=[dims, dims], max_deg=max_deg, coeff_range=nrange[:])
-    res = m.det()
-    z = random.randint(nrange[0], nrange[1])
-    string = str(m) + "\n" + "Evaluate the determinant at x = %d "%z
-    return string, res(z), lambda x : float(x)
+    res = min([abs(i) for i in m.det().roots()])
+    res = int(100 * res) / 100
+    string = str(m) + "\n" + "Find the root of the determinant with the least abs (accurate to 2 digits):  "
+    return string, res, lambda x : float(x)
 
 
 FUNCTIONS_ARRAY = [regMul, polyMul, polyEval, evalRoot, evalRootPoly, surd, polyDiv, div, polyroots, polydisc, partialFraction, subIntGame, 
