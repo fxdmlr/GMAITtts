@@ -642,7 +642,7 @@ class poly:
         '''
         return strpprint(self.npprint())
     
-    def pprint(self):
+    def pprint(self, prev_pprint=[[" "], ["x"], [" "]]):
         new_array = self.coeffs[:]
         new_array.reverse()
         lines = [[], [], []]
@@ -1169,7 +1169,7 @@ class matrix:
         return "".join(fstring)
         '''
         return matrixpprint(self.pprint())
-    def pprint(self):
+    def pprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         if self.name is not None:
             return [[" " for i in range(len(self.name))], [l for l in self.name], [" " for i in range(len(self.name))]]
         tot_cells = []
@@ -1177,8 +1177,8 @@ class matrix:
             cells = []
             for j in i:
                 lines = [[], [], []]
-                if hasattr(j, 'pprint'):
-                    lines = connect(lines, j.pprint())
+                if hasattr(j, 'npprint'):
+                    lines = connect(lines, j.npprint(prev_ppr=prev_ppr[:])[2:5])
                 else:
                     lines = connect(lines, [[" " for i in range(len(str(j)))], [k for k in str(j)], [" " for i in range(len(str(j)))]])
                     
@@ -5027,3 +5027,11 @@ def rand_diffeq_sym(nranges, deg, mdeg):
     
     return solve_diffeq_sym(coeffs.coeffs[:], [p, q], arr.coeffs[:]), strpprint(ppr[:]), arr.coeffs[:]
 
+def diff_det(nranges, dim, mat_deg, mdeg):
+    mat = matrix.randpoly([dim, dim], mat_deg, coeff_range=nranges[:])
+    init_vals =[0 for i in range(len(mat.det().coeffs[:]) - 1)]
+    coeffs = mat.det().coeffs[:]
+    p, q = rand_poly_nice_roots(nranges[:], mdeg - 1, all_real=False), rand_poly_nice_roots(nranges[:], mdeg, all_real=False)
+    s = sym_inv_lap_rat(p, q)
+    f = solve_diffeq_sym(coeffs[:], [p, q], init_vals[:])
+    return f, s, mat

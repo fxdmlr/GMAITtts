@@ -318,7 +318,7 @@ def diffeq(inpt_dict):#(nranges=[1, 10], max_deg=2):
     f, s, iv = utils.rand_diffeq_sym(nranges[:], order, max_deg)
     z = random.randint(inp_ranges[0], inp_ranges[1])
     nstr = "y(0) = " + str(iv[0]) + "\n" + "y'(0) = " + str(iv[1]) + "\n" + s + "\n" + "y(%d) = "%z 
-    cond = lambda x : abs(round(evl.evl(x), ndigits=2) - f(z)) < abs(0.1 * f(z))
+    cond = lambda x : abs(evl.evl(x) - f(z)) < 0.1
     return [nstr, f(z), lambda x : z if cond(x) else z + 1]
 
 def diffeq_mixed(inpt_dict):#(nranges=[1, 10], max_deg=2):
@@ -686,3 +686,27 @@ def circuit_game(inpt_dict):
 
     cond = lambda x : abs(x - answer) <= abs(moe*answer)
     return 'Voltage at t = %f : '%t, answer, lambda x : answer if cond(float(x)) else answer+1
+
+def diffDet(inpt_dict):
+    nranges = inpt_dict['nranges']
+    dim = inpt_dict['dim']
+    matdeg = inpt_dict['matdeg']
+    mdeg = inpt_dict['mdeg']
+    inp_range = inpt_dict['inprange']
+    f, s, mat= utils.diff_det(nranges[:], dim, matdeg, mdeg)
+    z = random.randint(inp_range[0], inp_range[1])
+    nstr = 'If p(D) is equal to the determinant of the matrix below; Then solve the equation below (zero state solution):\n'
+    st = [["" for i in range(8)], ["" for i in range(8)], ["" for i in range(8)], ["p(D)y = "], ["" for i in range(8)], ["" for i in range(8)], ["" for i in range(8)]]
+    nstr = nstr + utils.strpprint(utils.connect(st, s.npprint()[:]))
+    nstr = nstr + "\n" + utils.matrixpprint(mat.pprint(prev_ppr = [[" "], [" "], [" "], ["D"], [" "], [" "], [" "]]))
+    
+    nstr += '\ny(%d) = '%z
+    
+    
+    cond = lambda x : abs(evl.evl(x) - f(z)) < 0.01 * abs(f(z))
+    def check(x):
+        print("your result was calculated to be : ", evl.evl(x))
+        print('your deviation from the answer was : ', abs(evl.evl(x) - f(z)))
+        return f(z) if cond(x) else f(z) + 1
+    return [nstr, f(z), check]
+    
