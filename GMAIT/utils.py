@@ -5031,7 +5031,7 @@ def diff_det(nranges, dim, mat_deg, mdeg):
     mat = matrix.randpoly([dim, dim], mat_deg, coeff_range=nranges[:])
     init_vals =[0 for i in range(len(mat.det().coeffs[:]) - 1)]
     coeffs = mat.det().coeffs[:]
-    p, q = rand_poly_nice_roots(nranges[:], mdeg - 1, all_real=False), rand_poly_nice_roots(nranges[:], mdeg, all_real=False)
+    p, q = rand_poly_nice_roots([-10, 10], mdeg - 1, all_real=False), rand_poly_nice_roots([-10, 10], mdeg, all_real=False)
     s = sym_inv_lap_rat(p, q)
     f = solve_diffeq_sym(coeffs[:], [p, q], init_vals[:])
     return f, s, mat
