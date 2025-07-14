@@ -2,7 +2,7 @@ import math
 import random
 import cmath
 import decimal
-import utils2
+
 
 DEFAULT_TAYLOR_N = 1000
 def heaviside(t):
@@ -65,7 +65,7 @@ def strpprint(pp):
 
 def matrixpprint(pp):
     arr = [strpprint(i) for i in pp]
-    return "\n\n".join(arr) 
+    return "\n".join(arr) 
 
 def connect(arr1, arr2):
     arr3 = []
@@ -1169,6 +1169,7 @@ class matrix:
         return "".join(fstring)
         '''
         return matrixpprint(self.pprint())
+    
     def pprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         if self.name is not None:
             return [[" " for i in range(len(self.name))], [l for l in self.name], [" " for i in range(len(self.name))]]
@@ -1201,8 +1202,13 @@ class matrix:
                lines = connect(lines, new_cell2)
                lines = connect(lines, [["   "], [" , "], ["   "]])
             tot_lines.append(lines)
-        
-        return tot_lines[:]
+        op = [[["/"], ["|"], ["|"]]] + [[["|"], ["|"], ["|"]] for i in range((len(tot_lines) - 2)*heaviside(len(tot_lines) - 2))] + [[["|"], ["|"], ["\\"]]]
+        clsd = [[["\\"], ["|"], ["|"]]] + [[["|"], ["|"], ["|"]] for i in range((len(tot_lines) - 2)*heaviside(len(tot_lines) - 2))] + [[["|"], ["|"], ["/"]]]
+        new_lines = []
+        for i in range(len(tot_lines)):
+            #print(lines[i])
+            new_lines.append(connect(op[i], connect(tot_lines[i], clsd[i])))
+        return new_lines#tot_lines[:]
             
     def __call__(self, x):
         new_arr = []
@@ -1332,7 +1338,6 @@ class matrix:
             arr.append(sub)
         
         return matrix(arr)
-
 
 class vect:
     def __init__(self, array):
@@ -5035,3 +5040,5 @@ def diff_det(nranges, dim, mat_deg, mdeg):
     s = sym_inv_lap_rat(p, q)
     f = solve_diffeq_sym(coeffs[:], [p, q], init_vals[:])
     return f, s, mat
+
+
