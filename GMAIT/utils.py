@@ -583,6 +583,8 @@ class poly:
         if len(self.coeffs) == 0:
             return 0
         s = self.coeffs[0]
+        if isinstance(x, matrix):
+            s = self.coeffs[0] * matrix.ones(len(x.array[:]))
         for i in range(1, self.deg + 1):
             s += self.coeffs[i] * x ** i
         
@@ -1337,6 +1339,11 @@ class matrix:
 
             arr.append(sub)
         
+        return matrix(arr)
+    
+    @staticmethod
+    def ones(dim):
+        arr = [[int(i == j) for j in range(dim)] for i in range(dim)]
         return matrix(arr)
 
 class vect:
@@ -5040,5 +5047,3 @@ def diff_det(nranges, dim, mat_deg, mdeg):
     s = sym_inv_lap_rat(p, q)
     f = solve_diffeq_sym(coeffs[:], [p, q], init_vals[:])
     return f, s, mat
-
-

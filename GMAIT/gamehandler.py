@@ -709,4 +709,16 @@ def diffDet(inpt_dict):
         print('your deviation from the answer was : ', abs(evl.evl(x) - f(z)))
         return f(z) if cond(x) else f(z) + 1
     return [nstr, f(z), check]
+
+
+def matrixPoly(inpt_dict):
+    mnranges = inpt_dict['mnranges']
+    pnranges = inpt_dict['pnranges']
+    deg = inpt_dict['deg']
+    dim = inpt_dict['dim']
     
+    p = utils.poly.rand(deg, coeff_range=pnranges)
+    m = utils.matrix.rand(dims = [dim, dim], nrange=mnranges)
+    s = 'Find the determinant of \n'+utils.strpprint(p.npprint(prev_ppr=[[" "], [" "], [" "], ["A"], [" "], [" "], [" "]])) + "\nWhere A = \n" + str(m) + "\n> "
+    
+    return s, p(m).det(), lambda x : int(x)
