@@ -721,7 +721,7 @@ class poly:
         return lines[:]
     
     def __add__(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, complex)):
             x = self.coeffs[:]
             x[0] += other
             return poly(x[:])
@@ -738,7 +738,7 @@ class poly:
     
     def __mul__(self, other):
         
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, complex)):
             x = [other * i for i in self.coeffs[:]]
             return poly(x)
         
@@ -1522,13 +1522,19 @@ class polymvar:
     
     def __add__(self, other):
         if isinstance(other, (int, float)):
-            new_array = self.array[:]
+            new_array = [[[k for k in j]for j in i] for i in self.array[:]]
             new_array[0][0][0] += other
             return polymvar(new_array[:])
         
         elif isinstance(other, polymvar):
-            new_array = self.array[:] if len(self.array) >= len(other.array) else other.array[:]
-            m_arr = other.array[:] if len(self.array) >= len(other.array) else self.array[:]
+            if len(self.array) >= len(other.array):
+                new_array = [[[k for k in j]for j in i] for i in self.array[:]]  
+            else:
+                new_array = [[[k for k in j]for j in i] for i in other.array[:]]
+            if len(self.array) >= len(other.array):
+                m_arr =  [[[k for k in j]for j in i] for i in other.array[:]]  
+            else:
+                m_arr = [[[k for k in j]for j in i] for i in self.array[:]]
             narr = [[[0 for k in range(len(new_array))] for j in range(len(new_array))] for i in range(len(new_array))]
             q = len(m_arr)
             for i in range(len(new_array)):
@@ -1543,7 +1549,7 @@ class polymvar:
     
     def __mul__(self, other):
         if isinstance(other, (int, float)):
-            new_array = self.array[:]
+            new_array = [[[k for k in j]for j in i] for i in self.array[:]]
             for i in range(len(self.array)):
                 for j in range(len(self.array)):
                     for k in range(len(self.array)):
@@ -1802,6 +1808,23 @@ class polymvar:
             new_array.append(arr)
         
         return polymvar(new_array[:])
+    @staticmethod
+    def x():
+        zero_pol = [[[0 for j in range(2)] for i in range(2)]for k in range(2)]
+        zero_pol[1][0][0] = 1
+        return polymvar(zero_pol[:])
+    
+    @staticmethod
+    def y():
+        zero_pol = [[[0 for j in range(2)] for i in range(2)]for k in range(2)]
+        zero_pol[0][1][0] = 1
+        return polymvar(zero_pol[:])
+    
+    @staticmethod
+    def z():
+        zero_pol = [[[0 for j in range(2)] for i in range(2)]for k in range(2)]
+        zero_pol[0][0][1] = 1
+        return polymvar(zero_pol[:])
 
 class vectF:
     def __init__(self, array):
@@ -4834,13 +4857,15 @@ def generate_mult_arithm_item(num_ranges = [1, 10], rat_range=[1, 10], number_of
     ans = 0
     ppr = [[], [], []]
     for p, s in poly_arr:
-        ans += p(*s[:])
+        #ans += p(*s[:])
+        ans += p(*[truncate(i, res_ndigits) for i in s])
         if ppr != [[], [], []]:
             ppr = connect(ppr[:], connect([[" "], ["+"], [" "]], p.pprint()[:]))[:]
         else:
             ppr = connect(ppr[:], p.pprint()[:])[:]
         
-    return truncate(ans, res_ndigits), strpprint(ppr[:])
+    #return truncate(ans, res_ndigits), strpprint(ppr[:])
+    return ans, strpprint(ppr[:])
 
 def diffeq_nppr(q, symbol):
     p = q
