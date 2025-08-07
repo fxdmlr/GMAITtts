@@ -33,8 +33,10 @@ def regMul(inpt_dict):
     nrange = inpt_dict["nranges"]
     float_mode = inpt_dict["float_mode"]
     ndigits = inpt_dict["ndigits"]
+    base = inpt_dict['base']
     n1 = random.randint(nrange[0], nrange[1]) + float_mode*round(random.random(), ndigits)
     n2 = random.randint(nrange[0], nrange[1]) + float_mode*round(random.random(), ndigits)
+
     return ["%d * %d = "%(n1, n2) if not float_mode else "%f * %f = "%(n1, n2), n1 * n2, lambda x : float(x)]
 
 def polyMul(inpt_dict):
@@ -219,10 +221,13 @@ def realIntGameHARD(inpt_dict):
     return [string, res, lambda x : res if cond(x) else res + 1000] 
 def regMulDig(inpt_dict):#(digits=5):
     digits = inpt_dict["ndigits"]
-    n1 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
-    n2 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
+    base = inpt_dict['base']
+    n1 = random.randint(base ** (digits - 1), base ** (digits) - 1) 
+    n2 = random.randint(base ** (digits - 1), base ** (digits) - 1) 
     string = "%d * %d = "%(n1, n2)
-    return [string, n1 * n2, lambda x : int(x)]
+    return ["%s * %s = "%(utils.conv_base(n1, base), utils.conv_base(n2, base)) , utils.conv_base(n1 * n2, base), lambda x : x.upper()]
+
+    #return [string, n1 * n2, lambda x : int(x)]
 
 def fourierSeries(inpt_dict):#(nranges=[1, 10], deg=2, p_range=[0, 2], exp_cond=False, u_cond=False, umvar_cond=False, moe=0.01):
     nranges = inpt_dict["nranges"]

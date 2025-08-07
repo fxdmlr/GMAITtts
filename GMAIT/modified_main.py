@@ -303,9 +303,13 @@ def static(prechoice=None):
             t = int(input("Duration : "))
         rounds = (t, roundd)
         a = int(input("Number of Digits : "))
-        
+        b = input('Base : ')
+        if len(b) > 0:
+            b = int(b)
+        else:
+            b = 10
         os.system("clear")
-        inpt_dict = {"ndigits" : a}
+        inpt_dict = {"ndigits" : a, 'base':b}
         stats = gr.general_runner(gh.regMulDig, rounds, inpt_dict, md)#multgame.regMulGameDig(number_of_rounds=rounds, digits=a)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))

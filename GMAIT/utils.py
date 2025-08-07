@@ -5072,3 +5072,23 @@ def diff_det(nranges, dim, mat_deg, mdeg):
     s = sym_inv_lap_rat(p, q)
     f = solve_diffeq_sym(coeffs[:], [p, q], init_vals[:])
     return f, s, mat
+
+def conv_base(n, b):
+    digits_char = [str(i) for i in range(10)] + [chr(i) for i in range(65, 95)]
+    if n == 0:
+        return [0]
+    digits = []
+    while n:
+        digits.append(int(n % b))
+        n //= b
+    fin_digits = ''.join([digits_char[i] for i in digits[::-1]])
+    return fin_digits
+
+def conv_from_base(n, b):
+    digits_char = [str(i) for i in range(10)] + [chr(i) for i in range(65, 95)]
+    s = 0
+    nd = n[::-1]
+    for i in range(len(n)):
+        s += digits_char.index(nd[i]) * b**i
+    
+    return s
