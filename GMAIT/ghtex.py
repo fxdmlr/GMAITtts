@@ -165,31 +165,31 @@ def subIntGame(inpt_dict):#(mode=1, deg=2, nranges=[1, 10], boundranges=[1, 10],
     boundranges = inpt_dict["boundary_ranges"]
     ndigits = inpt_dict["ndigits"]
     if mode == 1:
-            p, q, string = utils.generate_integrable_ratExpr(deg, nranges=nranges[:])
+            p, q, string = utils.generate_integrable_ratExpr_tex(deg, nranges=nranges[:])
             a, b = random.randint(boundranges[0], boundranges[1]), random.randint(boundranges[0], boundranges[1])
             res = round(utils.numericIntegration(lambda x : p(x) / q(x), min(a, b), max(a, b)), ndigits=ndigits)
-            string2 = "Evaluate the integral of the function below from %d to %d\n"%(min(a, b), max(a, b)) + string + "\nI = "
+            string2 = "\\text{Evaluate the integral of the function below from %d to %d}\\\\"%(min(a, b), max(a, b)) + string + "\nI = "
             
             
     elif mode == 2:
-        f, string = utils.generate_eulersub_rand(deg, nranges=nranges[:])
+        f, string = utils.generate_eulersub_rand_tex(deg, nranges=nranges[:])
         a, b = random.randint(boundranges[0], boundranges[1]), random.randint(boundranges[0], boundranges[1])
         res = round(utils.numericIntegration(f, min(a, b), max(a, b)), ndigits=ndigits)
-        string2 = "Evaluate the integral of the function below from %d to %d\n"%(min(a, b), max(a, b)) + string + "\nI = "
+        string2 = "\\text{Evaluate the integral of the function below from %d to %d}\\\\"%(min(a, b), max(a, b)) + string + "\nI = "
         
         
     
     elif mode == 3:
-        f, string = utils.generate_trig(nranges=nranges[:])
+        f, string = utils.generate_trig_tex(nranges=nranges[:])
         a, b = random.randint(boundranges[0], boundranges[1]), random.randint(boundranges[0], boundranges[1])
         res = round(utils.numericIntegration(f, min(a, b), max(a, b)), ndigits=ndigits)
-        string2 = "Evaluate the integral of the function below from %d to %d\n"%(min(a, b), max(a, b)) + string + "\nI = "
+        string2 = "\\text{Evaluate the integral of the function below from %d to %d}\\\\"%(min(a, b), max(a, b)) + string + "\nI = "
     
     elif mode == 4:
-            p, q, string = utils.generate_ratExpr(deg, nranges=nranges[:])
+            p, q, string = utils.generate_ratExpr_tex(deg, nranges=nranges[:])
             a, b = random.randint(boundranges[0], boundranges[1]), random.randint(boundranges[0], boundranges[1])
             res = round(utils.numericIntegration(lambda x : p(x) / q(x), min(a, b), max(a, b)), ndigits=ndigits)
-            string2 = "Evaluate the integral of the function below from %d to %d\n"%(min(a, b), max(a, b)) + string + "\nI = "
+            string2 = "\\text{Evaluate the integral of the function below from %d to %d}\\\\"%(min(a, b), max(a, b)) + string + "\nI = "
             
     
     return [string2, res, lambda x : integral_conv_func(x, ndigits)]
@@ -233,9 +233,9 @@ def fourierSeries(inpt_dict):#(nranges=[1, 10], deg=2, p_range=[0, 2], exp_cond=
     umvar_cond = inpt_dict["umvar_cond"]
     moe = inpt_dict["moe"]
     n_partite = inpt_dict["n_partite"]
-    f, period, a_n, b_n, a_0, string, p1, c1 = utils.generate_fourier_s(nranges=nranges[:], n_partite=n_partite, deg=random.randint(0, deg), p_range=p_range, exp_cond=exp_cond, u_cond=u_cond, umvar_cond=umvar_cond)
-    s = 'If f(x) = a0 + a1Cos(Lx) + b1Sin(Lx) + ... then find  a0 + a1 + b1 if f(x) = \n'
-    s += string + "\n with a period of " + str(period) + "\n"
+    f, period, a_n, b_n, a_0, string, p1, c1 = utils.generate_fourier_s_tex(nranges=nranges[:], n_partite=n_partite, deg=random.randint(0, deg), p_range=p_range, exp_cond=exp_cond, u_cond=u_cond, umvar_cond=umvar_cond)
+    s = '\\text{If} f(x) = a_0 + a_1\\cos(Lx) + b_1\\sin(Lx) + \\cdots \\text{then find}  a_0 + a_1 + b_1 \\text{if} f(x) = '
+    s += string + "\n \text{with a period of } " + str(period) + "\\\\"
     res = a_0 + a_n(1) + b_n(1)
     cond = lambda x : (1-moe) * res <= evl.evl(x) <= (1+moe)*res or (1+moe) * res <= evl.evl(x) <= (1-moe)*res
     return [s, res, lambda x : res if cond(x) else res + 1000]
@@ -741,13 +741,3 @@ def tangent_line(inpt_dict):
     s = 'If the line tangent to f(x) at x = %d intercepts g(x) at x = a_1, a_2, ..., a_n \nfind |a_1^%d+a_2^%d+...+a_n^%d| where f(x)=\n'%(x, power, power, power)+str(function)+'\ng(x)=\n'+str(p)+"\n>"
     return s, res, lambda x : float(x)
 
-def arithmetic_game(inpt_dict):
-    numdigs = inpt_dict['ndig']
-    n = inpt_dict['n']
-    ndigits = inpt_dict['ndigits']
-    nranges = [10 ** (numdigs - 1), 10 ** (numdigs) - 1]
-    a, b = utils.arithmetic_elems(nranges, n)
-    bres = int(b * 10**ndigits) / (10**ndigits)
-    return a + "\n > ", bres, lambda x : float(x)
-
-    

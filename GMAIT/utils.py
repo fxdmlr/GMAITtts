@@ -720,6 +720,20 @@ class poly:
                     lines = connect(lines[:], connect(sgn_ppr[:], coeff_abs_ppr[:]))[:]
         return lines[:]
     
+    def texify(self, prev_tex = 'x'):
+        s = ""
+        for i in range(len(self.coeffs) - 1, -1, -1):
+            if self.coeffs[i] != 0:
+                n = str(abs(self.coeffs[i])) if abs(self.coeffs[i]) != 1 else ""
+                if abs(self.coeffs[i]) == 1 and i == 0:
+                    n = '1'
+                s += "-" if self.coeffs[i] < 0 else ("+" if i != len(self.coeffs) - 1 else "")
+                s += n + prev_tex + "^{" if i > 1 else (n + prev_tex if i == 1 else n) 
+                s += str(i) + "}" if i > 1 else ""
+        
+        return s
+                 
+    
     def __add__(self, other):
         if isinstance(other, (int, float, complex)):
             x = self.coeffs[:]
@@ -1211,7 +1225,20 @@ class matrix:
             #print(lines[i])
             new_lines.append(connect(op[i], connect(tot_lines[i], clsd[i])))
         return new_lines#tot_lines[:]
-            
+    
+    def texify(self, prev_tex='x'):
+        s = '\\begin{bmatrix}'
+        for i in self.array:
+            for j in i:
+                if hasattr(j, 'texify'):
+                    s += j.texify()+' &'
+                else:
+                    s += str(j)+' &'
+            s = s[:-1]
+            s += '\\\\'
+        s += '\\end{bmatrix}'
+        return s
+    
     def __call__(self, x):
         new_arr = []
         for i in range(len(self.array)):
@@ -2010,11 +2037,29 @@ class Sum:
                 array[:] = connect(array[:], connect([[" "], [" "], [" "], ["+"], [" "], [" "], [" "]], arg[:]))[:]
         return array
     
+    def texify(self, prev_tex='x'):
+        s = ""
+        arr = []
+        for i in self.arr[:]:
+            if hasattr(i, "texify"):
+                arr.append(i.texify())
+            else:
+                arr.append(str(i))
+        return "+".join(arr)
+    
     def diff(self, wrt=0):
         return Sum([i.diff(wrt=wrt) if hasattr(i, 'diff') else 0 for i in self.arr[:]]) 
     
     def __str__(self):
         return strpprint(self.npprint())
+    
+    def newtonsmethod(self, starting_point = 0.1, n = 1000):
+        x_n = starting_point
+        df = self.diff()
+        for i in range(n):
+            x_n -= self(x_n) / df(x_n)
+        
+        return x_n
     
     __rmul__ = __mul__
     __radd__ = __add__
@@ -2137,11 +2182,29 @@ class Prod:
                     array[:] = connect(array[:], connect(op, connect(arg[:], clsd)))[:]
         return array
     
+    def texify(self, prev_tex='x'):
+        s = ""
+        for i in self.arr[:]:
+            if hasattr(i, 'texify'):
+                s += "("+i.texify(prev_tex=prev_tex)+")"
+            else:
+                s += str(i)
+        
+        return s
+    
     def diff(self, wrt=0):
         return Sum([Prod(self.arr[:i] + [self.arr[i].diff(wrt=wrt) if hasattr(self.arr[i], "diff") else 0] + self.arr[i+1:]) for i in range(len(self.arr[:]))])
     
     def __str__(self):
-        return strpprint(self.npprint())    
+        return strpprint(self.npprint())   
+    
+    def newtonsmethod(self, starting_point = 0.1, n = 1000):
+        x_n = starting_point
+        df = self.diff()
+        for i in range(n):
+            x_n -= self(x_n) / df(x_n)
+        
+        return x_n 
     
     __rmul__ = __mul__
     __radd__ = __add__
@@ -2189,6 +2252,16 @@ class Comp:
                 array[:] = connect(array[:], arg[:])[:]
         
         return array[:]
+    
+    def texify(self, prev_tex='x'):
+        s = prev_tex[:]
+        for i in self.arr[:]:
+            if hasattr(i, 'texify'):
+                s = i.texify(prev_tex=s)[:]
+            else:
+                s += str(self.arr[0])
+        
+        return s
         
     def diff(self, wrt=0):
         array = []
@@ -2202,6 +2275,14 @@ class Comp:
     
     def __str__(self):
         return strpprint(self.npprint())
+    
+    def newtonsmethod(self, starting_point = 0.1, n = 1000):
+        x_n = starting_point
+        df = self.diff()
+        for i in range(n):
+            x_n -= self(x_n) / df(x_n)
+        
+        return x_n
     
     __rmul__ = __mul__
     __radd__ = __add__
@@ -2269,6 +2350,11 @@ class Div:
         
         return new_ppr[:]
     
+    def texify(self, prev_tex='x'):
+        a = self.arr[0].texify(prev_tex=prev_tex[:]) if hasattr(self.arr[0], 'texify') else str(self.arr[0])
+        b = self.arr[1].texify(prev_tex=prev_tex[:]) if hasattr(self.arr[1], 'texify') else str(self.arr[1])
+        return '\\frac{%s}{%s}'%(a, b)
+    
     def diff(self, wrt=0):
         n1 = Sum([Prod([self.arr[0].diff(wrt=wrt) if hasattr(self.arr[0], 'diff') else 0, self.arr[1]]), Prod([self.arr[1].diff(wrt=wrt)if hasattr(self.arr[1], 'diff') else 0, self.arr[0], -1])])
         n2 = Prod([self.arr[1], self.arr[1]])
@@ -2282,6 +2368,14 @@ class Div:
     
     def __sub__(self, other):
         return self + (-other)
+    
+    def newtonsmethod(self, starting_point = 0.1, n = 1000):
+        x_n = starting_point
+        df = self.diff()
+        for i in range(n):
+            x_n -= self(x_n) / df(x_n)
+        
+        return x_n
     
     __rmul__ = __mul__
     __radd__ = __add__
@@ -2324,6 +2418,9 @@ class sin:
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
     
+    def texify(self, prev_tex="x"):
+        return '\\sin (%s)'%prev_tex[:]
+    
     def diff(self, wrt=0):
         return cos()
 
@@ -2363,7 +2460,8 @@ class cos:
              [" ", " ", " "],
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\cos (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([sin(), poly([0, -1])])
 
@@ -2404,7 +2502,8 @@ class tan:
              [" ", " ", " "],
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\tan (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Sum([1, Comp([tan(), poly([0, 0, 1])])]) 
      
@@ -2437,6 +2536,8 @@ class inv:
         new_ppr = [[" " for i in prev_ppr[0]], [" " for i in prev_ppr[0]]] + [one[:]] + [div_sign[:]] + prev_ppr[1:4]
         return new_ppr[:]
         
+    def texify(self, prev_tex="x"):
+        return 'frac{1}{%s}'%prev_tex[:]
     
     def diff(self, wrt=0):
         return Comp([poly([0, 0, -1]), inv()])
@@ -2476,7 +2577,8 @@ class sqrt:
             new_ppr[1][i] = "_"
             
         return connect(rad, new_ppr[:])[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\sqrt{%s}'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([Prod([2, sqrt()]), inv()])
 
@@ -2516,7 +2618,8 @@ class asin:
              [" ", " ", " ", " "],
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\sin^{-1} (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([poly([1, 0, -1]), sqrt(), inv()])
 
@@ -2556,7 +2659,8 @@ class atan:
              [" ", " ", " ", " "],
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\tan^{-1} (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([poly([1, 0, 1]), inv()])
 
@@ -2596,7 +2700,8 @@ class sinh:
              [" ", " ", " ", " "],
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\sinh (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return cosh()
 
@@ -2636,7 +2741,8 @@ class cosh:
              [" ", " ", " ", " "],
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\cosh (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return cosh
 
@@ -2676,7 +2782,8 @@ class tanh:
              [" ", " ", " ", " "],
              [" ", " ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\tanh (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([tanh, poly([1, 0, -1])])
 class log:
@@ -2714,7 +2821,8 @@ class log:
              [" ", " ", " "],
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return '\\log (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return inv()
 
@@ -2754,7 +2862,8 @@ class exp:
              [" ", " ", " "],
              [" ", " ", " "]]
         return connect(s[:], connect(op[:], connect(prev_ppr[:], clsd[:])))[:]
-    
+    def texify(self, prev_tex="x"):
+        return 'e^{%s}'%prev_tex[:]
     def diff(self, wrt=0):
         return exp()
 
@@ -2804,6 +2913,39 @@ class DummyFunc:
     
     def pprint(self):
         return self.ppr[:]
+
+class DummyFuncN:
+    def __init__(self, n, ndigits=4):
+        self.n = n
+        self.real = self.n.real
+        self.imag = self.n.imag
+        self.string = str(n)
+        s = self.string[:]
+        self.ppr = [[" " for i in s], [" " for i in s], [" " for i in s], [i for i in s], [" " for i in s], [" " for i in s], [" " for i in s]]
+    
+    def npprint(self, prev_ppr = []):
+        return self.ppr[:]
+    
+    def __call__(self, x):
+        return self.n
+    
+    def __add__(self, other):
+        return Sum([self, other])
+    
+    def __mul__(self, other):
+        return Prod([self, other])
+    
+    def __neg__(self):
+        return self * (-1)
+    
+    def __sub__(self, other):
+        return self + (-other)
+    
+    def __truediv__(self, other):
+        return Div([self, other])
+    
+    __rmul__ = __mul__
+    __radd__ = __add__
     
 
 def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, max_prod=1, max_deg=2):
@@ -3065,6 +3207,32 @@ def generate_integrable_ratExpr(deg=3, nranges = [1, 10]):
     str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
     z = str1 + "\n" + str3 + "\n" + str2 + "\n"
     return [p, q, z]
+
+def generate_integrable_ratExpr_tex(deg=3, nranges = [1, 10]):
+    p = poly([1])
+    p_deg = random.randint(0, deg)
+    q = poly([1])
+    q_deg = random.randint(0, deg)
+    for i in range(p_deg // 2):
+        s1 = random.randint(1, 2) % 2
+        p *= s1 * poly.rand(2, coeff_range=nranges[:]) + (1-s1)*poly.rand(1, coeff_range=nranges[:])*poly.rand(1, coeff_range=nranges[:])
+    for i in range(q_deg // 2):
+        s2 = random.randint(1, 2) % 2
+        q *= s2 * poly.rand(2, coeff_range=nranges[:]) + (1-s2)*poly.rand(1, coeff_range=nranges[:])*poly.rand(1, coeff_range=nranges[:])
+    for i in range(p_deg % 2):
+        p *= poly.rand(1, coeff_range=nranges[:])
+    for i in range(q_deg % 2):
+        q *= poly.rand(1, coeff_range=nranges[:])
+    
+    str1 = str(p)
+    str2 = str(q)
+    str1cpy = str1[:]
+    str2cpy = str2[:]
+    len_measure1 = len(str1cpy.split("\n")[0])
+    len_measure2 = len(str2cpy.split("\n")[0])
+    str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
+    z = Div([p, q]).texify()
+    return [p, q, z]
 def generate_ratExpr(max_deg=3, nranges=[1, 10]):
     p = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
     q = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
@@ -3077,6 +3245,20 @@ def generate_ratExpr(max_deg=3, nranges=[1, 10]):
     str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
     z = str1 + "\n" + str3 + "\n" + str2 + "\n"
     return [p, q, z]
+
+def generate_ratExpr_tex(max_deg=3, nranges=[1, 10]):
+    p = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    q = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+    str1 = str(p)
+    str2 = str(q)
+    str1cpy = str1[:]
+    str2cpy = str2[:]
+    len_measure1 = len(str1cpy.split("\n")[0])
+    len_measure2 = len(str2cpy.split("\n")[0])
+    str3 = "".join(["-" for j in range(max(len_measure1, len_measure2))])
+    z = str1 + "\n" + str3 + "\n" + str2 + "\n"
+    return [p, q, Div([p, q]).texify()]
+
 def generate_eulersub(deg=2, nranges=[1, 10]):
     rat1 = generate_integrable_ratExpr(deg=deg, nranges=nranges[:])
     sq_term = poly.rand(2, coeff_range=nranges[:])
@@ -3215,6 +3397,15 @@ def generate_eulersub_rand(deg=2, nranges=[1, 10]):
             ]
         finstr = connect(ratstr1, z3_cpy2)
         return [tot_func, strpprint(finstr)]
+    
+def generate_eulersub_rand_tex(deg=2, nranges=[1, 10]):
+    p = poly.rand(deg, coeff_range=nranges[:])
+    q = poly.rand(deg, coeff_range=nranges[:])
+    r = poly.rand(deg, coeff_range=nranges[:])
+    f = Prod([Div([p, q]), sqrt(r)])
+    return f, f.texify()
+    
+  
 
 def generate_trig(nranges=[1, 10]):
     a, s, c = random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])
@@ -3238,6 +3429,29 @@ def generate_trig(nranges=[1, 10]):
     
     elif modeseed == 3:
         return generate_trig_prod(nranges=nranges[:])
+    
+def generate_trig_tex(nranges=[1, 10]):
+    a, s, c = random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])
+    a2, s2, c2 = random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])
+    a3, t = random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])
+    modeseed = random.randint(1, 3) 
+    if modeseed == 1:
+        p = lambda x : a + s * math.sin(x) + c * math.cos(x)
+        q = lambda x : a2 + s2 * math.sin(x) + c2 * math.cos(x)
+        p_str = "%d + %d\sin x + %d\cos x" % (a, s, c)
+        q_str = "%d + %d\sin x + %d\cos x" % (a2, s2, c2)
+        return [lambda x : p(x) / q(x), '\\frac{%s}{%s}'%(p_str, q_str)]
+    
+    elif modeseed == 2:
+        l = random.randint(nranges[0], nranges[1])
+        s = random.randint(1, 2) % 2
+        p = lambda x : l / (a3 + t * ((-1)**s) * math.tan(x))
+        q_str = "%d + %d\tan x"%(a3, t * ((-1)**s)) if not s else "%d - %d\tan x"%(a3, t)
+        t_str = "\\frac{%d}{%s}"%(l, q_str)
+        return [p, t_str]
+    
+    elif modeseed == 3:
+        return generate_trig_prod_tex(nranges=nranges[:])
 
 def generate_trig_prod(nranges=[1, 10]):
     a, b = random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])
@@ -3247,6 +3461,12 @@ def generate_trig_prod(nranges=[1, 10]):
     string_array = [[" ", " ", " "] + x + [" ", " ", " ", " ", " "] + y + [" "],
                     ["s", "i", "n"] + [" " for i in range(len(str(a)))] + ["x", " "] + ["c", "o", "s"] + [" " for i in range(len(str(b)))] + ["x"]]
     string = "\n".join(["".join(i) for i in string_array])
+    return [function, string]
+
+def generate_trig_prod_tex(nranges=[1, 10]):
+    a, b = random.randint(nranges[0], nranges[1]), random.randint(nranges[0], nranges[1])
+    function = lambda x : (math.sin(x)**a)*(math.cos(x))**b
+    string = "\\sin^{%d} x \\cos^{%d} x"%(a, b)
     return [function, string]
 
 def generate_fourier_ct(nranges=[1, 10], n_partite=1, deg=2, p_range=[1, 5], exp_cond=False, u_cond=False, umvar_cond=False):
@@ -3553,6 +3773,52 @@ def generate_fourier_s(nranges=[1, 10], n_partite=1, deg=2, p_range=[1, 5], exp_
     
     full_pprint = connect(array, poly_pprint)
     return [f, period, a_n, b_n, a_0, strpprint(full_pprint), p1, c1]
+
+
+def generate_fourier_s_tex(nranges=[1, 10], n_partite=1, deg=2, p_range=[1, 5], exp_cond=False, u_cond=False, umvar_cond=False):
+    p1 = poly.rand(deg, coeff_range=nranges[:])
+    c1 = random.randint(nranges[0], nranges[1])
+    period = 2*random.randint(p_range[0], p_range[1])
+    rand_exp = lambda x : math.exp(c1 * x)
+    f = (lambda x : p1(x) * rand_exp(x))
+    if n_partite > 1:
+        arr = [-period/2]
+        step = period // n_partite
+        for i in range(n_partite - 1):
+            arr.append(random.randint(arr[-1], arr[-1] + step))
+        arr.append(period/2)
+        p_array = [poly.rand(deg, coeff_range=nranges[:]) for i in range(n_partite)]
+        def g(x):
+            for i in range(n_partite):
+                if arr[i] <= x < arr[i+1]:
+                    return p_array[i](x)
+            
+            return 0
+        
+        a_n_d = lambda n : (lambda x : g(x) * math.cos(2 * n * math.pi * x / period))
+        b_n_d = lambda n : (lambda x : g(x) * math.sin(2 * n * math.pi * x / period)) 
+        a_n = lambda n : numericIntegration(a_n_d(n), -period/2, period/2) / (period/2)
+        b_n = lambda n : numericIntegration(b_n_d(n), -period/2, period/2) / (period/2)
+        a_0 = numericIntegration(g, -period/2, period/2) / period
+        str_arr = ["\\text{if }%d \leq x < %d \text{ then } f(x) = \n"%(arr[i], arr[i+1]) + p_array[i].texify() + "\\\\" for i in range(n_partite)]
+        string = "".join(str_arr)
+        return [g, period, a_n, b_n, a_0, string, p1, c1]
+
+
+
+    if not exp_cond:
+        f = lambda x : p1(x)
+    
+        
+    a_n_d = lambda n : (lambda x : f(x) * math.cos(2 * n * math.pi * x / period))
+    b_n_d = lambda n : (lambda x : f(x) * math.sin(2 * n * math.pi * x / period)) 
+    a_n = lambda n : numericIntegration(a_n_d(n), -period/2, period/2) / (period/2)
+    b_n = lambda n : numericIntegration(b_n_d(n), -period/2, period/2) / (period/2)
+    a_0 = numericIntegration(f, -period/2, period/2) / period
+    if not exp_cond:
+        return [f, period, a_n, b_n, a_0, p1.texify(), p1, c1]
+    
+    return [f, period, a_n, b_n, a_0, Prod([p1, Comp([poly([0, c1]), exp()])]).texify(), p1, c1]
 
 def fourier_s_poly(p1, p_range=[1, 5]):
     period = 2*random.randint(p_range[0], p_range[1])
@@ -4196,6 +4462,9 @@ def generate_rand_mseries(nranges , max_deg):
 def generate_rand_func_arr(ndigits=5, n=3):
     #syms = ["x", "y", "z", "w", "m", "n", "p", "q", "r", "s"]
     nums = [int(random.random() * 10 ** ndigits) / 10 ** ndigits for i in range(n)]
+    while 0 in nums:
+        nums[nums.index(0)] = int(random.random() * 10 ** ndigits) / 10 ** ndigits
+
     syms = [str(i) for i in nums]
     func = [rndFeval(symbol=syms[i]) for i in range(n)]
     fstr = [func[i][1]for i in range(n)]
@@ -5064,6 +5333,41 @@ def rand_diffeq_sym(nranges, deg, mdeg):
     
     return solve_diffeq_sym(coeffs.coeffs[:], [p, q], arr.coeffs[:]), strpprint(ppr[:]), arr.coeffs[:]
 
+def rand_diffeq_sym_tex(nranges, deg, mdeg):
+    coeffs = rand_poly_nice_roots(nranges[:], deg, all_real=False)
+    p, q = rand_poly_nice_roots(nranges[:], mdeg - 1, all_real=False), rand_poly_nice_roots(nranges[:], mdeg, all_real=False)
+    arr = poly.rand(deg - 1, coeff_range=nranges[:])
+    s = sym_inv_lap_rat(p, q)
+    
+    ppr = coeffs.texify(prev_tex='y')
+    
+    new_array = coeffs.coeffs[:]
+    new_array.reverse()
+    lines = [[], [], [], [], [], [], []]
+    
+    nppr = [[" "], [" "], [" "], ["y"], [" "], [" "], [" "]]
+    
+    for i in range(len(new_array)):
+        pow, coeff_abs, sgn_ppr = deg - i, abs(new_array[i].real), ("+" if i != 0 else " ") if sgn(new_array[i].real) else "-"
+        if new_array[i].imag != 0:
+            coeff_abs = new_array[i]
+            sgn_ppr =  '+'
+        coeff_abs_ppr = str(coeff_abs)
+        pow_ppr = "".join(["'" for j in range(pow)])
+        
+        if coeff_abs == 1 and pow != 0:
+            coeff_abs_ppr = ""
+        if coeff_abs == 0:
+            continue
+        else:
+            
+            lines = connect(lines[:], connect(sgn_ppr[:], connect(coeff_abs_ppr[:], connect(nppr[:], pow_ppr[:]))))[:]
+            
+    #return lines[:]
+    ppr = connect(lines[:], connect([["   "], ["   "], ["   "], [" = "], ["   "], ["   "], ["   "]], s.npprint()))
+    
+    return solve_diffeq_sym(coeffs.coeffs[:], [p, q], arr.coeffs[:]), strpprint(ppr[:]), arr.coeffs[:]
+
 def diff_det(nranges, dim, mat_deg, mdeg):
     mat = matrix.randpoly([dim, dim], mat_deg, coeff_range=nranges[:])
     init_vals =[0 for i in range(len(mat.det().coeffs[:]) - 1)]
@@ -5073,22 +5377,54 @@ def diff_det(nranges, dim, mat_deg, mdeg):
     f = solve_diffeq_sym(coeffs[:], [p, q], init_vals[:])
     return f, s, mat
 
-def conv_base(n, b):
-    digits_char = [str(i) for i in range(10)] + [chr(i) for i in range(65, 95)]
-    if n == 0:
-        return [0]
-    digits = []
-    while n:
-        digits.append(int(n % b))
-        n //= b
-    fin_digits = ''.join([digits_char[i] for i in digits[::-1]])
-    return fin_digits
 
-def conv_from_base(n, b):
-    digits_char = [str(i) for i in range(10)] + [chr(i) for i in range(65, 95)]
-    s = 0
-    nd = n[::-1]
-    for i in range(len(n)):
-        s += digits_char.index(nd[i]) * b**i
+def find_extrema(func):
+    if isinstance(func, list):
+        return (func[0].diff()*func[1]-func[1].diff()*func[0]).roots()
     
-    return s
+    else:
+        f = func.diff()
+        return [f.newtonsmethod()]
+
+def solve_eq(rhs, lhs):
+    z = Sum([rhs, Prod([-1, lhs])])
+    return z.newtonsmethod()
+
+def tangent_line(function, x):
+    return poly([function(x) - function.diff()(x) * x, function.diff()(x)])
+
+def arithmetic_elems(nranges, n):
+    result = random.randint(nranges[0], nranges[1])
+    curr_str = str(result)
+    res_str = str(result)
+    c = 0
+    for i in range(n):
+        op = random.randint(1, 4)
+        n2 = random.randint(nranges[0], nranges[1])
+        while n2 == 0:
+            n2 = random.randint(nranges[0], nranges[1])
+    
+        if op == 1: # +
+            curr_str = (curr_str[:] + "+" + str(n2))[:]
+            res_str = (res_str[:] + "+" + str(n2))[:]
+            result += n2
+        
+        elif op == 2: # -
+            curr_str = (curr_str[:] + "-" + str(n2))[:]
+            res_str = (res_str[:] + "-" + str(n2))[:]
+            result -= n2
+        
+        elif op == 3: # *
+            curr_str = ( curr_str[:] + "*" + str(n2))[:]
+            res_str = (res_str[:] + "*" + str(n2))[:]
+            result *= n2
+        
+        elif op == 4: # /
+            l = max(len(curr_str), len(str(n2)))
+            k = min(len(curr_str), len(str(n2)))
+            curr_str = curr_str + "\n" + "".join(['-' for j in range(l)]) + "\n"+ "".join([" " for j in range(int((abs(l - k)) / 2)-1)]) + str(n2)
+            res_str = ("(" + res_str[:] + ")" + "/" + "(" +str(n2))[:]
+            c += 1
+    for i in range(c):
+        res_str = res_str + ")"
+    return curr_str, eval(res_str)

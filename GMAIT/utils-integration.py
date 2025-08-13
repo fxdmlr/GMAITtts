@@ -122,7 +122,6 @@ def integrate_ratexp(np, nq):
     for u, v in mod_rat:
         
         if v.deg == 1:
-            print("nigga : ", u * Comp([v, log()]))
             s += Prod([u, Comp([v, log()])])
         else:
             sdiff = v.diff()
