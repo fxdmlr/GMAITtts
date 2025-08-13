@@ -5400,7 +5400,10 @@ def arithmetic_elems(nranges, n):
     c = 0
     for i in range(n):
         op = random.randint(1, 4)
+        while op == 4 and c > 0:
+            op = random.randint(1, 4)
         n2 = random.randint(nranges[0], nranges[1])
+        
         while n2 == 0:
             n2 = random.randint(nranges[0], nranges[1])
     
