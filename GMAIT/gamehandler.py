@@ -745,8 +745,8 @@ def arithmetic_game(inpt_dict):
     numdigs = inpt_dict['ndig']
     n = inpt_dict['n']
     ndigits = inpt_dict['ndigits']
-    nranges = [10 ** (numdigs - 1), 10 ** (numdigs) - 1]
-    a, b = utils.arithmetic_elems(nranges, n)
+    
+    a, b = utils.arithmetic_elems(numdigs, n)
     bres = int(b * 10**ndigits) / (10**ndigits)
     return a + "\n > ", bres, lambda x : float(x)
 

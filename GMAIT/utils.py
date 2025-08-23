@@ -1618,6 +1618,9 @@ class polymvar:
     def __sub__(self, other):
         return self + (-other)
     
+    def __truediv__(self, other):
+        return Div([self, other])
+    
     __rmul__ = __mul__
     __radd__ = __add__
     
@@ -2565,22 +2568,63 @@ class sqrt:
             return Prod([self, other])
     
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
-        rad = [[" ", " "],
-               [" ", " "],
-               [" ", " /"],
-               ["\\", "/"],
-               [" ", " "],
-               [" ", " "],
-               [" ", " "]]
+        rad = [[" ", " ", " ", " "],
+               [" ", " ", " ", "/"],
+               [" ", " ", "/", " "],
+               ["\\", "/", " ", " "],
+               [" ", " ", " ", " "],
+               [" ", " ", " ", " "],
+               [" ", " ", " ", " "]]
         new_ppr = prev_ppr[:]
-        for i in range(1, len(prev_ppr[0])):
-            new_ppr[1][i] = "_"
+        for i in range(len(prev_ppr[0])):
+            new_ppr[0][i] = "_"
             
         return connect(rad, new_ppr[:])[:]
     def texify(self, prev_tex="x"):
         return '\\sqrt{%s}'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([Prod([2, sqrt()]), inv()])
+
+class cbrt:
+    def __init__(self):
+        self.function = lambda x : x**(1/3)
+        self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
+    
+    def __call__(self, x):
+        return self.function(x)
+    
+    def __add__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other + self
+        
+        else:
+            return Sum([self, other])
+        
+    def __mul__(self, other):
+        if isinstance(other, (Prod, Sum)):
+            return other * self
+        
+        else:
+            return Prod([self, other])
+    
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        rad = [[" ", " ", " ", " "],
+               [" ", " ", " ", "/"],
+               [" ", "3", "/", " "],
+               ["\\", "/", " ", " "],
+               [" ", " ", " ", " "],
+               [" ", " ", " ", " "],
+               [" ", " ", " ", " "]]
+        new_ppr = prev_ppr[:]
+        for i in range(len(prev_ppr[0])):
+            new_ppr[0][i] = "_"
+            
+        return connect(rad, new_ppr[:])[:]
+    
+    def texify(self, prev_tex="x"):
+        return '(%s)^{\frac{1}{3}}'%prev_tex[:]
+    def diff(self, wrt=0):
+        return Comp([Prod([3, Comp([poly([0, 0, 1]), cbrt()])]), inv()])
 
 class asin:
     def __init__(self):
@@ -5393,8 +5437,9 @@ def solve_eq(rhs, lhs):
 def tangent_line(function, x):
     return poly([function(x) - function.diff()(x) * x, function.diff()(x)])
 
-def arithmetic_elems(nranges, n):
-    result = random.randint(nranges[0], nranges[1])
+def arithmetic_elems(ndig, n):
+    result = random.randint(0, 10) + random.random()
+    result = int(result * 10 ** ndig) / (10 ** ndig)
     curr_str = str(result)
     res_str = str(result)
     c = 0
@@ -5402,10 +5447,12 @@ def arithmetic_elems(nranges, n):
         op = random.randint(1, 4)
         while op == 4 and c > 0:
             op = random.randint(1, 4)
-        n2 = random.randint(nranges[0], nranges[1])
+        n2 = random.randint(0, 10) + random.random()
+        n2 = int(n2 * 10 ** ndig) / (10 ** ndig)
         
         while n2 == 0:
-            n2 = random.randint(nranges[0], nranges[1])
+            n2 = random.randint(0, 10) + random.random()
+            n2 = int(n2 * 10 ** ndig) / (10 ** ndig)
     
         if op == 1: # +
             curr_str = (curr_str[:] + "+" + str(n2))[:]
@@ -5431,3 +5478,10 @@ def arithmetic_elems(nranges, n):
     for i in range(c):
         res_str = res_str + ")"
     return curr_str, eval(res_str)
+
+def find_symbolic_root_quad(p):
+    c, b, a = p.coeffs[:]
+    d = Comp([Div([Sum([(b**2-4*a*c)]), 2*a]), sqrt()])
+    g = Div([-b, (2*a)])
+    return Sum([g, d]), Sum([g, Prod([-1, d])])
+

@@ -122,3 +122,29 @@ class multVar:
         else:
             raise Exception(TypeError, 'both types should be multVar when dividing with multVar')
 
+def canonical_form(pvar):
+    '''
+    converts the equation Ax^2+Bxy+Cy^2+Dx+Ey+F = 0
+    to the canonical form ax^2+by^2=1
+    '''
+    a = pvar.array[2][0][0]
+    b = pvar.array[1][1][0]
+    c = pvar.array[0][2][0]
+    d = pvar.array[1][0][0]
+    e = pvar.array[0][1][0]
+    f = pvar.array[0][0][0]
+    
+    S = matrix([
+        [a, b/2, d/2],
+        [b/2, c, e/2],
+        [d/2, e/2, f]
+    ]).det()
+    
+    r1, r2 = poly([a*c-b**2/4, -a-c, 1]).roots()
+    l1, l2 = -S / (r1*r2**2), -S / (r2*r1**2)
+    
+    return l1, l2 # this is equivalent to the equation : x^2/l1 + y^2/l2 = 1
+
+def change_of_variables():
+    pass
+    

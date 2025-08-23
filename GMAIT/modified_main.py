@@ -1083,7 +1083,7 @@ def static(prechoice=None):
         if md == 2:
             t = int(input("Duration : "))
         rounds = (t, roundd)
-        a = int(input("Number of Digits : "))
+        a = int(input("Number of Digits after floating point : "))
         n = input('Number of operations (DEFAULT 3): ')
         if n == "":
             n = 3
