@@ -180,9 +180,66 @@ def cfseries_poly(objects):
     f = uint.complex_fourier_series_poly(objects[4], objects[5], objects[6], objects[7])
     return sum([f(i) for i in objects[:4]])
 
+def line_point(p1, p2):
+    x = poly([0, 1])
+    y = ((p2[1] - p1[1]) / (p2[0] - p1[0]) ) * x - ((p2[1] - p1[1]) / (p2[0] - p1[0]) ) * p1[0] + p1[1]
+    return y
+
+def rand_func_linear(line_num, a, b):
+    points = []
+    for i in range(line_num + 1):
+        if len(points) == 0:
+            points.append([a, random.randint(-10, 10)])
+        elif len(points) == line_num:
+            point = [b, random.randint(-10, 10)]
+            points.append(point[:])
+        
+        else:
+            points.append([random.randint(points[-1] + 1, b), random.randint(-10, 10)])
+    
+    p_array = []
+    range_arr = []
+    for i in range(len(points[:-1])):
+        p_array.append(line_point(points[i], points[i+1]))
+        range_arr.append([points[i], points[i+1]])
+    
+    return p_array, range_arr, points[:]
+
+def connect_points(points):
+    p_array = []
+    range_arr = []
+    for i in range(len(points[:-1])):
+        p_array.append(line_point(points[i], points[i+1]))
+        range_arr.append([points[i][0], points[i+1][0]])
+    
+    return p_array[:], range_arr[:]
+
+def fourier_linear_cm_s(objects):
+    points = [[objects[4], objects[5]], [objects[6], objects[7]], [objects[8], objects[9]], [objects[10], objects[11]]]
+    p, r = connect_points(points[:])
+    t = points[-1][0] - points[0][0]
+    f = uint.mult_cfs(p[:], r[:], t)
+    return f(objects[0]) + f(objects[1]) + f(objects[2]) + f(objects[2])
+
+def fourier_linear_cm_t(objects):
+    points = [[objects[0], objects[1]], [objects[2], objects[3]], [objects[4], objects[5]], [objects[6], objects[7]]]
+    p, r = connect_points(points[:])
+    f = uint.mult_cft(p[:], r[:])
+    
+    return f(objects[8])
+
+def fourier_linear_re_s(objects):
+    points = [[objects[4], objects[5]], [objects[6], objects[7]], [objects[8], objects[9]], [objects[10], objects[11]]]
+    p, r = connect_points(points[:])
+    t = points[-1][0] - points[0][0]
+    f = uint.mult_rfs(p[:], r[:], t)
+    return f(objects[0])[0] + f(objects[1])[1] + f(objects[2])[0] + f(objects[2])[1]
+    
+
 arr_cmplx =  [rand_num, rand_num, rand_num, rand_num, rand_fourier, lambda : random.randint(0, 3), lambda : random.randint(4, 7), lambda : random.randint(7, 15)]
 arr_cmplx_2 =  [rand_num, rand_num, rand_num, rand_num, rand_poly, lambda : random.randint(0, 3), lambda : random.randint(4, 7), lambda : random.randint(7, 15)]
-
+arr_cfls =  [rand_num, rand_num, rand_num, rand_num, lambda : random.randint(0, 3), lambda : random.randint(-10, 10), lambda : random.randint(4, 7), lambda : random.randint(-10, 10), lambda : random.randint(8, 11), lambda : random.randint(-10, 10), lambda : random.randint(12, 15), lambda : random.randint(-10, 10)]
+arr_cflt =  [lambda : random.randint(0, 3), lambda : random.randint(-10, 10), lambda : random.randint(4, 7), lambda : random.randint(-10, 10), lambda : random.randint(8, 11), lambda : random.randint(-10, 10), lambda : random.randint(12, 15), lambda : random.randint(-10, 10), rand_num]
 
 
 number_generators = [
@@ -198,8 +255,11 @@ number_generators = [
     ['the result of $', lambda objects : objects[0].res, [rand_int_trig_h], [5]],
     ['the result of a_$ + b_$ + a_$ + b_$ in the fourier series of $ with a period of $',fser, [rand_num, rand_num, rand_num, rand_num, rand_fourier, lambda : random.randint(1, 10)], [0, 0, 0, 0, 5, 0]],
     ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of f(x) = $ if $<x<$ and 0 otherwise with a period of $', cfseries,  arr_cmplx[:], [0, 0, 0, 0, 5, 0, 0, 0]],
-    ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of f(x) = $ if $<x<$ and 0 otherwise with a period of $', cfseries,  arr_cmplx_2[:], [0, 0, 0, 0, 1, 0, 0, 0]]
-    
+    ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of f(x) = $ if $<x<$ and 0 otherwise with a period of $', cfseries,  arr_cmplx_2[:], [0, 0, 0, 0, 1, 0, 0, 0]],
+    ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of the signal connecting the points ($, $), ($, $), ($, $), ($, $) repeating', fourier_linear_cm_s, arr_cfls[:], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+    ['the result of a_$ + b_$ + a_$ + b_$ in the realfourier series of the signal connecting the points ($, $), ($, $), ($, $), ($, $) repeating', fourier_linear_re_s, arr_cfls[:], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
+    ['the complex fourier transfom of the signal connecting the points ($, $), ($, $), ($, $), ($, $) and zero elsewhere evaluated at w = $', fourier_linear_cm_t, arr_cflt[:], [0, 0, 0, 0, 0, 0, 0, 0, 0]]
+
 ]
 
 

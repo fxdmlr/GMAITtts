@@ -266,8 +266,29 @@ def real_fourier_series_poly(p, l):
     
     return a_n, b_n
 
+
+def real_fourier_series_poly_2(p, a, b, T):
+    l = T / 2
+    def a_n (n):
+        if n == 0:
+            f = p.integrate()
+            return (f(b) - f(a)) / (2*l)
+        f1, f2 = solve_poly_trig(p, n * math.pi / l, t = 1)
+        func = lambda x : f1(x) * cmath.exp(n*cmath.pi*complex(0, 1)*x/l ) + f2(x) * cmath.exp(-n*cmath.pi*complex(0, 1)*x/l) 
+        return (func(b) - func(a)) / l
+    
+    def b_n (n):
+        if n == 0: return 0
+        f1, f2 = solve_poly_trig(p, n * math.pi / l)
+        func = lambda x : f1(x) * cmath.exp(n*cmath.pi*complex(0, 1)*x/l ) + f2(x) * cmath.exp(-n*cmath.pi*complex(0, 1)*x/l)
+        return (func(b) - func(a)) / l
+    
+    return a_n, b_n
+
 def complex_fourier_series_poly(p, a, b, T):
-    res = lambda n : solve_poly_exp(p, complex(0, -n*2*math.pi/T)) / T
+    def res(n):
+        f = lambda x : solve_poly_exp(p, complex(0, -n*2*math.pi/T))(x) * cmath.exp(complex(0, -n*2*math.pi*x/T))
+        return (f(b) - f(a)) / T
     return res
 
 def complex_fourier_transform(p, a, b):
@@ -276,6 +297,39 @@ def complex_fourier_transform(p, a, b):
         g = solve_poly_exp(p, complex(0, -w))
         return g(b)*cmath.exp(complex(0, -w*b)) - g(a)*cmath.exp(complex(0, -w*a))
     return f
+
+def mult_cft(p_array, range_array):
+    '''
+    if p_array = [p1, p2, p3, ...]
+    and 
+    range_array = [(a00, a01), (a10, a11), ...]
+    
+    computes the fourier transform of f(x) = p1(x)(u(x-a00) - u(x-a01)) + p2(x)(u(x-a10)-u(x-a11)) + ...
+    where u(x) is the heaviside step function.
+    '''
+    return lambda w : sum([complex_fourier_transform(p_array[i], range_array[i][0], range_array[i][1])(w) for i in range(len(p_array))])
+
+def mult_cfs(p_array, range_array, period):
+    '''
+    if p_array = [p1, p2, p3, ...]
+    and 
+    range_array = [(a00, a01), (a10, a11), ...]
+    
+    computes the fourier transform of f(x) = p1(x)(u(x-a00) - u(x-a01)) + p2(x)(u(x-a10)-u(x-a11)) + ...
+    where u(x) is the heaviside step function.
+    '''
+    return lambda n : sum([complex_fourier_series_poly(p_array[i], range_array[i][0], range_array[i][1], period)(n) for i in range(len(p_array))])
+
+def mult_rfs(p_array, range_array, period):
+    '''
+    if p_array = [p1, p2, p3, ...]
+    and 
+    range_array = [(a00, a01), (a10, a11), ...]
+    
+    computes the fourier transform of f(x) = p1(x)(u(x-a00) - u(x-a01)) + p2(x)(u(x-a10)-u(x-a11)) + ...
+    where u(x) is the heaviside step function.
+    '''
+    return lambda w : [sum([real_fourier_series_poly_2(p_array[i], range_array[i][0], range_array[i][1], period)[0](w) for i in range(len(p_array))]), sum([real_fourier_series_poly_2(p_array[i], range_array[i][0], range_array[i][1], period)[1](w) for i in range(len(p_array))])]
     
 def inverse_fourier_cmplx(p, a, b):
     #finds the fourier transform of f = p(x) a<x<b 0 O.W.
