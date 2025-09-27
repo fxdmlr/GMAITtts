@@ -6,6 +6,7 @@ import evaluator as evl
 import statistics as st
 import circ_analysis as circ
 import turtle
+import problem_set_calc
 #import circuit_analyze as circ
 
 '''
@@ -693,12 +694,12 @@ def circuit_game(inpt_dict):
     return 'Voltage at t = %f : '%t, answer, lambda x : answer if cond(float(x)) else answer+1
 
 def diffDet(inpt_dict):
-    nranges = inpt_dict['nranges']
+    nranges = inpt_dict['ndig']
     dim = inpt_dict['dim']
     matdeg = inpt_dict['matdeg']
     mdeg = inpt_dict['mdeg']
     inp_range = inpt_dict['inprange']
-    f, s, mat= utils.diff_det(nranges[:], dim, matdeg, mdeg)
+    f, s, mat= utils.diff_det(nranges, dim, matdeg, mdeg)
     z = random.randint(inp_range[0], inp_range[1])
     nstr = 'If p(D) is equal to the determinant of the matrix below; Then solve the equation below (zero state solution):\n'
     st = [["" for i in range(8)], ["" for i in range(8)], ["" for i in range(8)], ["p(D)y = "], ["" for i in range(8)], ["" for i in range(8)], ["" for i in range(8)]]
@@ -745,9 +746,13 @@ def arithmetic_game(inpt_dict):
     numdigs = inpt_dict['ndig']
     n = inpt_dict['n']
     ndigits = inpt_dict['ndigits']
+    sq = inpt_dict['sq']
     
-    a, b = utils.arithmetic_elems(numdigs, n)
+    a, b = utils.arithmetic_elems(numdigs, n, sq = sq)
     bres = int(b * 10**ndigits) / (10**ndigits)
     return a + "\n > ", bres, lambda x : float(x)
 
-    
+def calc_game(inpt_dict):
+    a, b = problem_set_calc.single_number_gen()
+    moe = inpt_dict['moe']
+    return utils.strpprint(a) + '\n > ', b, lambda x : b if abs(evl.evl(x)- b) < abs(moe * b) else b + 1

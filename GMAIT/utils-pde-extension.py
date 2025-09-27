@@ -1,30 +1,33 @@
-'''
-A pde is stored as a two dimensoinal array EQ
-where EQ[i][j] is D^i_x D^j_y u(x, y) e.g.
-if EQ[1][2] = 3 then there exists a 3u_xyy term in
-our equation.
-
-The L.H.S is always supposed to be 0.
-
-The solution is derived via multiple laplace
-transforms with respect to each variable.
-
-'''
-
-
 from utils import *
 import math
-import random
-import cmath
 
-zero_pol = [[[0 for j in range(2)] for i in range(2)]for k in range(2)]
+def solve_second_order_const(arr):
+    '''
+    arr = [a, b, c, d, e, f, g]
+    auxx + buxy + cuyy + dux + euy + fu + g = 0
+    '''
+    a, b, c, d, e, f, g = arr[:]
+    delta = b ** 2 - 4*a*c
+    
+    '''
+    the new equation will be [a'u_xixi + b'uxieta, ...]
+    '''
+    if delta > 0:
+        pr, qr = (b + math.sqrt(delta)) / (2*a), (b - math.sqrt(delta)) / (2*a)
+        print(pr, qr)
+        # xi = y - pr * x
+        # eta = y - qr * x
+        
+        ux = poly([0, 0, -qr, -pr])
+        uy = poly([0, 0, 1, 1])
+        uyy = poly([0, 0, 0, 0, 1, 2, 1])
+        uxy = poly([0, 0, 0, 0, -qr, -pr-qr, -pr])
+        uxx = poly([0, 0, 0, 0, qr**2, 2*qr*pr, pr**2])
+        new = (d*ux + e*uy + c*uyy + b*uxy + a*uxx + poly([g, f])).coeffs[:]
+        new.reverse()
+        
+        # removing remaining single derivatives:
+        return new[:]
 
-def conv_to_lap(eq):
-    new_arr = [[[0 for k in range(len(eq))]for j in i]for i in eq]
-    for i in range(len(eq)):
-        for j in range(len(eq[i])):
-            new_arr[i][j][0] = eq[i][j]
-    return polymvar(new_arr)
-
-def y_roots(p):
-    pass
+print(solve_second_order_const([1, -3, 2, 1, 1, 1, 0]))
+        

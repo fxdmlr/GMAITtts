@@ -2,6 +2,7 @@ import math
 import random
 import cmath
 import decimal
+import evaluator as evl
 
 
 DEFAULT_TAYLOR_N = 1000
@@ -67,9 +68,31 @@ def matrixpprint(pp):
     arr = [strpprint(i) for i in pp]
     return "\n".join(arr) 
 
+def pprify(pp):
+    arr = []
+    for i in pp:
+        arr += i[:]
+    return arr[:]
+
 def connect(arr1, arr2):
     arr3 = []
-    for i in range(len(arr1)):
+    if len(arr1) != len(arr2):
+        larger = [k[:] for k in arr1] if len(arr1) > len(arr2) else [k[:] for k in arr2]
+        smaller = [k[:] for k in arr1] if len(arr1) < len(arr2) else [k[:] for k in arr2]
+        diff = len(larger) - len(smaller)
+        for i in range(int(diff / 2)):
+            smaller.append([" " for k in smaller[0]])
+            
+        for i in range(diff - int(diff / 2)):
+            smaller.insert(0, [" " for k in smaller[0]])
+        
+        if len(arr1) < len(arr2):
+            return connect(smaller, larger)[:]
+        
+        else:
+            return connect(larger, smaller)[:]
+        
+    for i in range(min(len(arr1), len(arr2))):
         arr3.append(arr1[i] + arr2[i])
     
     return arr3[:]
@@ -644,6 +667,52 @@ class poly:
         '''
         return strpprint(self.npprint())
     
+    def specstr(self):
+        string = []
+        for i in range(self.deg + 1):
+            if i < self.deg:
+                if i > 1:
+                    if self.coeffs[i] == 0:
+                        continue;
+                    elif self.coeffs[i] == 1 or self.coeffs[i] == -1:
+                        string += ["%s%s^%d"%("+" if self.coeffs[i] == 1 else "-", "x", i)]
+                    else:
+                        string += ["%s%s%s^%d"%("+" if math.copysign(1, self.coeffs[i])==1 else "" , str(self.coeffs[i]), "x", i)]
+                elif i == 1:
+                    if self.coeffs[i] == 0:
+                        continue;
+                    elif self.coeffs[i] in [1, -1]:
+                        string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "-" , "x")]
+                    else:
+                        string += ["%s%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "" ,str(self.coeffs[i]), "x")]
+                elif i == 0:
+                    if self.coeffs[i] == 0:
+                        continue;
+                    string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "" , str(self.coeffs[i]))]
+            
+            else:
+                if i > 1:
+                    if self.coeffs[i] == 0:
+                        continue;
+                    elif self.coeffs[i] in [1, -1]:
+                        string += ["%s%s^%d"%("+" if math.copysign(1, self.coeffs[i])==1 else "-" , "x", i)]
+                    else:
+                        string += ["%s%s%s^%d"%("+" if math.copysign(1, self.coeffs[i])==1 else "", str(self.coeffs[i]), "x", i)]
+                elif i == 1:
+                    if self.coeffs[i] == 0:
+                        continue;
+                    elif self.coeffs[i] in [1, -1]:
+                        string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "-" , "x")]
+                    else:
+                        string += ["%s%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "" ,str(self.coeffs[i]), "x")]
+                elif i == 0:
+                    if self.coeffs[i] == 0:
+                        continue;
+                    string += ["%s"%(str(self.coeffs[i]))]
+
+        string.reverse()
+        return "".join(string)
+    
     def pprint(self, prev_pprint=[[" "], ["x"], [" "]]):
         new_array = self.coeffs[:]
         new_array.reverse()
@@ -720,7 +789,9 @@ class poly:
                     lines = connect(lines[:], connect(sgn_ppr[:], coeff_abs_ppr[:]))[:]
         return lines[:]
     
-    def texify(self, prev_tex = 'x'):
+    def texify(self, prev_tex = "x"):
+        if prev_tex == "x":
+            prev_tex = self.variable
         s = ""
         for i in range(len(self.coeffs) - 1, -1, -1):
             if self.coeffs[i] != 0:
@@ -904,6 +975,15 @@ class poly:
     def roots(self, prevs=[]):
         zeros = 0
         i = 0
+        #check if the poly is x^n
+        non_zero_coeffs = 0
+        ind = 0
+        for i in range(len(self.coeffs[:])):
+            if self.coeffs[i] != 0:
+                non_zero_coeffs += 1
+                ind = i
+        if non_zero_coeffs == 1:
+            return [0 for i in range(ind)] + prevs[:]
         while self.coeffs[i] == 0 and i < len(self.coeffs):
             zeros += 1
             i += 1
@@ -919,6 +999,8 @@ class poly:
             b = self.coeffs[1]
             c = self.coeffs[0]
             d = b**2 - 4*a*c
+            if a == 0:
+                return poly(self.coeffs[:-1])
             return [(-b + cmath.sqrt(d))/(2*a), (-b - cmath.sqrt(d))/(2*a)] + prevs[:]
         
         if self.deg == 3:
@@ -938,6 +1020,8 @@ class poly:
             if C == 0:
                 C = ((d1 - cmath.sqrt(d1**2-4*d0**3)) / 2)**(1/3)
             
+            if a == 0:
+                return poly(self.coeffs[:-1]).roots()
             r1 = (-1/(3*a)) * (b + C + d0/C)
             r2, r3 = (self / poly([-r1, 1])).roots()
             
@@ -1036,6 +1120,8 @@ class poly:
             x_ig = x_i
             #if pl.diff()(x_i) == 0:
             #    x_i += 0.05
+            if pl.diff()(x_i) == 0:
+                return poly.newtonsmethod(pl, start + 0.1, max_iter)
             x_i -= pl(x_i) / pl.diff()(x_i)
             if not isinstance(x_i, complex) : 
                 x_i = round(x_i, ndigits=10)
@@ -1280,6 +1366,9 @@ class matrix:
                 
                 return matrix(arr)
     
+    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+        return pprify(self.pprint(prev_ppr=prev_ppr[:]))[:]
+    
     def __neg__(self):
         return self * (-1)
     
@@ -1505,7 +1594,6 @@ class pcurve:
     @staticmethod
     def rand(max_deg=2, nranges=[1, 10]):
         return pcurve([poly.rand(random.randint(0, max_deg), coeff_range=nranges[:]) for i in range(3)])
-        
 
 class polymvar:
     def __init__(self, array):
@@ -1575,7 +1663,7 @@ class polymvar:
             return self + other.convToMVar()
     
     def __mul__(self, other):
-        if isinstance(other, (int, float)):
+        if isinstance(other, (int, float, complex)):
             new_array = [[[k for k in j]for j in i] for i in self.array[:]]
             for i in range(len(self.array)):
                 for j in range(len(self.array)):
@@ -1838,6 +1926,15 @@ class polymvar:
             new_array.append(arr)
         
         return polymvar(new_array[:])
+    
+    @staticmethod
+    def rand_n(d=2, nrange=[1, 10], n=1):
+        zero_pol = [[[0 for j in range(d)] for i in range(d)]for k in range(d)]
+        for i in range(n):
+            zero_pol[random.randint(0, d - 1)][random.randint(0, d - 1)][random.randint(0, d - 1)] = random.randint(nrange[0], nrange[1])
+        
+        return polymvar(zero_pol)
+    
     @staticmethod
     def x():
         zero_pol = [[[0 for j in range(2)] for i in range(2)]for k in range(2)]
@@ -1854,6 +1951,11 @@ class polymvar:
     def z():
         zero_pol = [[[0 for j in range(2)] for i in range(2)]for k in range(2)]
         zero_pol[0][0][1] = 1
+        return polymvar(zero_pol[:])
+    
+    @staticmethod
+    def zeros(d = 2):
+        zero_pol = [[[0 for j in range(d)] for i in range(d)]for k in range(d)]
         return polymvar(zero_pol[:])
 
 class vectF:
@@ -2006,6 +2108,12 @@ class Sum:
         
         return Sum(new_arr[:])
     
+    def __sub__(self, other):
+        return self + (-other)
+    
+    def __neg__(self):
+        return Sum([-i for i in self.arr])
+    
     def __mul__(self, other):
         if isinstance(other, Sum):
             new_arr  = []
@@ -2023,6 +2131,14 @@ class Sum:
         
         else:
             return Prod([self, other])
+    
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         array = [[], [], [], [], [], [], []] 
         if len(self.arr) == 0:
@@ -2039,6 +2155,9 @@ class Sum:
                 arg = [[" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [j for j in str(i)], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))], [" " for j in range(len(str(i)))]]
                 array[:] = connect(array[:], connect([[" "], [" "], [" "], ["+"], [" "], [" "], [" "]], arg[:]))[:]
         return array
+    
+    def specstr(self, prev='x'):
+        pass
     
     def texify(self, prev_tex='x'):
         s = ""
@@ -2060,7 +2179,10 @@ class Sum:
         x_n = starting_point
         df = self.diff()
         for i in range(n):
-            x_n -= self(x_n) / df(x_n)
+            if df(x_n) != 0:
+                x_n -= self(x_n) / df(x_n)
+            else:
+                return self.newtonsmethod(starting_point=starting_point+0.1)
         
         return x_n
     
@@ -2157,7 +2279,12 @@ class Prod:
             
         
         return new_arr
-    
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         array = [[], [], [], [], [], [], []] 
         spaces = [[" "], [" "], [" "], [" "], [" "], [" "], [" "]]
@@ -2201,11 +2328,19 @@ class Prod:
     def __str__(self):
         return strpprint(self.npprint())   
     
+    def __neg__(self):
+        return Prod([-1, self.arr[:]])
+    
+    def __sub__(self, other):
+        return self + (-other)
     def newtonsmethod(self, starting_point = 0.1, n = 1000):
         x_n = starting_point
         df = self.diff()
         for i in range(n):
-            x_n -= self(x_n) / df(x_n)
+            if df(x_n) != 0:
+                x_n -= self(x_n) / df(x_n)
+            else:
+                return self.newtonsmethod(starting_point=starting_point+0.1)
         
         return x_n 
     
@@ -2245,6 +2380,17 @@ class Comp:
         
         else:
             return Prod([self, other])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self):
+        return self * (-1)
+    
+    def __sub__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         array = prev_ppr[:]
         for i in self.arr[:]:
@@ -2283,7 +2429,10 @@ class Comp:
         x_n = starting_point
         df = self.diff()
         for i in range(n):
-            x_n -= self(x_n) / df(x_n)
+            if df(x_n) != 0:
+                x_n -= self(x_n) / df(x_n)
+            else:
+                return self.newtonsmethod(starting_point=starting_point+0.1)
         
         return x_n
     
@@ -2324,6 +2473,17 @@ class Div:
             return Div([Prod([self.arr[0], other]), self.arr[1]])
         else:
             return Div([Prod([self.arr[0], other.arr[0]]), Prod([self.arr[1], other.arr[1]])])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i    
+    def __neg__(self):
+        return Div([-self.arr[0], self.arr[1]])
+    
+    def __sub__(self, other):
+        return self + (-other)
     
     def __truediv__(self, other):
         return Div([self.arr[0], Prod([self.arr[1], other])])
@@ -2372,11 +2532,17 @@ class Div:
     def __sub__(self, other):
         return self + (-other)
     
+    def roots(self):
+        return self.arr[0].roots()
+    
     def newtonsmethod(self, starting_point = 0.1, n = 1000):
         x_n = starting_point
-        df = self.diff()
+        df = self.arr[0].diff()
         for i in range(n):
-            x_n -= self(x_n) / df(x_n)
+            if df(x_n) != 0:
+                x_n -= self(x_n) / df(x_n)
+            else:
+                return self.newtonsmethod(starting_point=starting_point+0.1)
         
         return x_n
     
@@ -2390,7 +2556,7 @@ class sin:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2405,6 +2571,17 @@ class sin:
         
         else:
             return Prod([self, other])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self):
+        return Prod([-1, self])
+    
+    def __neg__(self, other):
+        return self + (-other)
     
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
@@ -2426,6 +2603,8 @@ class sin:
     
     def diff(self, wrt=0):
         return cos()
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class cos:
     def __init__(self):
@@ -2433,7 +2612,8 @@ class cos:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2448,7 +2628,16 @@ class cos:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
         clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
@@ -2467,6 +2656,8 @@ class cos:
         return '\\cos (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([sin(), poly([0, -1])])
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 
 class tan:
@@ -2475,7 +2666,7 @@ class tan:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2483,7 +2674,16 @@ class tan:
         
         else:
             return Sum([self, other])
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
         
+        return i
+    def __neg__(self, other):
+        return self + (-other)   
     def __mul__(self, other):
         if isinstance(other, (Prod, Sum)):
             return other * self
@@ -2509,6 +2709,8 @@ class tan:
         return '\\tan (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Sum([1, Comp([tan(), poly([0, 0, 1])])]) 
+    __rmul__ = __mul__
+    __radd__ = __add__
      
 class inv:
     def __init__(self):
@@ -2516,7 +2718,7 @@ class inv:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2531,7 +2733,16 @@ class inv:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         div_sign = ["-" for i in prev_ppr[0]]
         one_ind = int(len(prev_ppr[0]) / 2)
@@ -2544,6 +2755,8 @@ class inv:
     
     def diff(self, wrt=0):
         return Comp([poly([0, 0, -1]), inv()])
+    __rmul__ = __mul__
+    __radd__ = __add__
     
 class sqrt:
     def __init__(self):
@@ -2551,7 +2764,7 @@ class sqrt:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2566,7 +2779,16 @@ class sqrt:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         rad = [[" ", " ", " ", " "],
                [" ", " ", " ", "/"],
@@ -2584,6 +2806,8 @@ class sqrt:
         return '\\sqrt{%s}'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([Prod([2, sqrt()]), inv()])
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class cbrt:
     def __init__(self):
@@ -2591,7 +2815,7 @@ class cbrt:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2606,7 +2830,16 @@ class cbrt:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         rad = [[" ", " ", " ", " "],
                [" ", " ", " ", "/"],
@@ -2625,6 +2858,8 @@ class cbrt:
         return '(%s)^{\frac{1}{3}}'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([Prod([3, Comp([poly([0, 0, 1]), cbrt()])]), inv()])
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class asin:
     def __init__(self):
@@ -2632,7 +2867,7 @@ class asin:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2647,7 +2882,16 @@ class asin:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
         clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
@@ -2666,6 +2910,8 @@ class asin:
         return '\\sin^{-1} (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([poly([1, 0, -1]), sqrt(), inv()])
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class atan:
     def __init__(self):
@@ -2673,7 +2919,7 @@ class atan:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2688,7 +2934,16 @@ class atan:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
         clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
@@ -2707,6 +2962,8 @@ class atan:
         return '\\tan^{-1} (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([poly([1, 0, 1]), inv()])
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class sinh:
     def __init__(self):
@@ -2714,7 +2971,7 @@ class sinh:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2729,7 +2986,16 @@ class sinh:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
         clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
@@ -2748,6 +3014,8 @@ class sinh:
         return '\\sinh (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return cosh()
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class cosh:
     def __init__(self):
@@ -2755,7 +3023,7 @@ class cosh:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2770,7 +3038,16 @@ class cosh:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
         clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
@@ -2789,6 +3066,8 @@ class cosh:
         return '\\cosh (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return cosh
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 class tanh:
     def __init__(self):
@@ -2796,7 +3075,7 @@ class tanh:
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2811,7 +3090,16 @@ class tanh:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
         clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
@@ -2830,13 +3118,15 @@ class tanh:
         return '\\tanh (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return Comp([tanh, poly([1, 0, -1])])
+    __rmul__ = __mul__
+    __radd__ = __add__
 class log:
     def __init__(self):
         self.function = cmath.log
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2850,7 +3140,16 @@ class log:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
         clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
@@ -2869,14 +3168,15 @@ class log:
         return '\\log (%s)'%prev_tex[:]
     def diff(self, wrt=0):
         return inv()
-
+    __rmul__ = __mul__
+    __radd__ = __add__
 class exp:
     def __init__(self):
         self.function = cmath.exp
         self.user_args = dict([(key,val) for key,val in locals().items() if key!='self' and key!='__class__'])
     
     def __call__(self, x):
-        return self.function(x)
+        return self.function(x) if isinstance(x, (int, complex, float)) else Comp([x, self])
     
     def __add__(self, other):
         if isinstance(other, (Prod, Sum)):
@@ -2891,7 +3191,16 @@ class exp:
         
         else:
             return Prod([self, other])
-    
+    def __neg__(self):
+        return Prod([-1, self])
+    def __pow__(self, n):
+        i = self
+        for j in range(n - 1):
+            i *= self
+        
+        return i
+    def __neg__(self, other):
+        return self + (-other)
     def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         op = [[" "], [" "], [" "], [" ("], [" "], [" "], [" "]]
         clsd = [[" "], [" "], [" "], [" )"], [" "], [" "], [" "]]
@@ -2910,7 +3219,8 @@ class exp:
         return 'e^{%s}'%prev_tex[:]
     def diff(self, wrt=0):
         return exp()
-
+    __rmul__ = __mul__
+    __radd__ = __add__
 class Symbol:
     def __init__(self, string):
         self.string = string
@@ -2990,7 +3300,77 @@ class DummyFuncN:
     
     __rmul__ = __mul__
     __radd__ = __add__
+
+class Number:
+    def __init__(self, num):
+        self.num = num
+        if num == 'j':
+            self.num = complex(0, 1)
     
+    def __call__(self, x):
+        return self.num
+    
+    def __add__(self, other):
+        if isinstance(other, Number):
+            return Number(self.num + other.num)
+        
+        elif isinstance(other, (int, float)):
+            return Number(self.num + other)
+        
+        elif isinstance(other, poly, polymvar):
+            return self.num + other
+        
+        else:
+            return Sum([self, other])
+    
+    def __mul__(self, other):
+        if isinstance(other, Number):
+            return Number(self.num * other.num)
+        
+        elif isinstance(other, (int, float)):
+            return Number(self.num * other)
+        
+        elif isinstance(other, poly, polymvar):
+            return self.num * other
+        
+        else:
+            return Prod([self, other])
+    
+    def __pow__(self, other):
+        if isinstance(other, (int, float, Number)):
+            n = other.num if isinstance(other, Number) else other
+            return Number(self.num ** n)
+        
+        else:
+            return Comp([other * math.log(abs(self.num)), exp()])
+    
+    def __neg__(self):
+        return self * (-1)
+    
+    def __sub__(self, other):
+        return self + (-other)
+    
+    def __truediv__(self, other):
+        if isinstance(other, (int, float, Number)):
+            n = other.num if isinstance(other, Number) else other
+            n1 = self.num / math.gcd(self.num, n)
+            n2 = n / math.gcd(self.num, n)
+            return Number(n1) if n2 == 1 else Div([n1, n2])
+        
+        else:
+            return Div([self, other])
+    
+    def diff(self):
+        return Number(0)
+    
+    def npprint(self, prev_ppr = []):
+        return [[" " for i in str(self.num)], [" " for i in str(self.num)], [" " for i in str(self.num)], [i for i in str(self.num)], [" " for i in str(self.num)], [" " for i in str(self.num)], [" " for i in str(self.num)]]
+    
+    def __str__(self):
+        return strpprint(self.npprint())
+    
+    __rmul__ = __mul__
+    __radd__ = __add__
 
 def generate_random_function_integral(nranges=[0, 100], max_layer=1, max_sum=1, max_prod=1, max_deg=2):
     function_array = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), asin(), atan(), atan(), asin(), asin(), sqrt(), sqrt(), sqrt(), log(), log(), log()]
@@ -3021,8 +3401,8 @@ def generate_random_function_integral_II(nranges=[0, 100], n=9, k=5, max_deg=2, 
     q = seed(s[:]).simplify()
     return q
 
-def rand_func_iii(nranges=[0, 10], max_deg=4, n=5, fweights=[1, 1, 1, 1, 1, 1, 1, 1, 1], wweights=[1, 1, 1, 1], prev_wraps=[]):
-    functions = [sin(), cos(), tan(), log(), exp(), sqrt(), asin(), atan(), 'p']
+def rand_func_iii(nranges=[0, 10], max_deg=4, n=5, fweights=[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], wweights=[1, 1, 1, 1], prev_wraps=[]):
+    functions = [sin(), cos(), tan(), log(), exp(), Comp([poly.rand(2, coeff_range=nranges[:]), sqrt()]), asin(), atan(), 'p', 'q']
     function_array = []
     for i in range(len(fweights)):
         for j in range(fweights[i]):
@@ -3032,6 +3412,26 @@ def rand_func_iii(nranges=[0, 10], max_deg=4, n=5, fweights=[1, 1, 1, 1, 1, 1, 1
         if f == 'p':
             f = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
         
+        if f == 'q':
+            q = polymvar.rand_n(d=4, nrange=nranges[:])
+            p = q.array[:]
+            f = Sum([])
+            for i in range(len(p)):
+                for j in range(len(p[i])):
+                    for k in range(len(p[i][j])):
+
+                        a, b, c = Comp([sin(), poly([0, 1])**i]) , Comp([cos(), poly([0, 1])**j]) , Comp([exp(), poly([0, 1])**k])
+                        e = 1
+                        if i != 0:
+                            e *= a
+                        if j != 0:
+                            e *= b
+                        if k != 0:
+                            e *= c
+                        f +=  e * p[i][j][k]
+            
+
+            
         if isinstance(f, sqrt):
             return Comp([poly.rand(random.randint(0, max_deg), coeff_range=nranges[:], sgn_sensitive=0), sqrt()])
         return f
@@ -3051,7 +3451,25 @@ def rand_func_iii(nranges=[0, 10], max_deg=4, n=5, fweights=[1, 1, 1, 1, 1, 1, 1
             f = Comp([poly.rand(random.randint(0, max_deg), coeff_range=nranges[:], sgn_sensitive=0), sqrt()])
         if f == 'p':
             f = poly.rand(random.randint(0, max_deg), coeff_range=nranges[:])
+        if f == 'q':
+            q = polymvar.rand_n(d=4, nrange=nranges[:])
+            p = q.array[:]
+            f = Sum([])
+            for i in range(len(p)):
+                for j in range(len(p[i])):
+                    for k in range(len(p[i][j])):
+
+                        a, b, c = Comp([sin(), poly([0, 1])**i]) , Comp([cos(), poly([0, 1])**j]) , Comp([exp(), poly([0, 1])**k])
+                        e = 1
+                        if i != 0:
+                            e *= a
+                        if j != 0:
+                            e *= b
+                        if k != 0:
+                            e *= c
+                        f +=  e * p[i][j][k]
         wrapper = wrappers[random.randint(0, len(wrappers) - 1)]
+
         return wrapper([f, rand_func_iii(nranges=nranges[:], n=n-1, fweights=fweights[:], wweights=wweights[:], prev_wraps=prev_wraps+[wrapper])]).simplify()
 
 def generate_integral_problem(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, k=5, max_deg=2, comp=4, sums=3, prod=1):
@@ -3193,6 +3611,51 @@ def generate_integral_problem_iii(nranges=[0, 100], boundary_ranges=[-10, 10],n=
             return result, string, lb, hb
         except:
             continue
+def generate_integral_problem_iii_nppr(nranges=[0, 100], boundary_ranges=[-10, 10],n=9, max_deg=2, fweights=[1, 1, 1, 1, 1, 1, 1, 1, 1], wweights=[1, 1, 1, 1]):
+    
+    lb = random.randint(boundary_ranges[0], boundary_ranges[1] - 1)
+    hb = random.randint(lb + 1, boundary_ranges[1])
+    while True:
+        try:
+            p = rand_func_iii(nranges=nranges, max_deg=max_deg, n=n, fweights=fweights, wweights=wweights)
+            result = numericIntegration(p, lb, hb)
+            int_ppr = [[" ", " ", "/"], 
+                    [" ", "/", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "|", " "],
+                    [" ", "/", " "],
+                    ["/", " ", " "]]
+            for i in range(max(len(str(lb)), len(str(hb)))):
+                curr = [[str(hb)[i] if i < len(str(hb)) else " "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [" "],
+                        [str(lb)[i] if i < len(str(lb)) else " "]]
+                int_ppr[:] = connect(int_ppr[:], curr[:])[:]
+            x = p.npprint()
+            r = [" " for i in x[0]]
+            dx = [[" ", " "],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "],
+                ["d", "x"],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "],
+                [" ", " "]]
+            int_ppr[:] = connect(int_ppr[:], [r] + x + [r])[:]
+            int_ppr[:] = connect(int_ppr[:], dx[:])[:]
+            string = strpprint(int_ppr)[:]
+            return result, int_ppr, lb, hb
+        except:
+            continue
 '''
 r, s, l, h = generate_integral_problem_iii(nranges=[1, 10], boundary_ranges=[-10, 10], n=5, max_deg=4, fweights=[1, 1, 1, 4, 4, 5, 0, 1, 9], wweights=[1, 0, 1, 0])
 print(s)
@@ -3216,6 +3679,7 @@ def fourier_series(f, period):
     a_0 = numericIntegration(f, -period/2, period/2) / period
     return [a_n, b_n, a_0]
 
+
 def fourier_ct(function, start, end, dx=0.0001):
     return lambda w : numericIntegration(lambda x : function(x) * math.cos(w * x), start, end, dx=dx) * math.sqrt(2/math.pi)
 
@@ -3225,6 +3689,9 @@ def fourier_st(function, start, end, dx=0.0001):
 def fourier_t(function, start, end, dx=0.0001):
     return lambda w : numericIntegration(lambda x : function(x) * cmath.exp(complex(0, -w * x)), start, end, dx=dx) / math.sqrt(2 * math.pi)
 
+def complex_fourier_series(function, period, a, b):
+    f = lambda n : lambda x : function(x) * cmath.exp(complex(0, n * 2 * cmath.pi / period))
+    return lambda n : numericIntegration(f(n), a, b) / period
 
 def generate_integrable_ratExpr(deg=3, nranges = [1, 10]):
     p = poly([1])
@@ -5412,8 +5879,9 @@ def rand_diffeq_sym_tex(nranges, deg, mdeg):
     
     return solve_diffeq_sym(coeffs.coeffs[:], [p, q], arr.coeffs[:]), strpprint(ppr[:]), arr.coeffs[:]
 
-def diff_det(nranges, dim, mat_deg, mdeg):
-    mat = matrix.randpoly([dim, dim], mat_deg, coeff_range=nranges[:])
+def diff_det(ndig, dim, mat_deg, mdeg):
+    mat = matrix.randpoly([dim, dim], mat_deg, coeff_range=[10**(ndig), 10**(ndig+1)-1])
+    mat = mat * (10 ** -(ndig))
     init_vals =[0 for i in range(len(mat.det().coeffs[:]) - 1)]
     coeffs = mat.det().coeffs[:]
     p, q = rand_poly_nice_roots([-10, 10], mdeg - 1, all_real=False), rand_poly_nice_roots([-10, 10], mdeg, all_real=False)
@@ -5432,21 +5900,24 @@ def find_extrema(func):
 
 def solve_eq(rhs, lhs):
     z = Sum([rhs, Prod([-1, lhs])])
+    if isinstance(rhs - lhs, poly):
+        return (rhs - lhs).roots()[0]
     return z.newtonsmethod()
 
 def tangent_line(function, x):
     return poly([function(x) - function.diff()(x) * x, function.diff()(x)])
 
-def arithmetic_elems(ndig, n):
+def arithmetic_elems(ndig, n, sq=True):
     result = random.randint(0, 10) + random.random()
     result = int(result * 10 ** ndig) / (10 ** ndig)
     curr_str = str(result)
     res_str = str(result)
+    MAX = 5 if sq else 4
     c = 0
     for i in range(n):
-        op = random.randint(1, 4)
+        op = random.randint(1, MAX)
         while op == 4 and c > 0:
-            op = random.randint(1, 4)
+            op = random.randint(1, MAX)
         n2 = random.randint(0, 10) + random.random()
         n2 = int(n2 * 10 ** ndig) / (10 ** ndig)
         
@@ -5475,13 +5946,61 @@ def arithmetic_elems(ndig, n):
             curr_str = curr_str + "\n" + "".join(['-' for j in range(l)]) + "\n"+ "".join([" " for j in range(int((abs(l - k)) / 2)-1)]) + str(n2)
             res_str = ("(" + res_str[:] + ")" + "/" + "(" +str(n2))[:]
             c += 1
+        
+        elif op == 5:
+            nop = random.randint(1, 4)
+            while nop == 4 and c > 0:
+                nop = random.randint(1, 5)
+            nstr = 'sqrt(%s)'%str(n2)
+            n2 = math.sqrt(n2)
+            if nop == 1: # +
+                curr_str = (curr_str[:] + "+" + nstr)[:]
+                res_str = (res_str[:] + "+" + nstr)[:]
+                result += n2
+        
+            elif nop == 2: # -
+                curr_str = (curr_str[:] + "-" + nstr)[:]
+                res_str = (res_str[:] + "-" + nstr)[:]
+                result -= n2
+            
+            elif nop == 3: # *
+                curr_str = ( curr_str[:] + "*" + nstr)[:]
+                res_str = (res_str[:] + "*" + nstr)[:]
+                result *= n2
+            
+            elif nop == 4: # /
+                l = max(len(curr_str), len(nstr))
+                k = min(len(curr_str), len(nstr))
+                curr_str = curr_str + "\n" + "".join(['-' for j in range(l)]) + "\n"+ "".join([" " for j in range(int((abs(l - k)) / 2)-1)]) + nstr
+                res_str = ("(" + res_str[:] + ")" + "/" + "(" +nstr)[:]
+                c += 1
+        
     for i in range(c):
         res_str = res_str + ")"
-    return curr_str, eval(res_str)
+
+    return curr_str, evl.evl(res_str)
 
 def find_symbolic_root_quad(p):
     c, b, a = p.coeffs[:]
     d = Comp([Div([Sum([(b**2-4*a*c)]), 2*a]), sqrt()])
     g = Div([-b, (2*a)])
     return Sum([g, d]), Sum([g, Prod([-1, d])])
+        
+def maclaurin_series(func, N):
+    arr = []
+    function = func
+    for i in range(N + 1):
+        arr.append(function(0) / math.factorial(i))
+        function = function.diff()
+    
+    return arr
 
+def pade_approximant(func, l, m):
+    '''
+    incomplete.
+    '''
+    mcseries = maclaurin_series(func, l+m)[:]
+    num_arr = []
+    for i in range(m + 1):
+        num_arr.append([mcseries[j+l-(m-i)] for j in range(m)])
+        

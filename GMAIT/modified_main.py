@@ -8,7 +8,7 @@ def static(prechoice=None):
         choice = prechoice
     print("\n")
     if prechoice is None:
-        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n42-IntegralSolve\n43-InverseLaplace\n44-rootGameInteger\n45-NumericalAnalysis\n46-LaplaceMatrix\n47-Circuit Game\n48-DiffeqDet\n49-matrixPoly\n50-TangentProb\n51-ArithmeticGame\n"))
+        choice = int(input("Enter the desired mode :\n0-Quit\n1-regMul\n2-polyMul\n3-RegDet\n4-PolyDet\n5-polyEval\n6-evalRoot\n7-evalRootPoly\n8-surdGame\n9-divGame\n10-polyDiv\n11-EigenGame\n12-RootGame\n13-DiscGame\n14-PFD\n15-IntegralGame\n16-RegDig\n17-Fourier Series\n18-Equation system\n19-Mean\n20-Stdev\n21-diffeq\n22-curvatureGame\n23-TGame\n24-LineIntegralGame\n25-DiverganceGame\n26-LineIntegralSc\n27-Shuffle\n28-FourierTransform\n29-InterpolationGame\n30-DiffeqPoly\n31-PDEConst\n32-specialPDE\n33-PDE\n34-diffeqMixed\n35-complexIntegral\n36-RealIntegral\n37-MaclaurinSeries\n38-FuncMat\n39-FuncEval\n40-RandIntegral\n41-RealIntegralHARD\n42-IntegralSolve\n43-InverseLaplace\n44-rootGameInteger\n45-NumericalAnalysis\n46-LaplaceMatrix\n47-Circuit Game\n48-DiffeqDet\n49-matrixPoly\n50-TangentProb\n51-ArithmeticGame\n52-CalcGame\n"))
     if choice == 1:
         md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
         roundd = int(input("Number of rounds : ")) 
@@ -838,7 +838,7 @@ def static(prechoice=None):
         max_deg = int(input("Maximum polynomial degree : "))
         n = int(input("N : "))
         print("Enter function probability\nweights according to the table:")
-        print("sin cos tan log exp sqrt asin atan poly\n")
+        print("sin cos tan log exp sqrt asin atan poly trig_poly\n")
         fweights = input("Function Weights : ")
         print("Enter operator probability\nweights according to the table:")
         print("Addition Composition Mult. Div. ")
@@ -1019,8 +1019,7 @@ def static(prechoice=None):
         if md == 2:
             t = int(input("Duration : "))
         rounds = (t, roundd)
-        a, b = input("Range of numbers (seperated by blank space): ").split(" ")
-        ranges = [int(a), int(b)]
+        ndig = int(input('Number of digits after floating point : '))
         dim = int(input('Matrix dimentions : '))
         
         a, b = input("Range of input (seperated by blank space): ").split(" ")
@@ -1030,7 +1029,7 @@ def static(prechoice=None):
         max_deg_l = int(input("Maximum degree: "))
         
         os.system("clear")
-        inpt_dict = {"nranges" : ranges, "matdeg" : max_deg, 'mdeg' : max_deg_l, 'dim':dim, 'inprange':inp_ranges[:]}
+        inpt_dict = {"ndig" : ndig, "matdeg" : max_deg, 'mdeg' : max_deg_l, 'dim':dim, 'inprange':inp_ranges[:]}
         stats = gr.general_runner(gh.diffDet, rounds, inpt_dict, md)#multgame.diffeq(number_of_rounds=rounds, nranges=ranges[:], max_deg=max_deg)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
@@ -1095,9 +1094,28 @@ def static(prechoice=None):
             b = 2
         else:
             b = int(b)
+        sq = input('Include square roots ? (1-Yes 0-No) (DEFAULT NO)')
+        if sq == '':
+            sq = 0
+        else :
+            sq = int(sq)
         os.system("clear")
-        inpt_dict = {"ndig" : a, 'n':n, 'ndigits':b}
+        inpt_dict = {"ndig" : a, 'n':n, 'ndigits':b, 'sq':sq}
         stats = gr.general_runner(gh.arithmetic_game, rounds, inpt_dict, md)#multgame.regMulGameDig(number_of_rounds=rounds, digits=a)
+        print("Score : ", round(stats[0]))
+        print("Total time spent : ", round(stats[1]))
+        print("Time spent per item : ", round(stats[2]))
+    
+    if choice == 52:
+        md = int(input("Mode :\n 1-Static\n 2-Dynamic\n"))
+        roundd = int(input("Number of rounds : ")) 
+        t = 0
+        if md == 2:
+            t = int(input("Duration : "))
+        rounds = (t, roundd)
+        moe = float(input('Margin of error : '))
+        inpt_dict = {'moe' : moe}
+        stats = gr.general_runner(gh.calc_game, rounds, inpt_dict, md)#multgame.regMulGameDig(number_of_rounds=rounds, digits=a)
         print("Score : ", round(stats[0]))
         print("Total time spent : ", round(stats[1]))
         print("Time spent per item : ", round(stats[2]))
