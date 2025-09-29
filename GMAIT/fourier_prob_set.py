@@ -244,15 +244,8 @@ arr_cflt =  [lambda : random.randint(0, 3), lambda : random.randint(-10, 10), la
 
 number_generators = [
     
-    ['the integral of f(x) = $ from $ to $', lambda objects : uint.integrate_ratexp(objects[0].arr[0], objects[0].arr[1])(objects[2]) - uint.integrate_ratexp(objects[0].arr[0], objects[0].arr[1])(objects[1]), [rand_rat_expr, rand_num, rand_num], [5, 0, 0]],
-    ['the integral of f(x) = ($)exp($x) from $ to $ ', lambda objects : solve_poly_exp(objects[0], objects[1], objects[2], objects[3]), [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    ['the integral of f(x) = ($)cos($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3], t=1)).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    ['the integral of f(x) = ($)sin($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3])).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    ['the coefficient of cos($wx) in the fourier series of $ with a period of $ ', lambda objects : uint.real_fourier_series_poly(objects[1], objects[2]/2)[0](objects[0]), [rand_num, rand_poly, rand_num], [0, 1, 0]],
+   ['the coefficient of cos($wx) in the fourier series of $ with a period of $ ', lambda objects : uint.real_fourier_series_poly(objects[1], objects[2]/2)[0](objects[0]), [rand_num, rand_poly, rand_num], [0, 1, 0]],
     ['the coefficient of sin($wx) in the fourier series of $ with a period of $ ', lambda objects : uint.real_fourier_series_poly(objects[1], objects[2]/2)[1](objects[0]), [rand_num, rand_poly, rand_num], [0, 1, 0]],
-    ["the solution to the initial value problem p(D)y = 0 where p(x) = $ and y(0) = $, y'(0) = $ evaluated at x = $", lambda objects : solve_diffeq_sym(objects[0].coeffs[:], [0, 1], objects[1:-1])(objects[-1]), [rand_poly_min, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    ['the result of $', lambda objects : objects[0].res, [rand_int_sq], [5]],
-    ['the result of $', lambda objects : objects[0].res, [rand_int_trig_h], [5]],
     ['the result of a_$ + b_$ + a_$ + b_$ in the fourier series of $ with a period of $',fser, [rand_num, rand_num, rand_num, rand_num, rand_fourier, lambda : random.randint(1, 10)], [0, 0, 0, 0, 5, 0]],
     ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of f(x) = $ if $<x<$ and 0 otherwise with a period of $', cfseries,  arr_cmplx[:], [0, 0, 0, 0, 5, 0, 0, 0]],
     ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of f(x) = $ if $<x<$ and 0 otherwise with a period of $', cfseries,  arr_cmplx_2[:], [0, 0, 0, 0, 1, 0, 0, 0]],

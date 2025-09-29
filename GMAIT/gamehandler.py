@@ -7,6 +7,7 @@ import statistics as st
 import circ_analysis as circ
 import turtle
 import problem_set_calc
+import problem_set_integral, fourier_prob_set, laplace_problem_set
 #import circuit_analyze as circ
 
 '''
@@ -753,6 +754,45 @@ def arithmetic_game(inpt_dict):
     return a + "\n > ", bres, lambda x : float(x)
 
 def calc_game(inpt_dict):
-    a, b = problem_set_calc.single_number_gen()
-    moe = inpt_dict['moe']
+    i = 0
+    while not i:
+        try:
+            a, b = problem_set_calc.single_number_gen()
+            moe = inpt_dict['moe']
+            i = 1
+        except:
+            pass
+    return utils.strpprint(a) + '\n > ', b, lambda x : b if abs(evl.evl(x)- b) < abs(moe * b) else b + 1
+
+def integral_set_game(inpt_dict):
+    i = 0
+    while not i:
+        try:
+            a, b = problem_set_integral.single_number_gen()
+            moe = inpt_dict['moe']
+            i = 1
+        except:
+            pass
+    return utils.strpprint(a) + '\n > ', b, lambda x : b if abs(evl.evl(x)- b) < abs(moe * b) else b + 1
+
+def fourier_set_game(inpt_dict):
+    i = 0
+    while not i:
+        try:
+            a, b = fourier_prob_set.single_number_gen()
+            moe = inpt_dict['moe']
+            i = 1
+        except:
+            pass
+    return utils.strpprint(a) + '\n > ', b, lambda x : b if abs(evl.evl(x)- b) < abs(moe * b) else b + 1
+
+def laplace_set_game(inpt_dict):
+    i = 0
+    while not i:
+        try:
+            a, b = laplace_problem_set.single_number_gen()
+            moe = inpt_dict['moe']
+            i = 1
+        except:
+            pass
     return utils.strpprint(a) + '\n > ', b, lambda x : b if abs(evl.evl(x)- b) < abs(moe * b) else b + 1

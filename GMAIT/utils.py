@@ -329,6 +329,24 @@ class rational:
         po = [[" "], ["("], [" "]]
         pc = [[" "], [")"], [" "]]
         return lines[:]
+    def npprint(self, prev_ppr=[[], [], [], [], [], [], []]):
+        str1 = str(self.num[0])
+        str2 = str(self.num[1])
+        mlen = max(len(str1), len(str2))
+        if str2 != "1":
+            a = "".join([" "for i in range((mlen - len(str1))//2)])
+            b = a+"".join([" " for i in range((mlen - len(str1))%2)])
+            str12 = a + str1 + b
+            c = "".join([" "for i in range((mlen - len(str2))//2)])
+            d = a+"".join([" " for i in range((mlen - len(str2))%2)])
+            str22 = c + str2 + d
+            emp = [" " for _ in range(mlen)]
+            lines = [emp[:], emp[:], [str12], ["".join(["-" for i in range(mlen)])], [str22], emp[:], emp[:]]
+        else:
+            emp = [" " for _ in range(len(str1))]
+            lines = [emp[:], emp[:],[" " for i in range(len(str1))], [str1], [" " for i in range(len(str1))], emp[:], emp[:]]
+
+        return lines[:]
         
     
     def simplify(self):

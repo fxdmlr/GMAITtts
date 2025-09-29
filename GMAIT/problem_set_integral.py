@@ -234,6 +234,23 @@ def fourier_linear_re_s(objects):
     t = points[-1][0] - points[0][0]
     f = uint.mult_rfs(p[:], r[:], t)
     return f(objects[0])[0] + f(objects[1])[1] + f(objects[2])[0] + f(objects[2])[1]
+
+def gen_int_type1():
+    n = random.randint(2, 5)
+    p = poly([0, 1]) ** n
+    q = Prod([poly([random.randint(1, 10)**2, 0, 1]) for k in range(n)])
+    return Div([p, q])
+
+def int_type1(objects):
+    p = 1
+    for i in objects[0].arr[1].arr:
+        p *= i
+
+    f = uint.integrate_ratexp(objects[0].arr[0], p)
+    return f(objects[2]) - f(objects[1])
+
+def int_type2(objects):
+    p = objects[0].arr[0]
     
 
 arr_cmplx =  [rand_num, rand_num, rand_num, rand_num, rand_fourier, lambda : random.randint(0, 3), lambda : random.randint(4, 7), lambda : random.randint(7, 15)]
@@ -244,22 +261,15 @@ arr_cflt =  [lambda : random.randint(0, 3), lambda : random.randint(-10, 10), la
 
 number_generators = [
     
-    ['the integral of f(x) = $ from $ to $', lambda objects : uint.integrate_ratexp(objects[0].arr[0], objects[0].arr[1])(objects[2]) - uint.integrate_ratexp(objects[0].arr[0], objects[0].arr[1])(objects[1]), [rand_rat_expr, rand_num, rand_num], [5, 0, 0]],
-    ['the integral of f(x) = ($)exp($x) from $ to $ ', lambda objects : solve_poly_exp(objects[0], objects[1], objects[2], objects[3]), [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    ['the integral of f(x) = ($)cos($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3], t=1)).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    ['the integral of f(x) = ($)sin($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3])).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    ['the coefficient of cos($wx) in the fourier series of $ with a period of $ ', lambda objects : uint.real_fourier_series_poly(objects[1], objects[2]/2)[0](objects[0]), [rand_num, rand_poly, rand_num], [0, 1, 0]],
-    ['the coefficient of sin($wx) in the fourier series of $ with a period of $ ', lambda objects : uint.real_fourier_series_poly(objects[1], objects[2]/2)[1](objects[0]), [rand_num, rand_poly, rand_num], [0, 1, 0]],
-    ["the solution to the initial value problem p(D)y = 0 where p(x) = $ and y(0) = $, y'(0) = $ evaluated at x = $", lambda objects : solve_diffeq_sym(objects[0].coeffs[:], [0, 1], objects[1:-1])(objects[-1]), [rand_poly_min, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    ['the result of $', lambda objects : objects[0].res, [rand_int_sq], [5]],
-    ['the result of $', lambda objects : objects[0].res, [rand_int_trig_h], [5]],
-    ['the result of a_$ + b_$ + a_$ + b_$ in the fourier series of $ with a period of $',fser, [rand_num, rand_num, rand_num, rand_num, rand_fourier, lambda : random.randint(1, 10)], [0, 0, 0, 0, 5, 0]],
-    ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of f(x) = $ if $<x<$ and 0 otherwise with a period of $', cfseries,  arr_cmplx[:], [0, 0, 0, 0, 5, 0, 0, 0]],
-    ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of f(x) = $ if $<x<$ and 0 otherwise with a period of $', cfseries,  arr_cmplx_2[:], [0, 0, 0, 0, 1, 0, 0, 0]],
-    ['the result of c_$ + c_$ + c_$ + c_$ in the complex fourier series of the signal connecting the points ($, $), ($, $), ($, $), ($, $) repeating', fourier_linear_cm_s, arr_cfls[:], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
-    ['the result of a_$ + b_$ + a_$ + b_$ in the realfourier series of the signal connecting the points ($, $), ($, $), ($, $), ($, $) repeating', fourier_linear_re_s, arr_cfls[:], [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]],
-    ['the complex fourier transfom of the signal connecting the points ($, $), ($, $), ($, $), ($, $) and zero elsewhere evaluated at w = $', fourier_linear_cm_t, arr_cflt[:], [0, 0, 0, 0, 0, 0, 0, 0, 0]]
-
+    #['the integral of f(x) = $ from $ to $', lambda objects : uint.integrate_ratexp(objects[0].arr[0], objects[0].arr[1])(objects[2]) - uint.integrate_ratexp(objects[0].arr[0], objects[0].arr[1])(objects[1]), [rand_rat_expr, rand_num, rand_num], [5, 0, 0]],
+    #['the integral of f(x) = ($)exp($x) from $ to $ ', lambda objects : solve_poly_exp(objects[0], objects[1], objects[2], objects[3]), [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
+    #['the integral of f(x) = ($)cos($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3], t=1)).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
+    #['the integral of f(x) = ($)sin($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3])).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
+    #['the result of $', lambda objects : objects[0].res, [rand_int_sq], [5]],
+    #['the result of $', lambda objects : objects[0].res, [rand_int_trig_h], [5]],
+    #['the integral of f(x) = $ from $ to $ ', int_type1, [gen_int_type1, lambda : random.randint(0, 3), lambda : random.randint(4, 7)], [3, 0, 0]],
+    ['the integral of f(x) = $ from $ to $ ', int_type1, [gen_int_type1, lambda : random.randint(0, 3), lambda : random.randint(4, 7)], [3, 0, 0]]
+   
 ]
 
 
@@ -286,8 +296,7 @@ def single_number_gen():
 a, b = gen_rand_prob()
 print(strpprint(a))
 print(b)
-
+'''
 a, b = single_number_gen()
 print(strpprint(a))
 print(b)
-'''
