@@ -212,4 +212,49 @@ def transform_rat_p(p, q, bounds, n = 1):
     
     return init_p, init_q, bounds[:]
 
+def solve_trig_rat(p, q):
+    '''
+    p and q are polymvar with two variables x and y
+    where x represents sin(x) and y, cos(x).
+    finds an anti-derivative for p(sinx, cosx) / q(sinx, cosx)
+    using weirestrauss sub.
+    '''
+
+    #finding the maximum degree of (1+t^2)
+    max_p = 0
+    for i in range(len(p.array)):
+        for j in range(len(p.array[i])):
+            if p.array[i][j][0] != 0 and i + j > max_p:
+                max_p = i + j
+
+    max_q = 0
+    for i in range(len(q.array)):
+        for j in range(len(q.array[i])):
+            if q.array[i][j][0] != 0 and i + j > max_q:
+                    max_q = i + j
+
+    new_p, new_q = 0, 0
+    for i in range(len(p.array)):
+        for j in range(len(p.array[i])):
+            if p.array[i][j][0] != 0:
+                new_p += (poly([0, 2]) ** i) * (poly([1, 0, -1]) ** j) * (poly([1, 0, 1]) ** (max_p - (i + j)))
+
+    for i in range(len(q.array)):
+        for j in range(len(q.array[i])):
+            if q.array[i][j][0] != 0:
+                new_q += (poly([0, 2]) ** i) * (poly([1, 0, -1]) ** j) * (poly([1, 0, 1]) ** (max_q - (i + j)))
+    d = max_q - max_p - 1
+    if d > 0:
+        new_p *= 2 * poly([1, 0, 1]) ** d
+    else:
+        new_p *= 2
+        new_q *= poly([1, 0, 1]) ** (-d)
+
+    f = integrate_ratexp(new_p, new_q)
+    return Comp([Comp([poly([0, 0.5]), tan()]), f])
+
+
+
+
+
 

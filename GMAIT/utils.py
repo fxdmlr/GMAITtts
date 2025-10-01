@@ -2266,11 +2266,14 @@ class Prod:
     def __call__(self, x):
         s = 1
         for i in self.arr:
+
             if not callable(i):
+
+
                 s *= i
             else:
                 s *= i(x)
-        
+
         return s
     
     def __add__(self, other):

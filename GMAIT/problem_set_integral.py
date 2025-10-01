@@ -296,7 +296,8 @@ def single_number_gen():
 a, b = gen_rand_prob()
 print(strpprint(a))
 print(b)
-'''
+
 a, b = single_number_gen()
 print(strpprint(a))
 print(b)
+'''
