@@ -29,5 +29,5 @@ def solve_second_order_const(arr):
         # removing remaining single derivatives:
         return new[:]
 
-print(solve_second_order_const([1, -3, 2, 1, 1, 1, 0]))
+
         

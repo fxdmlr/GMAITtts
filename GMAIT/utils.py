@@ -50,7 +50,7 @@ def sdot(arr1, arr2):
     return s
 
 def sgn(x):
-    if isinstance(x, complex):
+    if isinstance(x, (complex, poly, polymvar)):
         return 1
     return x >= 0 if not callable(x) else x() >= 0
 
@@ -74,6 +74,8 @@ def pprify(pp):
         arr += i[:]
     return arr[:]
 
+ 
+
 def connect(arr1, arr2):
     arr3 = []
     if len(arr1) != len(arr2):
@@ -96,6 +98,13 @@ def connect(arr1, arr2):
         arr3.append(arr1[i] + arr2[i])
     
     return arr3[:]
+
+def npprify(string):
+    st = [[], [], [], [], [], [], []]
+    for i in string:
+        st = connect(st[:], [[" "], [" "], [" "], [i], [" "], [" "], [" "]])[:]
+    return st[:]
+ 
 
 def cross(v, u):
     i = det([[1, 0, 0], v[:], u[:]])
@@ -765,21 +774,22 @@ class poly:
         
         return lines[:]
     
-    def npprint(self, prev_ppr=[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
+    def npprint(self, prev_ppr='default'):#[[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]):
         new_array = self.coeffs[:]
         new_array.reverse()
         lines = [[], [], [], [], [], [], []]
         right_pr = [[" "], [" "], [" "], ["("], [" "], [" "], [" "]]
         left_pr = [[" "], [" "], [" "], [")"], [" "], [" "], [" "]]
-        nppr = prev_ppr[:]
-        if len(prev_ppr[0]) > 1:
-            nppr = connect(right_pr, connect(prev_ppr[:], left_pr))
+        nppr = prev_ppr[:] if prev_ppr[:] not in  ['default', [[" "], [" "], [" "], ["x"], [" "], [" "], [" "]]] else npprify(self.variable)[:] 
+        if len(nppr[0]) > 1:
+            nppr = connect(right_pr, connect(nppr[:], left_pr))
         
         for i in range(len(new_array)):
-            pow, coeff_abs, sgn_ppr = self.deg - i, abs(new_array[i].real), [[" "], [" "], [" "], [("+" if i != 0 else " ") if sgn(new_array[i].real) else "-"], [" "], [" "], [" "]]
-            if new_array[i].imag != 0:
-                coeff_abs = new_array[i]
-                sgn_ppr =  [[" "], [" "], [" "], ["+"], [" "], [" "], [" "]]
+            pow, coeff_abs, sgn_ppr = self.deg - i, abs(new_array[i].real) if isinstance(new_array[i], (int, float, rational, complex)) else new_array[i], [[" "], [" "], [" "], [("+" if i != 0 else " ") if sgn(new_array[i].real if isinstance(new_array[i], (int, float, complex, rational)) else new_array[i]) else "-"], [" "], [" "], [" "]]
+            if hasattr(new_array[i], 'imag'):
+                if new_array[i].imag != 0:
+                    coeff_abs = new_array[i]
+                    sgn_ppr =  [[" "], [" "], [" "], ["+"], [" "], [" "], [" "]]
             coeff_abs_ppr = [[" " for j in str(coeff_abs)],
                              [" " for j in str(coeff_abs)],
                              [" " for j in str(coeff_abs)],
@@ -787,6 +797,8 @@ class poly:
                              [" " for j in str(coeff_abs)],
                              [" " for j in str(coeff_abs)],
                              [" " for j in str(coeff_abs)]]
+            if hasattr(coeff_abs, 'npprint'):
+                coeff_abs_ppr = connect(right_pr[:], connect(coeff_abs.npprint()[:], left_pr[:]))
             pow_ppr = [[" " for j in str(pow)],
                        [" " for j in str(pow)],
                        [j for j in str(pow)],
@@ -838,6 +850,8 @@ class poly:
                 res_arr[i] += large_poly.coeffs[i]
             
             return poly(res_arr[:])
+        elif isinstance(other, Div):
+            return Div([other.arr[0] + self * other.arr[1], other.arr[1]])
     
     def __mul__(self, other):
         
@@ -853,8 +867,11 @@ class poly:
             
             return poly(arr[:])
         
-        elif isinstance(other, (Div, Prod, Sum)):
+        elif isinstance(other, (Prod, Sum)):
             return other * self
+        
+        elif isinstance(other, Div):
+            return Div([self * other.arr[0], other.arr[1]])
     
     def __pow__(self, other):
         if isinstance(other, int):
@@ -1114,6 +1131,39 @@ class poly:
             for i in range(len(self.coeffs)):
                 new_array[0][0][i] = self.coeffs[i]
             return polymvar(new_array)
+    
+    def sgn_table(self):
+        '''
+        returns two arrays : real_roots = [r0, r1, ...] and sgn_arr = [0, 1, ...] where
+        sgn_arr[i] = 0 if p(x) < 0 for r_{i-1} < x < r_i otherwise 1
+        '''
+        real_roots = []
+        for i in self.roots():
+            if abs(i.imag) < 0.001:
+                real_roots.append(round(i.real, ndigits=5))
+        new_roots_1 = sorted(real_roots[:])
+        new_roots = []
+        for i in range(len(new_roots_1) - 1):
+            if new_roots_1[i] == new_roots_1[i+1]:
+                continue
+            new_roots.append(new_roots_1[i])
+        
+        new_roots.append(new_roots_1[-1])
+        if len(new_roots) == 0:
+            return [[], [int(self(0) > 0)]]
+        
+        sgn_arr = [int(self(new_roots[0] - 1) > 0)]
+        for i in range(len(new_roots) - 1):
+            sgn_arr.append(int(self(new_roots[i]/2 + new_roots[i + 1]/2) > 0))
+        sgn_arr.append(int(self(new_roots[-1] + 1) > 0))
+        
+        return [new_roots[:], sgn_arr[:]]
+        
+    def ndiff(self, n):
+        f = poly(self.coeffs[:])
+        for i in range(n):
+            f = f.diff()
+        return f        
         
         
         
@@ -1952,6 +2002,17 @@ class polymvar:
             zero_pol[random.randint(0, d - 1)][random.randint(0, d - 1)][random.randint(0, d - 1)] = random.randint(nrange[0], nrange[1])
         
         return polymvar(zero_pol)
+    
+    @staticmethod
+    def rand_2_var(d=2, nrange = [1, 10], terms=3):
+        x = polymvar.x()
+        y = polymvar.y()
+        s = 0
+        for i in range(terms):
+            k = random.randint(0, d)
+            s += random.randint(-10, 10) * (x ** k) * (y ** (d - k))
+        
+        return s
     
     @staticmethod
     def x():

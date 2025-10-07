@@ -286,7 +286,6 @@ def ratexp_integration_real(np, nq):
         z = 0
 
     coeffs = partial_frac_decomp(p, q)
-    print(coeffs)
     all_roots = coeffs[:]
     real_roots = []
     imag_roots = []

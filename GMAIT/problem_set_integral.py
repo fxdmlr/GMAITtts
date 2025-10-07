@@ -139,8 +139,8 @@ def solve_poly_exp(p, n, a, b, t=0):
     return f(b) - f(a)
 
 def rand_rat_expr():
-    p = poly.rand(random.randint(0, 2))
-    q = poly.rand(random.randint(p.deg, 4))
+    p = poly.rand(random.randint(0, 3))
+    q = rand_poly_nice_roots([-30, 30], random.randint(p.deg, 4), all_real = 0)#poly.rand(random.randint(p.deg, 4))
     return Div([p, q])
 
 class question_method:
@@ -241,17 +241,98 @@ def gen_int_type1():
     q = Prod([poly([random.randint(1, 10)**2, 0, 1]) for k in range(n)])
     return Div([p, q])
 
+def rand_euler():
+    p = polymvar.rand_2_var()
+    q = polymvar.rand_2_var()
+    r = poly.rand(2, coeff_range=[-10, 10])
+    while r.coeffs[1]**2 == 4 * r.coeffs[0] * r.coeffs[2]:
+        r = poly.rand(2, coeff_range=[-10, 10])
+    f = Comp([r, sqrt()])
+    a = 0
+    for i in range(len(p.array[:])):
+        for j in range(len(p.array[i])):
+            if p.array[i][j][0] != 0:
+                alpha = poly([0, 1])**i
+                beta = f ** j if j != 0 else 1
+                if j % 2 == 0:
+                    beta = r ** int(j/2)
+                a += Prod([p.array[i][j][0], alpha , beta])
+    
+    b = 0
+    for i in range(len(q.array[:])):
+        for j in range(len(q.array[i])):
+            if q.array[i][j][0] != 0:
+                alpha = poly([0, 1])**i
+                beta = f ** j if j != 0 else 1
+                if j % 2 == 0:
+                    beta = r ** int(j/2)
+                b += Prod([q.array[i][j][0], alpha , beta])
+    
+    return question([p, q, r], Div([a, b]).npprint())
+
+def generate_quad_n():
+    p = poly.rand(random.randint(0, 4), coeff_range=[-10, 10])
+    z = complex(random.randint(-10, 10), random.randint(-10, 10))
+    r = random.randint(1, 10) * poly([round(abs(z)**2), -2*z.real, 1])
+    n = random.randint(3, 11)
+    while n % 2 == 0:
+        n = random.randint(3, 7)
+    
+    return question([p, r, n], Div([p, Comp([Comp([r, sqrt()]), poly([0, 1])**n])]).npprint())
+
+def rand_trig_rat():
+    p = polymvar.rand_2_var(d=3, nrange=[1, 10], terms=4)
+    q = polymvar.rand_2_var(d=3, nrange=[1, 10], terms=4)
+
+    a = 0
+    for i in range(len(p.array[:])):
+        for j in range(len(p.array[i])):
+            if p.array[i][j][0] != 0:
+                alpha = Comp([sin(), poly([0, 1])**i]) if i != 0 else 1
+                beta = Comp([cos(), poly([0, 1])**j]) if j != 0 else 1
+                a += Prod([p.array[i][j][0], alpha , beta])
+    
+    b = 0
+    for i in range(len(q.array[:])):
+        for j in range(len(q.array[i])):
+            if q.array[i][j][0] != 0:
+                alpha = Comp([sin(), poly([0, 1])**i]) if i != 0 else 1
+                beta = Comp([cos(), poly([0, 1])**j]) if j != 0 else 1
+                b += Prod([q.array[i][j][0], alpha , beta])
+    
+    return question([p, q], Div([a, b]).npprint())
+    
+
 def int_type1(objects):
     p = 1
     for i in objects[0].arr[1].arr:
         p *= i
 
-    f = uint.integrate_ratexp(objects[0].arr[0], p)
+    f = uint.ratexp_integration_real(objects[0].arr[0], p)
     return f(objects[2]) - f(objects[1])
 
-def int_type2(objects):
-    p = objects[0].arr[0]
+class question:
+    def __init__(self, arg_arr, nppr):
+        self.arr = arg_arr[:]
+        self.nppr = nppr[:]
     
+    def npprint(self, prev_pprint=[]):
+        return self.nppr[:]
+
+def int_euler(objects):
+    p, q, r = objects[0].arr
+    f = uint.integrate_euler(p, q, r)
+    return f(objects[2]) - f(objects[1])
+
+def int_quad_p(objects):
+    p, r, n = objects[0].arr 
+    f = uint.integrate_q_p_n(p, r, n)
+    return f(objects[2]) - f(objects[1])
+
+def int_trig_rat(objects):
+    p, q = objects[0].arr 
+    f = uint.integrate_trig_rat(p, q)
+    return f(objects[2]) - f(objects[1])
 
 arr_cmplx =  [rand_num, rand_num, rand_num, rand_num, rand_fourier, lambda : random.randint(0, 3), lambda : random.randint(4, 7), lambda : random.randint(7, 15)]
 arr_cmplx_2 =  [rand_num, rand_num, rand_num, rand_num, rand_poly, lambda : random.randint(0, 3), lambda : random.randint(4, 7), lambda : random.randint(7, 15)]
@@ -261,15 +342,22 @@ arr_cflt =  [lambda : random.randint(0, 3), lambda : random.randint(-10, 10), la
 
 number_generators = [
     
-    #['the integral of f(x) = $ from $ to $', lambda objects : uint.integrate_ratexp(objects[0].arr[0], objects[0].arr[1])(objects[2]) - uint.integrate_ratexp(objects[0].arr[0], objects[0].arr[1])(objects[1]), [rand_rat_expr, rand_num, rand_num], [5, 0, 0]],
-    #['the integral of f(x) = ($)exp($x) from $ to $ ', lambda objects : solve_poly_exp(objects[0], objects[1], objects[2], objects[3]), [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    #['the integral of f(x) = ($)cos($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3], t=1)).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    #['the integral of f(x) = ($)sin($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3])).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
-    #['the result of $', lambda objects : objects[0].res, [rand_int_sq], [5]],
-    #['the result of $', lambda objects : objects[0].res, [rand_int_trig_h], [5]],
-    #['the integral of f(x) = $ from $ to $ ', int_type1, [gen_int_type1, lambda : random.randint(0, 3), lambda : random.randint(4, 7)], [3, 0, 0]],
-    ['the integral of f(x) = $ from $ to $ ', int_type1, [gen_int_type1, lambda : random.randint(0, 3), lambda : random.randint(4, 7)], [3, 0, 0]]
-   
+    ['the integral of f(x) = $ from $ to $', lambda objects : uint.ratexp_integration_real(objects[0].arr[0], objects[0].arr[1])(objects[2]) - uint.ratexp_integration_real(objects[0].arr[0], objects[0].arr[1])(objects[1]), [rand_rat_expr, rand_num, rand_num], [5, 0, 0]],
+    ['the integral of f(x) = ($)exp($x) from $ to $ ', lambda objects : solve_poly_exp(objects[0], objects[1], objects[2], objects[3]), [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
+    ['the integral of f(x) = ($)cos($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3], t=1)).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
+    ['the integral of f(x) = ($)sin($x) from $ to $ ', lambda objects : (solve_poly_trig(objects[0], objects[1], objects[2], objects[3])).real, [rand_poly, rand_num, rand_num, rand_num], [1, 0, 0, 0]],
+    ['the result of $', lambda objects : objects[0].res, [rand_int_sq], [5]],
+    ['the result of $', lambda objects : objects[0].res, [rand_int_trig_h], [5]],
+    ['the integral of f(x) = $ from $ to $ ', int_type1, [gen_int_type1, lambda : random.randint(0, 3), lambda : random.randint(4, 7)], [3, 0, 0]],
+    ['the integral of f(x) = $ from $ to $ ', int_type1, [gen_int_type1, lambda : random.randint(0, 3), lambda : random.randint(4, 7)], [3, 0, 0]],
+    ['the integral of f(x) = $ from $ to $ ', int_euler, [rand_euler, lambda : random.randint(0, 2), lambda : random.randint(3, 10)], [7, 0, 0]],
+    ['the integral of f(x) = $ from $ to $ ', int_quad_p, [generate_quad_n, lambda : random.randint(0, 2), lambda : random.randint(3, 10)], [7, 0, 0]],
+    ['the integral of f(x) = $ from $ to $ ', int_trig_rat, [rand_trig_rat, lambda : random.randint(0, 2), lambda : random.randint(3, 10)], [7, 0, 0]],
+    ['the integral of f(x) = $ from $ to $', lambda objects : uint.ratexp_integration_real(objects[0].arr[0], objects[0].arr[1])(objects[2]) - uint.ratexp_integration_real(objects[0].arr[0], objects[0].arr[1])(objects[1]), [rand_rat_expr, rand_num, rand_num], [5, 0, 0]],
+    ['the integral of f(x) = $ from $ to $', lambda objects : uint.ratexp_integration_real(objects[0].arr[0], objects[0].arr[1])(objects[2]) - uint.ratexp_integration_real(objects[0].arr[0], objects[0].arr[1])(objects[1]), [rand_rat_expr, rand_num, rand_num], [5, 0, 0]],
+    ['the integral of f(x) = $ from $ to $', lambda objects : uint.ratexp_integration_real(objects[0].arr[0], objects[0].arr[1])(objects[2]) - uint.ratexp_integration_real(objects[0].arr[0], objects[0].arr[1])(objects[1]), [rand_rat_expr, rand_num, rand_num], [5, 0, 0]],
+
+
 ]
 
 

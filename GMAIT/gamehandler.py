@@ -7,7 +7,7 @@ import statistics as st
 import circ_analysis as circ
 import turtle
 import problem_set_calc
-import problem_set_integral, fourier_prob_set, laplace_problem_set
+import problem_set_integral, fourier_prob_set, laplace_problem_set, lincont_problem_set
 #import circuit_analyze as circ
 
 '''
@@ -796,3 +796,26 @@ def laplace_set_game(inpt_dict):
         except:
             pass
     return utils.strpprint(a) + '\n > ', b, lambda x : b if abs(evl.evl(x)- b) < abs(moe * b) else b + 1
+
+def lincont_game(inpt_dict):
+    i = 0
+    while not i:
+        try:
+            a, b = lincont_problem_set.single_number_gen()
+            moe = inpt_dict['moe']
+            i = 1
+        except:
+            pass
+    if not callable(b):
+
+        return utils.strpprint(a) + '\n > ', b, lambda x : b if abs(evl.evl(x)- b) <= abs(moe * b) else b + 3
+    else:
+
+        st = utils.strpprint(a) + '\n > '
+        res = 'Not this !'
+        def check_method(x):
+            if b(x):
+                return res
+            return res + " THIS IS WRONG! "
+        
+        return st, res, check_method
