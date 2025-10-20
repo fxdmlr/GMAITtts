@@ -748,10 +748,14 @@ def arithmetic_game(inpt_dict):
     n = inpt_dict['n']
     ndigits = inpt_dict['ndigits']
     sq = inpt_dict['sq']
+    cmplx = inpt_dict['cmplx']
     
-    a, b = utils.arithmetic_elems(numdigs, n, sq = sq)
-    bres = int(b * 10**ndigits) / (10**ndigits)
-    return a + "\n > ", bres, lambda x : float(x)
+    a, b = utils.arithmetic_elems(numdigs, n, cmplx=cmplx, sq = sq)
+    if not isinstance(b, complex):
+        bres = int(b * 10**ndigits) / (10**ndigits)
+    else:
+        bres = complex(int(b.real * 10**ndigits) / (10**ndigits), int(b.imag * 10**ndigits) / (10**ndigits))
+    return a + "\n > ", bres, lambda x : complex(x)
 
 def calc_game(inpt_dict):
     i = 0
@@ -819,3 +823,12 @@ def lincont_game(inpt_dict):
             return res + " THIS IS WRONG! "
         
         return st, res, check_method
+
+def complex_mult_game(inpt_dict):
+    ndigits = inpt_dict['ndigits']
+    n1 = complex(random.randint(10**(ndigits-1), 10**(ndigits) - 1), random.randint(10**(ndigits-1), 10**(ndigits) - 1))
+    n2 = complex(random.randint(10**(ndigits-1), 10**(ndigits) - 1), random.randint(10**(ndigits-1), 10**(ndigits) - 1))
+    st = "%s%s = "%(str(n1), str(n2))
+    res = n1 * n2
+    check_method = lambda x : complex(x)
+    return st, res, check_method

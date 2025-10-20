@@ -1,4 +1,4 @@
-import math
+import cmath as math
 
 def isbasic(string):
     for i in string:
@@ -45,6 +45,12 @@ def isnumber(c):
     if 48<=ord(c)<=57:
         return 1
     return 0
+def evalBcmplx(string):
+    b = string.replace("^", "**")
+    b = string.replace('j', 'complex(0, 1)')
+    c = eval(b)
+    return c
+
 def evalB(string):
     b = string.replace("^", "**")
     c = eval(b)

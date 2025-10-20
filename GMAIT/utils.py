@@ -5989,7 +5989,7 @@ def solve_eq(rhs, lhs):
 def tangent_line(function, x):
     return poly([function(x) - function.diff()(x) * x, function.diff()(x)])
 
-def arithmetic_elems(ndig, n, sq=True):
+def arithmetic_elems(ndig, n, cmplx=False, sq=True):
     result = random.randint(0, 10) + random.random()
     result = int(result * 10 ** ndig) / (10 ** ndig)
     curr_str = str(result)
@@ -6002,10 +6002,18 @@ def arithmetic_elems(ndig, n, sq=True):
             op = random.randint(1, MAX)
         n2 = random.randint(0, 10) + random.random()
         n2 = int(n2 * 10 ** ndig) / (10 ** ndig)
-        
+        if cmplx:
+            m2 = random.randint(0, 10) + random.random()
+            m2 = int(m2 * 10 ** ndig) / (10 ** ndig)
+            n2 = complex(n2, m2)
+            
         while n2 == 0:
             n2 = random.randint(0, 10) + random.random()
             n2 = int(n2 * 10 ** ndig) / (10 ** ndig)
+            if cmplx:
+                m2 = random.randint(0, 10) + random.random()
+                m2 = int(m2 * 10 ** ndig) / (10 ** ndig)
+                n2 = complex(n2, m2)
     
         if op == 1: # +
             curr_str = (curr_str[:] + "+" + str(n2))[:]
@@ -6034,7 +6042,7 @@ def arithmetic_elems(ndig, n, sq=True):
             while nop == 4 and c > 0:
                 nop = random.randint(1, 5)
             nstr = 'sqrt(%s)'%str(n2)
-            n2 = math.sqrt(n2)
+            n2 = cmath.sqrt(n2)
             if nop == 1: # +
                 curr_str = (curr_str[:] + "+" + nstr)[:]
                 res_str = (res_str[:] + "+" + nstr)[:]
@@ -6060,7 +6068,7 @@ def arithmetic_elems(ndig, n, sq=True):
     for i in range(c):
         res_str = res_str + ")"
 
-    return curr_str, evl.evl(res_str)
+    return curr_str, evl.evalBcmplx(evl.ins_star(res_str))
 
 def find_symbolic_root_quad(p):
     c, b, a = p.coeffs[:]
