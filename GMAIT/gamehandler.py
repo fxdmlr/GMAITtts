@@ -223,7 +223,7 @@ def regMulDig(inpt_dict):#(digits=5):
     digits = inpt_dict["ndigits"]
     n1 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
     n2 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
-    string = "%d x %d = "%(n1, n2)
+    string = "%d * %d = "%(n1, n2)
     return [string, n1 * n2, lambda x : int(x)]
 
 def fourierSeries(inpt_dict):#(nranges=[1, 10], deg=2, p_range=[0, 2], exp_cond=False, u_cond=False, umvar_cond=False, moe=0.01):

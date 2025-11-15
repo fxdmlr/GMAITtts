@@ -694,51 +694,53 @@ class poly:
         '''
         return strpprint(self.npprint())
     
-    def specstr(self):
+    def specstr(self, var='x'):
         string = []
         for i in range(self.deg + 1):
+            self.coeffs[i] = self.coeffs[i].real
             if i < self.deg:
                 if i > 1:
                     if self.coeffs[i] == 0:
                         continue;
                     elif self.coeffs[i] == 1 or self.coeffs[i] == -1:
-                        string += ["%s%s^%d"%("+" if self.coeffs[i] == 1 else "-", "x", i)]
+                        string += ["%s%s^%d"%("+" if self.coeffs[i] == 1 else "-", var[:], i)]
                     else:
-                        string += ["%s%s%s^%d"%("+" if math.copysign(1, self.coeffs[i])==1 else "" , str(self.coeffs[i]), "x", i)]
+                        string += ["%s%s%s^%d"%("+" if math.copysign(1, self.coeffs[i].real)==1 else "" , str(self.coeffs[i]), var[:], i)]
                 elif i == 1:
                     if self.coeffs[i] == 0:
                         continue;
                     elif self.coeffs[i] in [1, -1]:
-                        string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "-" , "x")]
+                        string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i].real)==1 else "-" , var[:])]
                     else:
-                        string += ["%s%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "" ,str(self.coeffs[i]), "x")]
+                        string += ["%s%s%s"%("+" if math.copysign(1, self.coeffs[i].real)==1 else "" ,str(self.coeffs[i]), var[:])]
                 elif i == 0:
                     if self.coeffs[i] == 0:
                         continue;
-                    string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "" , str(self.coeffs[i]))]
+                    string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i].real)==1 else "" , str(self.coeffs[i]))]
             
             else:
                 if i > 1:
                     if self.coeffs[i] == 0:
                         continue;
                     elif self.coeffs[i] in [1, -1]:
-                        string += ["%s%s^%d"%("+" if math.copysign(1, self.coeffs[i])==1 else "-" , "x", i)]
+                        string += ["%s%s^%d"%("+" if math.copysign(1, self.coeffs[i].real)==1 else "-" , var[:], i)]
                     else:
-                        string += ["%s%s%s^%d"%("+" if math.copysign(1, self.coeffs[i])==1 else "", str(self.coeffs[i]), "x", i)]
+                        string += ["%s%s%s^%d"%("+" if math.copysign(1, self.coeffs[i].real)==1 else "", str(self.coeffs[i]), var[:], i)]
                 elif i == 1:
                     if self.coeffs[i] == 0:
                         continue;
                     elif self.coeffs[i] in [1, -1]:
-                        string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "-" , "x")]
+                        string += ["%s%s"%("+" if math.copysign(1, self.coeffs[i].real)==1 else "-" , var[:])]
                     else:
-                        string += ["%s%s%s"%("+" if math.copysign(1, self.coeffs[i])==1 else "" ,str(self.coeffs[i]), "x")]
+                        string += ["%s%s%s"%("+" if math.copysign(1, self.coeffs[i].real)==1 else "" ,str(self.coeffs[i]), var[:])]
                 elif i == 0:
                     if self.coeffs[i] == 0:
                         continue;
                     string += ["%s"%(str(self.coeffs[i]))]
 
         string.reverse()
-        return "".join(string)
+        nstr = "".join(string)[:] 
+        return nstr[1:] if nstr[0] == '+' else nstr[:]
     
     def pprint(self, prev_pprint=[[" "], ["x"], [" "]]):
         new_array = self.coeffs[:]
@@ -1017,6 +1019,7 @@ class poly:
             if self.coeffs[i] != 0:
                 non_zero_coeffs += 1
                 ind = i
+                break
         if non_zero_coeffs == 1:
             return [0 for i in range(ind)] + prevs[:]
         while self.coeffs[i] == 0 and i < len(self.coeffs):
@@ -1200,7 +1203,109 @@ class poly:
         
         return x_i
 
+class rexp_poly:
+    def __init__(self, p1, p2):
+        self.p1 = p1
+        self.p2 = p2
+    
+    def simplification(self):
+        if isinstance(self.p1, (int, float)) and isinstance(self.p2, (int, float)):
+            return self.p1 / self.p2
+        if isinstance(self.p1, (int, float)) or isinstance(self.p2, (int, float)):
+            return self
+        
 
+        i = 0
+        #check if the poly is x^n
+        non_zero_coeffs = 0
+        ind = 0
+        for i in range(len(self.p1.coeffs[:])):
+            if self.p1.coeffs[i] != 0:
+                ind = i
+                break
+        
+        j = 0
+        #check if the poly is x^n
+        non_zero_coeffs = 0
+        indq = 0
+        for j in range(len(self.p2.coeffs[:])):
+            if self.p2.coeffs[j] != 0:
+                indq = j
+                break
+        m = min(ind, indq)
+        np1 = poly(self.p1.coeffs[m:])
+        np2 = poly(self.p2.coeffs[m:])
+        np1 = np1 * (1/np2.coeffs[-1])
+        np2 = np2 * (1/np2.coeffs[-1])
+        np1_r = np1.roots()
+        np2_r = np2.roots()
+        couples_p = []
+        couples_q = []
+        for i in range(len(np1_r)):
+            found = False
+            for j in range(len(np2_r)):
+                if found:
+                    break
+                if abs(np1_r[i] - np2_r[j]) < 0.0001 and j not in couples_q:
+                    couples_p.append(i)
+                    couples_q.append(j)
+                    found = True
+                
+        nnp = np1.coeffs[-1]
+        nnq = np2.coeffs[-1]
+        for k in range(len(np1_r)):
+            if k not in couples_p:
+                nnp *= poly([-np1_r[k], 1])
+        for k in range(len(np2_r)):
+            if k not in couples_q:
+                nnq *= poly([-np2_r[k], 1])
+        
+        return rexp_poly(nnp, nnq)
+
+    def __add__(self, other):
+        if isinstance(other, (int, float, poly)):
+            return rexp_poly(self.p1 + self.p2 * other, self.p2)
+        elif isinstance(other, rexp_poly):
+            return rexp_poly(self.p1 * other.p2 + self.p2 * other.p1, self.p2 * other.p2)
+    
+    def __mul__(self, other):
+        if isinstance(other, (int, float, poly)):
+            return rexp_poly(self.p1 * other, self.p2)
+        elif isinstance(other, rexp_poly):
+            return rexp_poly(self.p1 * other.p1, self.p2 * other.p2)
+    
+    def __neg__(self):
+        return (-1) * self
+    
+    def __sub__(self, other):
+        return self + (-other)
+    
+    def __truediv__(self, other):
+        if isinstance(other, (int, float, poly)):
+            return rexp_poly(self.p1 , self.p2 * other)
+        elif isinstance(other, rexp_poly):
+            return rexp_poly(self.p1 * other.p2, self.p2 * other.p1)
+    
+    def __str__(self):
+        return self.specstr()
+    
+    __rmul__ = __mul__
+    __radd__ = __add__
+    def diff(self):
+        return rexp_poly(self.p1.diff() * self.p2 - self.p2.diff() * self.p1, self.p2 * self.p2)
+    
+    def npprint(self, prev_ppr='default'):
+        return Div([self.p1, self.p2]).npprint()
+    
+    def specstr(self, var='x'):
+        pstr = self.p1.specstr(var=var[:]) if hasattr(self.p1, 'specstr') else str(self.p1)
+        qstr = self.p2.specstr(var=var[:]) if hasattr(self.p2, 'specstr') else str(self.p2)
+        npstr = '(%s)'%pstr[:] if '+' in pstr or '-' in pstr else pstr[:] 
+        nqstr = '(%s)'%qstr[:] if '+' in qstr or '-' in qstr else qstr[:] 
+        return npstr+'/'+nqstr
+
+
+        
 class PowSeries:
     def __init__(self, c_n, name=None):
         self.function = c_n
@@ -1486,6 +1591,11 @@ class matrix:
             new_array = [[det(minor(self.array[:], [i, j])) / d * (-1)**(i + j) for i in range(n)] for j in range(n)]
         else:
             new_array = [[Div([det(minor(self.array[:], [i, j])) , d * (-1)**(i + j)]) for i in range(n)] for j in range(n)]
+        return matrix(new_array[:])
+    
+    def adj(self):
+        n = len(self.array[:])
+        new_array = [[det(minor(self.array[:], [i, j]))*(-1)**(i + j) for i in range(n)] for j in range(n)]
         return matrix(new_array[:])
         
     __rmul__ = __mul__
