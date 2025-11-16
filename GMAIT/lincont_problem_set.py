@@ -3,6 +3,8 @@ import utils_integration as uint
 from lincontutils import *
 import random
 import cmath
+import sfggame as sfg
+import turtle
 
 
 def rand_poly():
@@ -189,7 +191,35 @@ def rand_row_pol(syms=['p', 'q', 'r']):
     p3.variable = syms[2]
     return matrix([[p1, p2, p3]])
     
-     
+
+class sfg_graph:
+    def __init__(self, arr):
+        self.graph = arr[:]
+    
+    def __str__(self):
+        tr = turtle.Turtle()
+        sfg.draw_sfg(self.graph, 0, len(self.graph) - 1, tr)
+        return ''
+
+def rand_sfg():
+    return sfg_graph(sfg.rand_sfg(5))
+    
+def sfg_game(objects):
+    a, b = sfg.sfg_tf(objects[0].graph[:], 0, len(objects[0].graph[:]) - 1)
+    r = (a/b).simplification()
+    print(r)
+    p, q = r.p1, r.p2
+    return sym_inv_lap_rat(p, q)(objects[1])
+
+def rand_row():
+    return matrix([[random.randint(-10, 10), random.randint(-10, 10), random.randint(-10, 10)]])
+
+def ss_tf_solve(objects):
+    r = sstf(objects[0], objects[1], objects[2], objects[3])
+    f = sym_inv_lap_rat(r.p1, r.p2)(objects[4])
+    return f
+
+
 '''
 0 -> real number
 1 -> polynomial
@@ -213,7 +243,9 @@ number_generators = [
     ['Is the system with the characateristic polynomial $ , hurwitz-routh stable ? (1-Yes 0-No) ', lambda objects : 1 if hurwitz_stable_num(objects[0]) else 0, [rand_poly_hdeg]],
     ['find a value for k so that p(x) = $ is hurwitz-routh stable. ', check_pol_co_pol_hurwitz, [rand_pol_coeff_pol]],
     ['find values for k1, k2, k3 so that the system defined by the state equations dX/dt = $X + $u(t) where u(t)= -<k1, k2, k3>X is hurwitz-routh stable. ',check_mat_hurwitz, [rand_mat, rand_vect]],
-    ['find values for p, q, r so that the system defined by the state equations dX/dt = $X + $u(t) where u(t)= -$X is hurwitz-routh stable. ',check_mat_pol_hurwitz, [rand_mat, rand_vect, rand_row_pol]]
+    ['find values for p, q, r so that the system defined by the state equations dX/dt = $X + $u(t) where u(t)= -$X is hurwitz-routh stable. ',check_mat_pol_hurwitz, [rand_mat, rand_vect, rand_row_pol]],
+    ['find the impulse response for the figure $ at t = $ ', sfg_game, [rand_sfg, rand_num]],
+    ['find the output for the system defined by the state equations dX/dt = $X + $u(t) where the output is given by y = $X + $ at t = $', ss_tf_solve, [rand_mat, rand_vect, rand_row, rand_num, lambda : round(random.random(), ndigits=2)]]
 ]
 
 
@@ -243,3 +275,6 @@ def single_number_gen():
     
     return new_string, f(inp_arr[:])
 
+a, b = single_number_gen()
+print(strpprint(a))
+print(b)

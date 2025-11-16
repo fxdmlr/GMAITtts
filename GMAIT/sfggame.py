@@ -31,7 +31,7 @@ def sfg_tf(array, input_node, output_node):
         sub_arr[node] += 1        
         eqns.append(sub_arr[:])
     eq_mat = matrix([[j for j in i] for i in eqns[:]])
-    print(eq_mat)
+    #print(eq_mat)
     res_vect = matrix([[0] if i != input_node else [1] for i in range(len(array[:]))])
     neq_mat = matrix([[eqns[i][j] if j != output_node else int(i == input_node) for j in range(len(eqns[i]))]for i in range(len(eqns))]).det()
     #adj = eq_mat.adj() * res_vect
@@ -166,8 +166,7 @@ def rand_sfg(number_of_nodes, ratio=0.2, nranges=[1, 10], mdeg=1):
                 p1 = poly.rand(random.randint(0, d-1), coeff_range=nranges[:])
                 p2 = poly.rand(d, coeff_range=nranges[:])
                 gain = rexp_poly(p1, p2)
-                print('gain = ', rexp_poly(p1, p2))
-                print('reduced gain = ', gain)
+
             else:
                 gain = random.randint(nranges[0], nranges[1]) * (-1) ** random.randint(0, 1)
             new_node = random.randint(1, len(array) - 2)
@@ -180,22 +179,3 @@ def rand_sfg(number_of_nodes, ratio=0.2, nranges=[1, 10], mdeg=1):
     return array
     
             
-sn = rexp_poly(poly([1]), poly([0, 1]))
-sfg = rand_sfg(2, ratio=0.1)
-print(sfg)
-'''
-[
-    [],
-    [[0, 1], [6, -1]],
-    [[1, 1], [3, -1]], 
-    [[2, sn]],
-    [[2, 1], [3, 2], [5, -2]],
-    [[4, sn]],
-    [[4, 1], [5, 1]],
-    [[6, 1]]
-]
-'''
-
-
-
-

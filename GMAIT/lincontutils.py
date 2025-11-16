@@ -156,3 +156,30 @@ def char_poly_state_eq(A):
     p.variable = 's'
     return p
 
+def sstf(a, b, c, d):
+    nm = matrix([[poly([-a.array[i][j], int(i == j)]) for j in range(len(a.array))] for i in range(len(a.array))])
+    nm1, de = nm.adj(), nm.det()
+    return rexp_poly((c * nm1 * b).array[0][0], de) + d
+
+def tfss(p, q):
+    A = [[int(i - 1 == j) for i in range(q.deg)] for j in range(q.deg - 1)]
+    A.append((-q).coeffs[:-1])
+
+    B = [[int(i == p.deg)] for i in range(1, p.deg + 1)]
+    C = []
+    sub = []
+    for i in range(q.deg):
+        if i < len(p.coeffs):
+            a = p.coeffs[i]
+        else:
+            a = 0
+        
+        if i < len(q.coeffs):
+           b = - q.coeffs[i] * p.coeffs[-1] 
+        else:
+            b = 0
+        
+        sub.append(a + b)
+    
+    C = [sub]
+    return matrix(A), matrix(B), matrix(C)

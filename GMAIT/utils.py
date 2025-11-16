@@ -1010,25 +1010,12 @@ class poly:
         return (1/self.coeffs[-1])*((-1)**(n*(n-1)/2)) * self.resultant(self.diff())
     
     def roots(self, prevs=[]):
-        zeros = 0
-        i = 0
-        #check if the poly is x^n
-        non_zero_coeffs = 0
-        ind = 0
-        for i in range(len(self.coeffs[:])):
-            if self.coeffs[i] != 0:
-                non_zero_coeffs += 1
-                ind = i
-                break
-        if non_zero_coeffs == 1:
-            return [0 for i in range(ind)] + prevs[:]
-        while self.coeffs[i] == 0 and i < len(self.coeffs):
-            zeros += 1
-            i += 1
-        if zeros > 0:
-            new_p = poly(self.coeffs[zeros:])
-            return new_p.roots(prevs=[0 for i in range(zeros)])
-        
+        if len(self.coeffs) == 0:
+            return prevs[:]
+        if self.coeffs[-1] == 0:
+            return poly(self.coeffs[:-1]).roots(prevs=prevs[:])
+        if self.coeffs[0] == 0:
+            return poly(self.coeffs[1:]).roots(prevs=prevs[:] + [0])
         if self.deg == 1:
             return [-self.coeffs[0] / self.coeffs[1]] + prevs[:]
         
@@ -1098,8 +1085,8 @@ class poly:
                 return [r1+d, r2+d, r3+d, r4+d] + prevs[:]
 
         else:
-            guess = complex(0, 0)
-            max_iter = 100
+            guess = 0
+            max_iter = 1000
             current_root = poly.newtonsmethod(self, guess, max_iter)
             new_poly = self / poly([-current_root, 1])
             return new_poly.roots(prevs=prevs[:]+[current_root])
@@ -1205,16 +1192,33 @@ class poly:
 
 class rexp_poly:
     def __init__(self, p1, p2):
-        self.p1 = p1
-        self.p2 = p2
+        if isinstance(p1, poly) and isinstance(p2, poly):
+            if all([abs(int(i) - float(i)) < 0.001 for i in p1.coeffs[:]+p2.coeffs[:]]):
+                g = math.gcd(math.gcd(*(map(int, p1.coeffs[:])) if hasattr(p1, 'coeffs') else p1), math.gcd(*(map(int, p2.coeffs[:])) if hasattr(p2, 'coeffs') else p2))
+                self.p1 = p1 * (1/g)
+                self.p2 = p2 * (1/g)
+            else:
+                self.p1 = p1
+                self.p2 = p2
+        else:
+            self.p1 = p1
+            self.p2 = p2
+    
+    def __call__(self, x):
+        return self.p1(x) / self.p2(x)
     
     def simplification(self):
         if isinstance(self.p1, (int, float)) and isinstance(self.p2, (int, float)):
             return self.p1 / self.p2
-        if isinstance(self.p1, (int, float)) or isinstance(self.p2, (int, float)):
-            return self
+        if isinstance(self.p1, (int, float)):
+            return rexp_poly(self.p1, self.p2)
+        if isinstance(self.p2, (int, float)):
+            return self.p1 * (1/self.p2)
         
-
+        if self.p1.coeffs[-1] == 0:
+            return rexp_poly(poly(self.p1.coeffs[:-1]), self.p2).simplification()
+        if self.p2.coeffs[-1] == 0:
+            return rexp_poly(self.p1, poly(self.p2.coeffs[:-1])).simplification()
         i = 0
         #check if the poly is x^n
         non_zero_coeffs = 0
@@ -1226,7 +1230,6 @@ class rexp_poly:
         
         j = 0
         #check if the poly is x^n
-        non_zero_coeffs = 0
         indq = 0
         for j in range(len(self.p2.coeffs[:])):
             if self.p2.coeffs[j] != 0:
@@ -1235,43 +1238,62 @@ class rexp_poly:
         m = min(ind, indq)
         np1 = poly(self.p1.coeffs[m:])
         np2 = poly(self.p2.coeffs[m:])
-        np1 = np1 * (1/np2.coeffs[-1])
-        np2 = np2 * (1/np2.coeffs[-1])
+
+
         np1_r = np1.roots()
         np2_r = np2.roots()
+
         couples_p = []
         couples_q = []
         for i in range(len(np1_r)):
-            found = False
             for j in range(len(np2_r)):
-                if found:
-                    break
-                if abs(np1_r[i] - np2_r[j]) < 0.0001 and j not in couples_q:
+                if abs(np1_r[i] - np2_r[j]) < 0.00001 and j not in couples_q:
                     couples_p.append(i)
                     couples_q.append(j)
-                    found = True
-                
-        nnp = np1.coeffs[-1]
-        nnq = np2.coeffs[-1]
+                    break
+        
+        nnp = np1.coeffs[-1].real
+        nnq = np2.coeffs[-1].real
         for k in range(len(np1_r)):
             if k not in couples_p:
-                nnp *= poly([-np1_r[k], 1])
+                nnp *= poly([-np1_r[k].real, 1])
         for k in range(len(np2_r)):
             if k not in couples_q:
-                nnq *= poly([-np2_r[k], 1])
+                nnq *= poly([-np2_r[k].real, 1])
         
-        return rexp_poly(nnp, nnq)
+        a = poly([round(i, ndigits=3) for i in nnp.coeffs[:]]) if hasattr(nnp, 'coeffs') else round(nnp, ndigits=3)
+        b = poly([round(i, ndigits=3) for i in nnq.coeffs[:]]) if hasattr(nnq, 'coeffs') else round(nnq, ndigits=3)
+        return rexp_poly(a, b)
 
     def __add__(self, other):
         if isinstance(other, (int, float, poly)):
             return rexp_poly(self.p1 + self.p2 * other, self.p2)
         elif isinstance(other, rexp_poly):
+            if self.p1 * other.p2 + self.p2 * other.p1 == 0:
+                return 0
+            if self.p2 == other.p2:
+                return rexp_poly(self.p1 + other.p1, self.p2)
+            
             return rexp_poly(self.p1 * other.p2 + self.p2 * other.p1, self.p2 * other.p2)
     
     def __mul__(self, other):
+        if other == 0:
+            return 0
+        
         if isinstance(other, (int, float, poly)):
+            if other == self.p2:
+                return self.p1
+            
             return rexp_poly(self.p1 * other, self.p2)
         elif isinstance(other, rexp_poly):
+            if other.p1 == 0:
+                return 0
+            if self.p1 == other.p2 and self.p2 == other.p1:
+                return 1
+            elif self.p1 == other.p2:
+                return rexp_poly(other.p1, self.p2)
+            elif self.p2 == other.p1:
+                return rexp_poly(self.p1, other.p2)
             return rexp_poly(self.p1 * other.p1, self.p2 * other.p2)
     
     def __neg__(self):
@@ -1282,8 +1304,19 @@ class rexp_poly:
     
     def __truediv__(self, other):
         if isinstance(other, (int, float, poly)):
+            if other == self.p1:
+                return rexp_poly(1, self.p2)
             return rexp_poly(self.p1 , self.p2 * other)
         elif isinstance(other, rexp_poly):
+            if self.p1 == other.p1 and self.p2 == other.p2:
+                return 1
+            elif self.p1 == other.p1:
+                np1 = other.p2
+                return rexp_poly(np1, self.p2)
+            elif self.p2 == other.p2:
+                return rexp_poly(self.p1, other.p1)
+           
+            
             return rexp_poly(self.p1 * other.p2, self.p2 * other.p1)
     
     def __str__(self):
