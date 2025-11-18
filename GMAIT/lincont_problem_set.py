@@ -275,6 +275,3 @@ def single_number_gen():
     
     return new_string, f(inp_arr[:])
 
-a, b = single_number_gen()
-print(strpprint(a))
-print(b)

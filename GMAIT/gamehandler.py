@@ -223,7 +223,9 @@ def regMulDig(inpt_dict):#(digits=5):
     digits = inpt_dict["ndigits"]
     n1 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
     n2 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
-    string = "%d * %d = "%(n1, n2)
+    n1s = ' '.join([i for i in str(n1)])
+    n2s = ' '.join([i for i in str(n2)])
+    string = "  %s\n* %s\n"%(n1s, n2s) + ''.join(['-' for i in range(max(len(n1s), len(n2s)) + 2)]) + '\n'
     return [string, n1 * n2, lambda x : int(x)]
 
 def fourierSeries(inpt_dict):#(nranges=[1, 10], deg=2, p_range=[0, 2], exp_cond=False, u_cond=False, umvar_cond=False, moe=0.01):
@@ -832,3 +834,12 @@ def complex_mult_game(inpt_dict):
     res = n1 * n2
     check_method = lambda x : complex(x)
     return st, res, check_method
+
+def trachtenberg(inpt_dict):
+    digits = inpt_dict["ndigits"]
+    n1 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
+    n2 = random.randint(10 ** (digits - 1), 10 ** (digits) - 1) 
+    n1s = ' '.join([i for i in str(n1)])
+    n2s = ' '.join([i for i in str(n2)])
+    string = "  %s\n* %s\n"%(n1s, n2s) + ''.join(['-' for i in range(max(len(n1s), len(n2s)) + 2)]) + '\n'
+    return [string, str(n1 * n2)[::-1], lambda x : x]
